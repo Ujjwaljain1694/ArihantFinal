@@ -9,25 +9,22 @@ const SamparkReport = () => {
     const [search, setSearch] = React.useState("");
 
     return (
-        <Layout>
-            <SubNavigation activeTab="Sampark Report" />
-            <div style={L.wrapper}>
-                <div style={L.card}>
-                    <div style={L.row}>
-                        <LField label="From Date">
-                            <LDateInput value={fromDate} onChange={e => setFromDate(e.target.value)} />
-                        </LField>
-                        <LField label="To Date">
-                            <LDateInput value={toDate} onChange={e => setToDate(e.target.value)} />
-                        </LField>
-                        <LField label="Search by client">
-                            <LSearchInput value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by Client Code" width="220px" />
-                        </LField>
-                        <LApplyBtn label="SEARCH >" />
-                    </div>
+        <div style={L.wrapper}>
+            <div style={L.card}>
+                <div style={L.row}>
+                    <LField label="From Date">
+                        <LDateInput value={fromDate} onChange={e => setFromDate(e.target.value)} />
+                    </LField>
+                    <LField label="To Date">
+                        <LDateInput value={toDate} onChange={e => setToDate(e.target.value)} />
+                    </LField>
+                    <LField label="Search by client">
+                        <LSearchInput value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by Client Code" width="220px" />
+                    </LField>
+                    <LApplyBtn label="SEARCH >" />
                 </div>
             </div>
-        </Layout>
+        </div>
     );
 };
 export default SamparkReport;
