@@ -1,0 +1,24 @@
+{
+  "files": {
+    "main.css": "/static/css/main.30456a71.css",
+    "main.js": "/static/js/main.4c945bce.js",
+    "static/media/education costjpg": "/static/media/education cost00122025040047067047.c76e468d560548ba59f8.jpg",
+    "static/media/position-call-banner.jpg": "/static/media/position-call-banner.38754f68e90a1ad52939.jpg",
+    "static/media/arihant plus.jpg": "/static/media/arihant plus.ed9ba39b68e9a54065d4.jpg",
+    "static/media/jpg": "/static/media/07122025040748626748.734d621d085c2ff98d89.jpg",
+    "static/media/contest.jpg": "/static/media/contest.1dd0468095506493138d.jpg",
+    "static/media/requirjpg": "/static/media/require310620250231168943116.f180d93ee8f0f4626984.jpg",
+    "static/media/fa-solid-900.woff2": "/static/media/fa-solid-900.ce9a3fa740bd60b4ac3b.woff2",
+    "static/media/fa-brands-400.woff2": "/static/media/fa-brands-400.f276979f97f1cf375d23.woff2",
+    "static/media/fa-regular-400.woff2": "/static/media/fa-regular-400.cfbad32c79d9dda6af4a.woff2",
+    "static/media/logo-arihant-capital.png": "/static/media/logo-arihant-capital.097618f445f9965e765b.png",
+    "static/media/fa-v4compatibility.woff2": "/static/media/fa-v4compatibility.296da06936a3373940c8.woff2",
+    "index.html": "/index.html",
+    "main.30456a71.css.map": "/static/css/main.30456a71.css.map",
+    "main.4c945bce.js.map": "/static/js/main.4c945bce.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.30456a71.css",
+    "static/js/main.4c945bce.js"
+  ]
+}

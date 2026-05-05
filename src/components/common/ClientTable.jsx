@@ -1,0 +1,107 @@
+import React, { useState } from 'react';
+
+const ClientTable = ({ data = [] }) => {
+  const [visibleRows, setVisibleRows] = useState({});
+
+  const toggleVisibility = (index) => {
+    setVisibleRows(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+
+  const maskValue = (value, isVisible, type) => {
+    if (isVisible) return value;
+    if (!value) return "";
+    
+    const s = value.toString();
+    if (type === 'pan') return s.slice(0, 5).replace(/./g, 'X') + s.slice(-4);
+    if (type === 'mobile') return s.slice(0, 6).replace(/./g, 'X') + s.slice(-4);
+    if (type === 'email') {
+        const [user, domain] = s.split('@');
+        return user.slice(0, 1) + "XXXX@" + domain;
+    }
+    return s;
+  };
+
+  const headers = [
+    "CLIENT NAME", "PAN", "MOBILE", "EMAIL", "DEFAULT BANK & AC NO.", 
+    "CITY & STATE", "MTF AC. OPENING DATE", "DP CODE"
+  ];
+
+  return (
+    <div className="bg-white border border-gray-200 overflow-hidden shadow-none rounded-none">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-[11px] font-medium tracking-tight">
+          <thead className="bg-[#1EB04C] text-white uppercase">
+            <tr>
+              {headers.map((h, i) => (
+                <th key={i} className="px-3 py-3 border-r border-white/10 last:border-0 group cursor-pointer font-bold">
+                  <div className="flex items-center gap-1.5 whitespace-nowrap">
+                    {h}
+                    <div className="flex flex-col text-[7px] leading-[4px] opacity-40 group-hover:opacity-100 transition-opacity">
+                        <span>▲</span><span>▼</span>
+                    </div>
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="bg-white">
+            {data.map((row, i) => (
+              <tr key={i} className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
+                {/* Client Name & Code */}
+                <td className="px-3 py-2 border-r border-gray-100 text-[11px]">
+                  <div className="font-bold text-gray-800 uppercase">{row.name}</div>
+                  <div className="text-[10px] text-gray-400 font-normal">{row.code}</div>
+                </td>
+                
+                {/* PAN */}
+                <td className="px-3 py-2 border-r border-gray-100 text-[11px] text-gray-700">
+                  <div className="flex items-center justify-between gap-2">
+                    {maskValue(row.pan, visibleRows[i], 'pan')}
+                    <i 
+                      className={`fas ${visibleRows[i] ? 'fa-eye' : 'fa-eye-slash'} text-gray-300 cursor-pointer hover:text-[#1EB04C] text-[10px]`}
+                      onClick={() => toggleVisibility(i)}
+                    ></i>
+                  </div>
+                </td>
+
+                {/* MOBILE */}
+                <td className="px-3 py-2 border-r border-gray-100 text-[11px] text-gray-700">
+                  <div className="flex items-center justify-between gap-2">
+                    {maskValue(row.mobile, visibleRows[i], 'mobile')}
+                  </div>
+                </td>
+
+                {/* EMAIL */}
+                <td className="px-3 py-2 border-r border-gray-100 text-[11px] text-gray-700">
+                  <div className="flex items-center justify-between gap-2">
+                    {maskValue(row.email, visibleRows[i], 'email')}
+                  </div>
+                </td>
+
+                {/* BANK */}
+                <td className="px-3 py-2 border-r border-gray-100 text-[11px] text-gray-700">{row.bank}</td>
+                
+                {/* CITY */}
+                <td className="px-3 py-2 border-r border-gray-100 text-[11px] text-gray-700">{row.city}</td>
+                
+                {/* DATE */}
+                <td className="px-3 py-2 border-r border-gray-100 text-[11px] text-gray-700">{row.date}</td>
+                
+                {/* DP CODE */}
+                <td className="px-3 py-2 border-r border-gray-100 last:border-0 text-[11px] text-gray-700">{row.dp}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="px-4 py-2 bg-[#f9f9f9] text-gray-500 font-medium border-t border-gray-200 text-[11px]">
+        {data.length} total
+      </div>
+    </div>
+  );
+};
+
+export default ClientTable;
