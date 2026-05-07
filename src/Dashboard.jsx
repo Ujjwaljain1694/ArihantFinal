@@ -52,7 +52,7 @@ const StatItem = ({ icon, label, value }) => {
 
   return (
     <div className="flex items-center gap-3 p-[15px] bg-[#f9f9f9] rounded-md border border-[#e0e0e0]">
-      <div className="flex items-center justify-center w-10 h-10 bg-white text-[#34b350] rounded-md text-[18px] shadow-sm">
+      <div className="flex items-center justify-center text-[#34b350] text-[18px]">
         {renderIcon()}
       </div>
 
@@ -60,7 +60,7 @@ const StatItem = ({ icon, label, value }) => {
         <p className="m-0 mb-1.5 text-[13px] text-gray-600 font-medium">{label}</p>
         <div className="flex items-center justify-between gap-2.5">
           <span className="text-sm font-semibold text-gray-800">{hidden ? "XXXXXX" : value}</span>
-          <button 
+          <button
             onClick={() => setHidden(!hidden)}
             className="bg-transparent border-none cursor-pointer text-gray-500 p-0.5 rounded transition-colors hover:bg-gray-200"
           >
@@ -74,6 +74,53 @@ const StatItem = ({ icon, label, value }) => {
 
 function Dashboard() {
   const navigate = useNavigate();
+
+  const slides = [
+    "480920250448563074856",
+    "42092025054204790424",
+    "360920250536464153646",
+    "370920250537151493715",
+    "550920250455229795522",
+    "380920250538105403810",
+    "380920250538366803836",
+    "380920250538598053859",
+    "370920250537324933732"
+  ];
+
+  const [currentIndex, setCurrentIndex] = useState(1);
+  const [isTransitioning, setIsTransitioning] = useState(true);
+
+  // Extend slides for infinite loop: [Last Slide, ...Slides, First Slide]
+  const extendedSlides = [slides[slides.length - 1], ...slides, slides[0]];
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      handleNext();
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [currentIndex, extendedSlides.length]);
+
+  const handleNext = () => {
+    if (currentIndex >= extendedSlides.length - 1) return;
+    setIsTransitioning(true);
+    setCurrentIndex(prev => prev + 1);
+  };
+
+  const handlePrev = () => {
+    if (currentIndex <= 0) return;
+    setIsTransitioning(true);
+    setCurrentIndex(prev => prev - 1);
+  };
+
+  const handleTransitionEnd = () => {
+    if (currentIndex === extendedSlides.length - 1) {
+      setIsTransitioning(false);
+      setCurrentIndex(1);
+    } else if (currentIndex === 0) {
+      setIsTransitioning(false);
+      setCurrentIndex(slides.length);
+    }
+  };
 
   const services = [
     { name: "KORP SSO", href: "https://uatbo.arihantcapital.com/Home/DashBoard" },
@@ -94,14 +141,8 @@ function Dashboard() {
     <div className="bg-[#f1f1f1] min-h-screen font-sans">
       <Header />
 
-      {/* Sub Header */}
-      <div className="bg-white px-[15px] py-[10px] text-sm flex items-center gap-2 mt-[60px]">
-        <span className="w-2 h-2 bg-green-600 rounded-full"></span>
-        <span className="text-gray-700 font-medium tracking-tight">MP21 &gt; ARIHANT PLUS</span>
-      </div>
-
       {/* Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-[15px] p-[15px]">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-[15px] p-[15px] mt-[60px]">
         {[
           { label: "Total Branch", value: "10" },
           { label: "Total Clients", value: "15,596" },
@@ -109,22 +150,22 @@ function Dashboard() {
           { label: "Traded Clients", value: "1,587" },
           { label: "Inactive Clients", value: "4,002" },
         ].map((card, idx) => (
-          <div 
+          <div
             key={idx}
-            className="bg-white p-4 rounded-xl text-center shadow-[0_2px_8px_rgba(0,0,0,0.05)] w-full cursor-pointer flex flex-col justify-center transition-all hover:shadow-lg hover:-translate-y-1"
+            className="bg-white p-2.5 rounded-xl text-center shadow-[0_2px_8px_rgba(0,0,0,0.05)] w-full max-w-[210px] mx-auto cursor-pointer flex flex-col justify-center transition-all hover:shadow-lg hover:-translate-y-1"
           >
-            <h2 className="m-0 text-gray-900 text-lg font-black">{card.value}</h2>
-            <p className="m-0 mt-1 text-[10px] text-gray-400 font-bold uppercase tracking-widest">{card.label}</p>
+            <h2 className="m-0 text-gray-900 text-base font-normal">{card.value}</h2>
+            <p className="m-0 mt-1 text-[9px] text-gray-400 font-bold uppercase tracking-widest">{card.label}</p>
           </div>
         ))}
       </div>
 
       {/* New Revenue Dashboard Component */}
       <div className="bg-white p-6 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] m-[15px] border border-gray-50">
-        <h2 className="m-0 mb-5 text-[18px] text-gray-800 font-black uppercase tracking-tight">My revenue details</h2>
-        
+        <h2 className="m-0 mb-0.5 text-[15px] text-gray-800 font-normal uppercase tracking-tight">My revenue details</h2>
+
         {/* Horizontal Divider Line */}
-        <div className="my-6 border-t border-gray-100"></div>
+        <div className="my-2 border-t border-gray-100"></div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-[15px]">
           <StatItem icon={Calendar} label="YTD Revenue" value="5,20,000" />
@@ -139,43 +180,64 @@ function Dashboard() {
       <div className="px-4 py-4">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Carousel Section */}
-          <div className="w-full lg:w-[65%] my-auto">
-            <div id="carouselExample" className="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
-              <div className="carousel-inner rounded-3xl overflow-hidden shadow-2xl h-[330px] border border-gray-100">
-                {[
-                  "480920250448563074856",
-                  "42092025054204790424",
-                  "360920250536464153646",
-                  "370920250537151493715",
-                  "550920250455229795522",
-                  "380920250538105403810",
-                  "380920250538366803836",
-                  "380920250538598053859",
-                  "370920250537324933732"
-                ].map((id, idx) => (
-                  <div key={idx} className={`carousel-item h-full ${idx === 0 ? "active" : ""}`}>
-                    <img 
-                      src={`https://download.arihantcapital.com/account/${id}.jpg`} 
-                      className="block w-full h-full object-cover"
+          <div className="w-full lg:w-[65%] my-auto relative group">
+            <div className="relative overflow-hidden shadow-2xl h-[330px] rounded-3xl border border-gray-100">
+              <div
+                className={`flex h-full ${isTransitioning ? "transition-transform duration-700 ease-in-out" : ""}`}
+                style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+                onTransitionEnd={handleTransitionEnd}
+              >
+                {extendedSlides.map((id, idx) => (
+                  <div key={idx} className="min-w-full h-full relative">
+                    <img
+                      src={`https://download.arihantcapital.com/account/${id}.jpg`}
+                      className="w-full h-full object-cover"
                       alt={`Slide ${idx + 1}`}
                     />
                   </div>
                 ))}
               </div>
-              <button className="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
-                <span className="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span className="visually-hidden">Previous</span>
+
+              {/* Navigation Controls - Large Chevrons on Hover */}
+              <button
+                onClick={handlePrev}
+                className="absolute left-6 top-1/2 -translate-y-1/2 z-50 text-white flex items-center justify-center transition-all opacity-70 hover:opacity-100 bg-black/10 hover:bg-black/30 w-12 h-12 rounded-full border-none cursor-pointer"
+              >
+                <i className="fa-solid fa-chevron-left text-2xl drop-shadow-lg"></i>
               </button>
-              <button className="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
-                <span className="carousel-control-next-icon" aria-hidden="true"></span>
-                <span className="visually-hidden">Next</span>
+              <button
+                onClick={handleNext}
+                className="absolute right-6 top-1/2 -translate-y-1/2 z-50 text-white flex items-center justify-center transition-all opacity-70 hover:opacity-100 bg-black/10 hover:bg-black/30 w-12 h-12 rounded-full border-none cursor-pointer"
+              >
+                <i className="fa-solid fa-chevron-right text-2xl drop-shadow-lg"></i>
               </button>
+
+              {/* Minimal Dots */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                {slides.map((_, idx) => {
+                  let isActive = false;
+                  if (currentIndex === 0) isActive = idx === slides.length - 1;
+                  else if (currentIndex === extendedSlides.length - 1) isActive = idx === 0;
+                  else isActive = idx === currentIndex - 1;
+
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        setIsTransitioning(true);
+                        setCurrentIndex(idx + 1);
+                      }}
+                      className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${isActive ? "bg-[#34b350] w-6" : "bg-white/50 w-1.5"}`}
+                    ></div>
+                  );
+                })}
+              </div>
             </div>
           </div>
-          
+
           {/* Video Section */}
           <div className="w-full lg:w-[35%] h-[330px]">
-             <VideoCard />
+            <VideoCard />
           </div>
         </div>
       </div>
@@ -183,15 +245,15 @@ function Dashboard() {
       {/* Services Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[15px] p-[15px] pb-10">
         {services.map((service, idx) => (
-          <a 
+          <a
             key={idx}
             href={service.href}
             target={service.href !== "#" ? "_blank" : "_self"}
             rel="noopener noreferrer"
             className="group bg-white p-[15px] rounded-lg flex items-center justify-center gap-3 cursor-pointer shadow-[0_2px_5px_rgba(0,0,0,0.08)] transition-all hover:-translate-y-1 hover:bg-[#f3fff5] hover:shadow-xl border border-gray-50 hover:border-green-100 no-underline active:scale-95"
           >
-            <span className="text-[14px] font-bold text-[#4ade80] group-hover:text-[#22c55e] transition-colors">{service.name}</span>
-            <span className="text-[#34b350] font-black text-lg group-hover:translate-x-1 transition-transform">{'>'}</span>
+            <span className="text-[14px] font-bold text-gray-900 group-hover:text-[#34b350] transition-colors">{service.name}</span>
+            <span className="text-gray-400 font-black text-lg group-hover:text-[#34b350] group-hover:translate-x-1 transition-all">{'>'}</span>
           </a>
         ))}
       </div>
