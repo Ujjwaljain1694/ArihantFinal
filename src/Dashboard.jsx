@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Calendar, Wifi, User, Folder } from "lucide-react";
 import Header from "./Header.jsx";
@@ -38,9 +38,7 @@ const VideoCard = () => {
   );
 };
 
-const StatItem = ({ icon, label, value }) => {
-  const [hidden, setHidden] = useState(true);
-
+const StatItem = ({ icon, label, value, onEyeClick, isRevealed }) => {
   const renderIcon = () => {
     if (typeof icon === 'string') {
       return <i className={`${icon} text-[#34b350] text-[18px]`}></i>;
@@ -59,12 +57,12 @@ const StatItem = ({ icon, label, value }) => {
       <div className="flex-1">
         <p className="m-0 mb-1.5 text-[13px] text-gray-600 font-medium">{label}</p>
         <div className="flex items-center justify-between gap-2.5">
-          <span className="text-sm font-semibold text-gray-800">{hidden ? "XXXXXX" : value}</span>
+          <span className="text-sm font-semibold text-gray-800">{!isRevealed ? "XXXXXX" : value}</span>
           <button
-            onClick={() => setHidden(!hidden)}
+            onClick={onEyeClick}
             className="bg-transparent border-none cursor-pointer text-gray-500 p-0.5 rounded transition-colors hover:bg-gray-200"
           >
-            {hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+            {!isRevealed ? <EyeOff size={14} /> : <Eye size={14} />}
           </button>
         </div>
       </div>
@@ -74,6 +72,20 @@ const StatItem = ({ icon, label, value }) => {
 
 function Dashboard() {
   const navigate = useNavigate();
+
+  // OTP States
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [isRevealed, setIsRevealed] = useState(() => {
+    return sessionStorage.getItem("revenue_verified") === "true";
+  });
+  const [resendTimer, setResendTimer] = useState(120); // 2 minutes in seconds
+  const [canResend, setCanResend] = useState(false);
+  const [toast, setToast] = useState({
+    show: false,
+    type: "",
+    message: "",
+  });
 
   const slides = [
     "480920250448563074856",
@@ -93,12 +105,27 @@ function Dashboard() {
   // Extend slides for infinite loop: [Last Slide, ...Slides, First Slide]
   const extendedSlides = [slides[slides.length - 1], ...slides, slides[0]];
 
-  React.useEffect(() => {
+  // Slider Timer
+  useEffect(() => {
     const timer = setInterval(() => {
       handleNext();
     }, 4000);
     return () => clearInterval(timer);
-  }, [currentIndex, extendedSlides.length]);
+  }, [currentIndex]);
+
+  // OTP Countdown Timer
+  useEffect(() => {
+    let interval = null;
+    if (showOtpModal && resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (resendTimer === 0) {
+      setCanResend(true);
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [showOtpModal, resendTimer]);
 
   const handleNext = () => {
     if (currentIndex >= extendedSlides.length - 1) return;
@@ -122,6 +149,101 @@ function Dashboard() {
     }
   };
 
+  // Eye Icon Click Handler
+  const handleEyeClick = () => {
+    if (isRevealed) {
+      return; // Do nothing if already revealed, keep it visible as requested
+    }
+
+    setShowOtpModal(true);
+    setResendTimer(120); // Reset timer to 2 min
+    setCanResend(false);
+
+    // Initial message
+    setToast({
+      show: true,
+      type: "error",
+      message: "Next SMS will be send after 2 min!",
+    });
+
+    setTimeout(() => {
+      setToast({
+        show: false,
+        type: "",
+        message: "",
+      });
+    }, 3000);
+  };
+
+  // OTP Submit Handler
+  const handleSubmitOtp = () => {
+    if (otp === "123456") {
+      setShowOtpModal(false);
+      setIsRevealed(true);
+      sessionStorage.setItem("revenue_verified", "true");
+      setOtp(""); // Clear OTP input
+
+      // Success Popup
+      setToast({
+        show: true,
+        type: "success",
+        message: "OTP Verified Successfully!",
+      });
+
+      setTimeout(() => {
+        setToast({
+          show: false,
+          type: "",
+          message: "",
+        });
+      }, 3000);
+    } else {
+      // Wrong OTP
+      setToast({
+        show: true,
+        type: "error",
+        message: "Invalid OTP",
+      });
+
+      setTimeout(() => {
+        setToast({
+          show: false,
+          type: "",
+          message: "",
+        });
+      }, 3000);
+    }
+  };
+
+  // Resend OTP Handler
+  const handleResendOtp = () => {
+    if (!canResend) return;
+
+    setResendTimer(120);
+    setCanResend(false);
+    setOtp("");
+
+    setToast({
+      show: true,
+      type: "success",
+      message: "New OTP Sent Successfully!",
+    });
+
+    setTimeout(() => {
+      setToast({
+        show: false,
+        type: "",
+        message: "",
+      });
+    }, 3000);
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const services = [
     { name: "KORP SSO", href: "https://uatbo.arihantcapital.com/Home/DashBoard" },
     { name: "RM/Subbroker EKYC", href: "http://ekyc-admin-test.s3-website.ap-south-1.amazonaws.com/sso/?branchCode=AP05&sessionID=806483125" },
@@ -138,7 +260,7 @@ function Dashboard() {
   ];
 
   return (
-    <div className="bg-[#f1f1f1] min-h-screen font-sans">
+    <div className="bg-[#f1f1f1] min-h-screen font-sans relative">
       <Header />
 
       {/* Cards */}
@@ -168,11 +290,11 @@ function Dashboard() {
         <div className="my-2 border-t border-gray-100"></div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-[15px]">
-          <StatItem icon={Calendar} label="YTD Revenue" value="5,20,000" />
-          <StatItem icon={Wifi} label="YTD Traded Clients" value="120" />
-          <StatItem icon="fa fa-suitcase" label="MTD Revenue" value="80,000" />
-          <StatItem icon={User} label="MTD Traded Clients" value="25" />
-          <StatItem icon={Folder} label="MTD Clients Acquired" value="18" />
+          <StatItem icon={Calendar} label="YTD Revenue" value="5,20,000" onEyeClick={handleEyeClick} isRevealed={isRevealed} />
+          <StatItem icon={Wifi} label="YTD Traded Clients" value="120" onEyeClick={handleEyeClick} isRevealed={isRevealed} />
+          <StatItem icon="fa fa-suitcase" label="MTD Revenue" value="80,000" onEyeClick={handleEyeClick} isRevealed={isRevealed} />
+          <StatItem icon={User} label="MTD Traded Clients" value="25" onEyeClick={handleEyeClick} isRevealed={isRevealed} />
+          <StatItem icon={Folder} label="MTD Clients Acquired" value="18" onEyeClick={handleEyeClick} isRevealed={isRevealed} />
         </div>
       </div>
 
@@ -207,9 +329,9 @@ function Dashboard() {
               </button>
               <button
                 onClick={handleNext}
-                className="absolute right-6 top-1/2 -translate-y-1/2 z-50 text-white flex items-center justify-center transition-all opacity-70 hover:opacity-100 bg-black/10 hover:bg-black/30 w-12 h-12 rounded-full border-none cursor-pointer"
+                className="absolute right-6 top-1/2 -translate-y-1/2 z-20 text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 bg-transparent border-none p-0 outline-none cursor-pointer"
               >
-                <i className="fa-solid fa-chevron-right text-2xl drop-shadow-lg"></i>
+                <i className="fa-solid fa-chevron-right text-4xl drop-shadow-lg"></i>
               </button>
 
               {/* Minimal Dots */}
@@ -252,11 +374,75 @@ function Dashboard() {
             rel="noopener noreferrer"
             className="group bg-white p-[15px] rounded-lg flex items-center justify-center gap-3 cursor-pointer shadow-[0_2px_5px_rgba(0,0,0,0.08)] transition-all hover:-translate-y-1 hover:bg-[#f3fff5] hover:shadow-xl border border-gray-50 hover:border-green-100 no-underline active:scale-95"
           >
-            <span className="text-[14px] font-bold text-gray-900 group-hover:text-[#34b350] transition-colors">{service.name}</span>
-            <span className="text-gray-400 font-black text-lg group-hover:text-[#34b350] group-hover:translate-x-1 transition-all">{'>'}</span>
+            <span className="text-[14px] font-bold text-[#4ade80] group-hover:text-[#22c55e] transition-colors">{service.name}</span>
+            <span className="text-[#34b350] font-black text-lg group-hover:translate-x-1 transition-transform">{'>'}</span>
           </a>
         ))}
       </div>
+
+      {/* OTP Modal */}
+      {showOtpModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[2000]">
+          <div className="bg-white w-[95%] max-w-[500px] rounded-[24px] p-8 relative shadow-2xl animate-in zoom-in duration-300">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowOtpModal(false)}
+              className="absolute right-6 top-4 text-4xl text-gray-400 hover:text-black border-none bg-transparent cursor-pointer"
+            >
+              ×
+            </button>
+
+            <h2 className="text-[28px] font-semibold text-gray-800 mb-6">Please enter OTP</h2>
+            <label className="text-lg text-gray-600 block mb-2">OTP</label>
+            <input
+              type="text"
+              maxLength={6}
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmitOtp()}
+              placeholder="Enter your 6-digit OTP"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-xl outline-none focus:border-green-500 transition-all"
+            />
+
+            <div className="text-center mt-6 text-gray-600">
+              Resend OTP in <span className="font-bold text-[#34b350]">{formatTime(resendTimer)}</span>
+            </div>
+            <div
+              className={`text-center mt-2 transition-colors font-medium ${canResend ? "text-[#34b350] cursor-pointer hover:underline" : "text-gray-300 cursor-not-allowed"}`}
+              onClick={handleResendOtp}
+            >
+              Resend OTP
+            </div>
+
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={handleSubmitOtp}
+                className="bg-[#34b350] hover:bg-[#2da145] text-white px-12 py-3 rounded-full text-xl font-semibold transition-all duration-300 shadow-lg"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Popup */}
+      {toast.show && (
+        <div
+          className={`fixed top-10 right-10 z-[3000] min-w-[300px] rounded-2xl px-6 py-4 shadow-2xl text-white animate-in slide-in-from-right duration-500
+          ${toast.type === "error" ? "bg-pink-600" : "bg-green-500"}`}
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h3 className="text-xl font-bold mb-1">{toast.type === "error" ? "Error" : "Success"}</h3>
+              <p className="text-sm font-medium opacity-90">{toast.message}</p>
+            </div>
+            <div className="text-3xl font-black">
+              {toast.type === "error" ? "⊘" : "✓"}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
