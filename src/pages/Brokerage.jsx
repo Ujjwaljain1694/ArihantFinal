@@ -16,11 +16,16 @@ const Brokerage = () => {
     const [showOtpModal, setShowOtpModal] = useState(false);
     const [timer, setTimer] = useState(115); // 1:55
     const [otp, setOtp] = useState("");
-    
+
     // Capital Brokerage States
     const [fromDate, setFromDate] = useState(null);
     const [toDate, setToDate] = useState(null);
+    const [clientCode, setClientCode] = useState("");
     const [error, setError] = useState("");
+
+    // Error Toast States
+    const [showCustomError, setShowCustomError] = useState(false);
+    const [customErrorMsg, setCustomErrorMsg] = useState("");
 
     // Third Party Brokerage States
     const [tpFromDate, setTpFromDate] = useState(null);
@@ -42,6 +47,14 @@ const Brokerage = () => {
         return () => clearInterval(interval);
     }, [showOtpModal, timer]);
 
+    // Clear error toast after 3 seconds
+    useEffect(() => {
+        if (showCustomError) {
+            const timer = setTimeout(() => setShowCustomError(false), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [showCustomError]);
+
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
@@ -49,14 +62,45 @@ const Brokerage = () => {
     };
 
     const handleApply = () => {
-        const errorMsg = validateDates(fromDate, toDate);
-        if (errorMsg) {
-            setError(errorMsg);
-            toast.error(errorMsg);
+        if (!fromDate && !toDate) {
+            setCustomErrorMsg("Please select Date range");
+            setShowCustomError(true);
             return;
         }
+        if (fromDate && !toDate) {
+            setCustomErrorMsg("Please select To Date");
+            setShowCustomError(true);
+            return;
+        }
+        if (!fromDate && toDate) {
+            setCustomErrorMsg("Please select From Date");
+            setShowCustomError(true);
+            return;
+        }
+        if (fromDate && toDate && fromDate.toDateString() === toDate.toDateString()) {
+            setCustomErrorMsg("From and To dates cannot be same");
+            setShowCustomError(true);
+            return;
+        }
+
+        const errorMsg = validateDates(fromDate, toDate);
+        if (errorMsg) {
+            setCustomErrorMsg(errorMsg);
+            setShowCustomError(true);
+            return;
+        }
+
         setError("");
         toast.success("Filters applied successfully");
+    };
+
+    const handleSearchClient = () => {
+        if (!clientCode.trim()) {
+            setCustomErrorMsg("Please enter Client Code");
+            setShowCustomError(true);
+            return;
+        }
+        toast.success("Searching client...");
     };
 
     const handleEyeClick = () => {
@@ -106,19 +150,97 @@ const Brokerage = () => {
         { title: "Total Comm Turnover", value: "₹ 0" },
     ];
 
+    const handleDownload = () => {
+        const downloadData = [
+            ["DHRUVIK BHAVESHKUMAR SHAH 286400023", "₹ 12,450", "₹ 4,50,000", "FNO"],
+            ["DHRUVIK BHAVESHKUMAR SHAH 286400023", "₹ 8,920", "₹ 2,10,000", "FNO"]
+        ];
+        const csvContent = "data:text/csv;charset=utf-8,"
+            + headers.join(",") + "\n"
+            + downloadData.map(row => row.map(cell => `"${cell}"`).join(",")).join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Brokerage_Report_${new Date().toLocaleDateString()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("Report downloaded successfully");
+    };
+
+    const [hasTpSearched, setHasTpSearched] = useState(false);
+
+    const handleTpApply = () => {
+        if (!tpFromDate && !tpToDate) {
+            setCustomErrorMsg("Please select Date range");
+            setShowCustomError(true);
+            return;
+        }
+        if (tpFromDate && !tpToDate) {
+            setCustomErrorMsg("Please select To Date");
+            setShowCustomError(true);
+            return;
+        }
+        if (!tpFromDate && tpToDate) {
+            setCustomErrorMsg("Please select From Date");
+            setShowCustomError(true);
+            return;
+        }
+        if (tpFromDate && tpToDate && tpFromDate.toDateString() === tpToDate.toDateString()) {
+            setCustomErrorMsg("From and To dates cannot be same");
+            setShowCustomError(true);
+            return;
+        }
+
+        const errorMsg = validateDates(tpFromDate, tpToDate);
+        if (errorMsg) {
+            setCustomErrorMsg(errorMsg);
+            setShowCustomError(true);
+            return;
+        }
+
+        setHasTpSearched(true);
+        toast.success("Third Party filters applied successfully");
+    };
+
+    const [hasResearchSearched, setHasResearchSearched] = useState(false);
+
+    const handleResearchApply = () => {
+        if (!tradeDate) {
+            setCustomErrorMsg("Please select Trade Date");
+            setShowCustomError(true);
+            return;
+        }
+
+        setHasResearchSearched(true);
+        toast.error("Data not found", {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            theme: "colored"
+        });
+    };
+
+    const tpHeaders = ["BranchCode", "Branch Name", "MF Brokerage", "Unlisted Brokerage", "Insurance Brokerage", "Bonds Brokerage", "Wealth Basket Brokerage", "Value Stock", "PMS Brokerage"];
+    const tpData = [
+        ["BRAP05", "ACML- PALASIA INDOR", "0.00", "0.00", "0", "0.00", "0", "0.00", "0"]
+    ];
+
     return (
-        <div className="px-10 py-6 max-w-[1600px] mx-auto relative">
+        <div className="px-2 pt-0 pb-0 max-w-[1600px] mx-auto relative">
             {/* 🧭 SUB TABS */}
-            <div className="flex gap-10 border-b border-gray-200 mb-8 pt-2">
+            <div className="flex gap-10 border-b border-gray-200 mb-1 pt-0">
                 {subTabs.map((tab) => (
                     <span
                         key={tab}
                         onClick={() => setActiveSubTab(tab)}
-                        className={`cursor-pointer pb-3 text-sm transition-all ${
-                            activeSubTab === tab
-                                ? "border-b-[3px] border-[#34b350] font-bold text-black"
-                                : "text-gray-500 font-medium hover:text-black"
-                        }`}
+                        className={`cursor-pointer pb-3 text-sm transition-all ${activeSubTab === tab
+                            ? "border-b-[3px] border-[#34b350] font-bold text-black"
+                            : "text-gray-500 font-medium hover:text-black"
+                            }`}
                     >
                         {tab}
                     </span>
@@ -128,49 +250,55 @@ const Brokerage = () => {
             {/* 📦 CONTENT BASED ON SUB TAB */}
             {activeSubTab === "Capital Brokerage" && (
                 <>
-                    <FilterSection title="Search criteria">
+                    <FilterSection>
                         <FilterItem label="From Date">
-                            <DateInput 
-                                selected={fromDate} 
-                                onChange={(d) => setFromDate(d)} 
-                                error={error}
+                            <DateInput
+                                selected={fromDate}
+                                onChange={(d) => setFromDate(d)}
+                                error={showCustomError && !fromDate && activeSubTab === "Capital Brokerage"}
                             />
                         </FilterItem>
                         <FilterItem label="To Date">
-                            <DateInput 
-                                selected={toDate} 
-                                onChange={(d) => setToDate(d)} 
-                                error={error}
+                            <DateInput
+                                selected={toDate}
+                                onChange={(d) => setToDate(d)}
+                                error={showCustomError && !toDate && activeSubTab === "Capital Brokerage"}
                             />
                         </FilterItem>
                         <ApplyButton onClick={handleApply} />
 
                         <div className="ml-12 flex items-end gap-6">
                             <FilterItem label="Search By Client">
-                                <SearchInput placeholder="Search client code" width="320px" />
+                                <SearchInput
+                                    placeholder="Search client code"
+                                    width="320px"
+                                    value={clientCode}
+                                    onChange={(e) => setClientCode(e.target.value)}
+                                    error={showCustomError && !clientCode.trim() && activeSubTab === "Capital Brokerage"}
+                                />
                             </FilterItem>
-                            <ApplyButton label="SEARCH" onClick={() => toast.info("Searching client...")} />
+                            <ApplyButton label="SEARCH" onClick={handleSearchClient} />
                         </div>
                     </FilterSection>
 
                     {/* 📊 Cards Section */}
-                    <div className="grid grid-cols-4 gap-6 mb-12 mt-8">
+                    <div className="grid grid-cols-4 gap-10 mb-4 mt-1 max-w-[1200px]">
                         {statsData.map((s, i) => (
-                            <div key={i} className="border border-gray-300 rounded-lg p-4 bg-white shadow-sm transition-all hover:border-[#34b350]/30 hover:shadow-md group">
-                                <div className="flex items-center justify-between mb-3">
-                                    <h3 className="text-gray-700 text-xs font-medium uppercase tracking-wider">{s.title}</h3>
-                                    <div 
+                            <div key={i} className="border border-gray-300 rounded-lg p-3 bg-white shadow-sm transition-all hover:border-[#34b350]/30 hover:shadow-md group">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h3 className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">{s.title}</h3>
+                                    <div
                                         onClick={handleEyeClick}
-                                        className="cursor-pointer p-1 hover:bg-gray-100 rounded-full transition-colors"
+                                        className="cursor-pointer p-0.5 hover:bg-gray-100 rounded-full transition-colors"
                                     >
                                         {isMasked ? (
-                                            <EyeOff size={18} className="text-gray-400 group-hover:text-red-500" />
+                                            <EyeOff size={14} className="text-gray-400 group-hover:text-red-500" />
                                         ) : (
-                                            <Eye size={18} className="text-[#34b350]" />
+                                            <Eye size={14} className="text-[#34b350]" />
                                         )}
                                     </div>
                                 </div>
-                                <div className={`${isMasked ? "text-[16px] font-medium text-gray-400" : "text-2xl font-black text-gray-900"} tracking-tight tabular-nums transition-all`}>
+                                <div className={`${isMasked ? "text-[14px] font-bold text-gray-400" : "text-[16px] font-black text-gray-900"} tracking-tight tabular-nums transition-all`}>
                                     {isMasked ? "xxxx" : s.value}
                                 </div>
                             </div>
@@ -184,72 +312,88 @@ const Brokerage = () => {
                         showMaskIcon={true}
                         onMaskToggle={handleEyeClick}
                         isMasked={isMasked}
+                        onDownload={handleDownload}
                     />
                 </>
             )}
 
             {activeSubTab === "Third Party Brokerage" && (
-                <div className="bg-white px-8 py-6 rounded-lg max-w-[1600px] mx-auto border border-gray-100 shadow-sm mb-10">
-                    <div className="flex gap-8 items-end flex-wrap">
+                <>
+                    <FilterSection>
                         {/* From Date */}
                         <FilterItem label="From Date">
-                            <DateInput 
-                                selected={tpFromDate} 
-                                onChange={(d) => setTpFromDate(d)} 
+                            <DateInput
+                                selected={tpFromDate}
+                                onChange={(d) => setTpFromDate(d)}
                                 width="220px"
+                                error={showCustomError && !tpFromDate && activeSubTab === "Third Party Brokerage"}
                             />
                         </FilterItem>
 
                         {/* To Date */}
                         <FilterItem label="To Date">
-                            <DateInput 
-                                selected={tpToDate} 
-                                onChange={(d) => setTpToDate(d)} 
+                            <DateInput
+                                selected={tpToDate}
+                                onChange={(d) => setTpToDate(d)}
                                 width="220px"
+                                error={showCustomError && !tpToDate && activeSubTab === "Third Party Brokerage"}
                             />
                         </FilterItem>
 
                         {/* Apply Button */}
-                        <button 
-                            onClick={() => toast.info("Applying Third Party filters...")}
-                            className="bg-[#27ae60] hover:bg-[#219150] text-white px-10 h-[44px] rounded-full font-bold text-[14px] flex items-center gap-2 transition-all shadow-md"
-                        >
-                            <span>APPLY</span>
-                            <span className="text-[18px]">›</span>
-                        </button>
-                    </div>
-                </div>
+                        <div className="mb-0.5">
+                            <ApplyButton
+                                onClick={handleTpApply}
+                            />
+                        </div>
+                    </FilterSection>
+
+                    {hasTpSearched && (
+                        <DataTable
+                            headers={tpHeaders}
+                            rows={tpData}
+                            resultsCount={1}
+                        />
+                    )}
+                </>
             )}
 
             {activeSubTab === "Research Brokerage" && (
-                <div className="bg-white px-8 py-6 rounded-lg max-w-[1600px] mx-auto border border-gray-100 shadow-sm mb-10">
-                    <div className="flex gap-8 items-end flex-wrap">
+                <>
+                    <FilterSection>
                         {/* Trade Date */}
                         <FilterItem label="Trade Date">
-                            <DateInput 
-                                selected={tradeDate} 
-                                onChange={(d) => setTradeDate(d)} 
+                            <DateInput
+                                selected={tradeDate}
+                                onChange={(d) => setTradeDate(d)}
                                 width="220px"
+                                error={showCustomError && !tradeDate && activeSubTab === "Research Brokerage"}
                             />
                         </FilterItem>
 
                         {/* Apply Button */}
-                        <button 
-                            onClick={() => toast.info("Applying Research Trade Date filter...")}
-                            className="bg-[#27ae60] hover:bg-[#219150] text-white px-10 h-[44px] rounded-full font-bold text-[14px] flex items-center gap-2 transition-all shadow-md"
-                        >
-                            <span>APPLY</span>
-                            <span className="text-[18px]">›</span>
-                        </button>
-                    </div>
-                </div>
+                        <div className="mb-0.5">
+                            <ApplyButton
+                                onClick={handleResearchApply}
+                            />
+                        </div>
+                    </FilterSection>
+
+                    {hasResearchSearched && (
+                        <DataTable
+                            headers={["Trade Date", "Client Code", "Client Name", "Brokerage", "Turnover"]}
+                            rows={[]}
+                            resultsCount={0}
+                        />
+                    )}
+                </>
             )}
 
             {/* 🔐 OTP MODAL */}
             {showOtpModal && (
                 <div className="fixed inset-0 bg-black/40 z-[2000] flex items-center justify-center">
                     <div className="bg-white rounded-2xl p-10 w-[550px] shadow-lg relative">
-                        <button 
+                        <button
                             onClick={() => setShowOtpModal(false)}
                             className="absolute right-8 top-8 text-gray-400 hover:text-black transition-colors"
                         >
@@ -258,11 +402,11 @@ const Brokerage = () => {
 
                         <div className="text-left px-4">
                             <h2 className="text-[26px] font-medium text-gray-800 mb-8">Please enter OTP</h2>
-                            
+
                             <div className="mb-6">
                                 <label className="block text-[15px] text-gray-600 mb-2 font-medium">OTP</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={otp}
                                     onChange={(e) => setOtp(e.target.value)}
                                     placeholder="Enter your 6-digit OTP"
@@ -272,7 +416,7 @@ const Brokerage = () => {
 
                             <div className="text-center mb-10">
                                 <p className="text-[14px] text-gray-500 mb-1">Resend OTP in {formatTime(timer)}</p>
-                                <button 
+                                <button
                                     onClick={() => timer === 0 && setTimer(115)}
                                     className={`text-[14px] font-medium transition-colors ${timer === 0 ? "text-[#34b350] cursor-pointer" : "text-gray-300 cursor-default"}`}
                                 >
@@ -281,7 +425,7 @@ const Brokerage = () => {
                             </div>
 
                             <div className="flex justify-center">
-                                <button 
+                                <button
                                     onClick={handleOtpSubmit}
                                     className="bg-[#34b350] text-white font-medium rounded-full px-16 h-[52px] text-[16px] hover:bg-[#2e9e47] transition-all shadow-sm"
                                 >
@@ -292,6 +436,23 @@ const Brokerage = () => {
                     </div>
                 </div>
             )}
+
+            {/* 🚨 CUSTOM ERROR TOAST */}
+            <div
+                className={`fixed top-5 right-5 bg-[#e50046] text-white rounded-xl shadow-2xl px-6 py-2 min-w-[360px]
+                        flex items-center justify-between z-[5000]
+                        transition-all duration-500 transform ${showCustomError ? "translate-x-0 opacity-100" : "translate-x-[120%] opacity-0"}`}
+            >
+                <div>
+                    <h2 className="text-2xl font-bold -mb-1">Error</h2>
+                    <p className="text-base font-semibold">{customErrorMsg}</p>
+                </div>
+                <div className="ml-6 flex items-center">
+                    <div className="w-9 h-9 border-[3px] border-white rounded-full relative">
+                        <span className="absolute top-1/2 left-1/2 w-4 h-[2.5px] bg-white -translate-x-1/2 -translate-y-1/2 rotate-[-45deg] rounded"></span>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };
