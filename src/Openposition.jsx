@@ -5,6 +5,15 @@ export default function OpenPosition() {
   const [selectedOption, setSelectedOption] = useState('Select Option');
   const [searchInput, setSearchInput] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showCustomError, setShowCustomError] = useState(false);
+  const [customErrorMsg, setCustomErrorMsg] = useState("");
+
+  React.useEffect(() => {
+    if (showCustomError) {
+      const timer = setTimeout(() => setShowCustomError(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showCustomError]);
   const [sortConfig, setSortConfig] = useState({
     key: '',
     direction: 'asc',
@@ -106,6 +115,46 @@ export default function OpenPosition() {
     }
   ];
 
+  const [filteredData, setFilteredData] = useState(tableData);
+
+  const handleApply = () => {
+    // FILTER DATA
+    const filtered = tableData.filter((item) => {
+      return (
+        item.clientCode
+          .toLowerCase()
+          .includes(searchInput.toLowerCase())
+        ||
+        item.scriptName
+          .toLowerCase()
+          .includes(searchInput.toLowerCase())
+      );
+    });
+
+    // IF NO DATA FOUND
+    if (
+      searchInput.trim() !== "" &&
+      filtered.length === 0
+    ) {
+      setCustomErrorMsg("Please Enter Client Code or Script Name");
+      setShowCustomError(true);
+
+      // TABLE EMPTY
+      setFilteredData([]);
+      return;
+    }
+
+    // IF INPUT EMPTY
+    if (searchInput.trim() === "") {
+      setCustomErrorMsg("Please Enter Client Code or Script Name");
+      setShowCustomError(true);
+      return;
+    }
+
+    // DATA FOUND
+    setFilteredData(filtered);
+  };
+
   const handleSort = (key) => {
     let direction = 'asc';
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
@@ -125,7 +174,7 @@ export default function OpenPosition() {
     return <ChevronsUpDown size={14} className="text-white/60 ml-2" />;
   };
 
-  const sortedData = [...tableData].sort((a, b) => {
+  const sortedData = [...filteredData].sort((a, b) => {
     if (!sortConfig.key) return 0;
     if (a[sortConfig.key] < b[sortConfig.key]) {
       return sortConfig.direction === 'asc' ? -1 : 1;
@@ -176,12 +225,12 @@ export default function OpenPosition() {
   };
 
   return (
-    <div className="bg-white min-h-screen flex flex-col">
+    <div className="flex flex-col">
       {/* Main Content Section */}
-      <div className="flex-1 px-8 py-6">
+      <div className="flex-1 px-0 py-0">
         {/* Search Section */}
-        <div className="bg-gray-100 border border-gray-200 px-8 py-6 rounded-lg mb-8 max-w-[1600px] mx-auto">
-          <div className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-6">
+        <div className="bg-gray-100 border border-gray-200 px-8 py-6 rounded-lg mb-6 max-w-[1600px] mx-auto">
+          <div className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
             Search For
           </div>
 
@@ -225,12 +274,15 @@ export default function OpenPosition() {
                 placeholder="Search"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 h-[48px] border border-gray-200 rounded-full focus:outline-none focus:border-[#27ae60] focus:ring-2 focus:ring-green-50/50 text-sm transition-all shadow-sm bg-white"
+                className={`w-full pl-12 pr-4 py-3 h-[48px] border rounded-full focus:outline-none focus:border-[#27ae60] focus:ring-2 focus:ring-green-50/50 text-sm transition-all shadow-sm bg-white ${showCustomError && !searchInput.trim() ? "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.5)]" : "border-gray-200"}`}
               />
             </div>
 
             {/* Apply Button */}
-            <button className="bg-[#27ae60] hover:bg-[#219150] text-white px-8 h-[48px] rounded-full font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2">
+            <button 
+              onClick={handleApply}
+              className="bg-[#27ae60] hover:bg-[#219150] text-white px-8 h-[48px] rounded-full font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2"
+            >
               <span>APPLY</span>
               <span className="text-lg">›</span>
             </button>
@@ -356,6 +408,23 @@ export default function OpenPosition() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* 🚨 CUSTOM ERROR TOAST */}
+        <div
+          className={`fixed top-5 right-5 bg-[#e50046] text-white rounded-xl shadow-2xl px-6 py-2 min-w-[360px]
+                  flex items-center justify-between z-[6000]
+                  transition-all duration-500 transform ${showCustomError ? "translate-x-0 opacity-100" : "translate-x-[120%] opacity-0"}`}
+        >
+          <div>
+            <h2 className="text-2xl font-bold -mb-1">Error</h2>
+            <p className="text-base font-semibold">{customErrorMsg}</p>
+          </div>
+          <div className="ml-6 flex items-center">
+            <div className="w-9 h-9 border-[3px] border-white rounded-full relative">
+              <span className="absolute top-1/2 left-1/2 w-4 h-[2.5px] bg-white -translate-x-1/2 -translate-y-1/2 rotate-[-45deg] rounded"></span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

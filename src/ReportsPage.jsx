@@ -19,6 +19,7 @@ import MobileLogin from "./pages/MobileLogin.jsx";
 import MTFSetoff from "./pages/MTFSetoff.jsx";
 import IPOReport from "./pages/IPOReport.jsx";
 import PerformanceReport from "./pages/PerformanceReport.jsx";
+import ArihantProducts from "./ArihantProducts.jsx";
 
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState("Transaction");
@@ -95,11 +96,11 @@ export default function ReportsPage() {
       <div className="bg-[#f3f3f3]">
         {needsHeader && <Header />}
 
-        <div className={`bg-gray-100 p-2 md:p-6 ${needsHeader ? "mt-6" : ""}`}>
+        <div className={`bg-gray-100 p-1 md:p-2 ${needsHeader ? "mt-[60px]" : ""}`}>
 
-          <div className="tabs-wrapper w-full bg-white px-4 md:px-8 pt-2 shadow-md border border-gray-200 rounded-lg max-w-[1700px] mx-auto mt-8">
+          <div className="tabs-wrapper w-full bg-white px-4 md:px-8 pt-1 pb-0 shadow-md border border-gray-200 rounded-lg max-w-[1700px] mx-auto">
             {/* 🧭 LEVEL 1 TABS */}
-            <div className="flex flex-wrap gap-x-6 gap-y-2 border-b border-gray-200 pt-3 text-[14px]">
+            <div className="flex flex-wrap gap-x-6 gap-y-2 border-b border-gray-200 pt-4 text-[14px]">
               {tabs.map((tab) => (
                 <span
                   key={tab}
@@ -131,11 +132,14 @@ export default function ReportsPage() {
                 ))}
               </div>
             )}
-          </div>
 
-          {/* 📦 CONTENT */}
-          <div className={`max-w-[1700px] mx-auto ${activeTab === "Transaction" ? "mt-5" : ""}`}>
-            {renderContent()}
+            {/* 📦 CONTENT INSIDE TABS WRAPPER */}
+            <div className={`${activeTab === "Transaction" ? "pt-1" : ""}`}>
+              {renderContent()}
+            </div>
+            
+            {/* 🔗 ARIHANT PRODUCTS & LEGEND SECTION */}
+            <ArihantProducts />
           </div>
 
         </div>
