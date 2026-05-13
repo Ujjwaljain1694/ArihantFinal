@@ -29,7 +29,7 @@ function FundamentalCall() {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen">
+    <div className="bg-white min-h-screen">
       <Header />
       
       {/* Top Tabs */}
@@ -86,8 +86,8 @@ function FundamentalCall() {
           </p>
 
           {/* Table Header - Without Segment Column */}
-          <div className="mt-6 border border-black rounded-md overflow-hidden bg-yellow-50">
-            <div className="grid grid-cols-2 bg-yellow-50 font-medium text-gray-700">
+          <div className="mt-6 border border-black rounded-md overflow-hidden bg-white">
+            <div className="grid grid-cols-2 bg-white font-medium text-gray-700">
               <div className="p-3 border-r border-black flex items-center justify-betweeen">
                 <span>Date&Time</span>
                 

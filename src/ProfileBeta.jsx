@@ -9,21 +9,26 @@ export default function ProfileBeta() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [clientData, setClientData] = useState(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showCustomError, setShowCustomError] = useState(false);
+  const [customErrorMsg, setCustomErrorMsg] = useState("");
+
+  React.useEffect(() => {
+    if (showCustomError) {
+      const timer = setTimeout(() => setShowCustomError(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showCustomError]);
 
   const handleSearch = async () => {
-    if (!search) return;
+    if (!search.trim()) {
+      setCustomErrorMsg("Please Enter Client Code");
+      setShowCustomError(true);
+      return;
+    }
 
     setLoading(true);
 
     try {
-      // BACKEND API HERE
-      /*
-      const res = await fetch(`/api/profile-beta?clientCode=${search}`);
-      const data = await res.json();
-      setClientData(data);
-      */
-
       // Dummy Response
       setTimeout(() => {
         setClientData({
@@ -115,7 +120,7 @@ export default function ProfileBeta() {
           </div>
         </div>
 
-        {/* API Result */}
+      {/* API Result */}
         {clientData && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 px-5 py-5 mt-6">
             <h3 className="text-xl font-semibold mb-4">Client Details</h3>
@@ -126,6 +131,24 @@ export default function ProfileBeta() {
             <p><b>Mobile:</b> {clientData.mobile}</p>
           </div>
         )}
+      </div>
+
+      {/* 🚨 CUSTOM ERROR TOAST */}
+      <div
+        className={`fixed top-5 right-5 bg-[#e50046] text-white rounded-xl shadow-2xl px-6 py-2 min-w-[360px]
+                flex items-center justify-between z-[60000]
+                transition-all duration-500 transform ${showCustomError ? "translate-x-0 opacity-100" : "translate-x-[120%] opacity-0"}`}
+      >
+        <div>
+          <h2 className="text-2xl font-bold -mb-1 text-white">Error</h2>
+          <p className="text-base font-semibold text-white">{customErrorMsg}</p>
+        </div>
+        <div className="ml-6 flex items-center">
+          <div className="w-9 h-9 border-[3px] border-white rounded-full relative">
+            <span className="absolute top-1/2 left-1/2 w-4 h-[2.5px] bg-white -translate-x-1/2 -translate-y-1/2 rotate-[-45deg] rounded"></span>
+            <span className="absolute top-1/2 left-1/2 w-4 h-[2.5px] bg-white -translate-x-1/2 -translate-y-1/2 rotate-[45deg] rounded"></span>
+          </div>
+        </div>
       </div>
     </div>
   );

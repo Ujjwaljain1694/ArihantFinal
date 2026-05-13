@@ -8,9 +8,23 @@ export default function PhysicalAccountOpening() {
     key: "",
     direction: "asc",
   });
+  const [showCustomError, setShowCustomError] = useState(false);
+  const [customErrorMsg, setCustomErrorMsg] = useState("");
+
+  React.useEffect(() => {
+    if (showCustomError) {
+      const timer = setTimeout(() => setShowCustomError(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showCustomError]);
 
   // SEARCH / BACKEND READY
   const handleApply = async () => {
+    if (search.trim() === "") {
+      setCustomErrorMsg("Please enter client code to search");
+      setShowCustomError(true);
+      return;
+    }
     const data = [
       {
         clientCode: "CL001",
@@ -69,35 +83,39 @@ export default function PhysicalAccountOpening() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f2f2f2] p-6">
-      <p className="text-[18px] text-[#222] mb-2 pt-2">
+    <div className="bg-white px-2">
+      <p className="text-[14px] text-gray-500 my-2 py-2 font-medium uppercase tracking-wider">
         Search results({results.length})
       </p>
 
-      <div className="flex items-center gap-8 mb-8">
-        <div className="relative w-[430px]">
+      <div className="flex items-center gap-6 mb-6">
+        <div className="relative w-[380px]">
           <Search
-            size={22}
-            className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"
+            size={18}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
           />
           <input
             type="text"
             placeholder="Search client code"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-[54px] rounded-full border border-gray-300 pl-14 pr-4 text-[18px] outline-none bg-white"
+            className="w-full h-[40px] rounded-full border border-gray-300 pl-12 pr-4 text-[15px] outline-none bg-white focus:border-[#34b44a] transition-all"
           />
         </div>
-        <button className="bg-gradient-to-r from-[#35b34a] to-[#2f9f42] hover:from-[#2f9f42] hover:to-[#28a845] text-white font-bold text-[18px] px-8 h-[44px] rounded-full flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+        <button 
+          onClick={handleApply}
+          className="bg-[#34b44a] text-white font-bold text-[14px] px-8 h-[40px] rounded-full flex items-center gap-2 shadow-md hover:bg-[#2e9d41] transition-all active:scale-95"
+        >
           APPLY
-          <ChevronRight size={20} />
+          <ChevronRight size={16} />
         </button>
       </div>
 
       {/* Table */}
-      <div className="w-full">
-        {/* Header */}
-        <div className="grid grid-cols-10 bg-[#34b44a] text-white text-[14px] font-semibold border border-gray-300">
+      <div className="w-full border-t border-gray-200 mt-6">
+        <div className="w-full">
+          {/* Header */}
+          <div className="grid grid-cols-10 bg-[#34b44a] text-white text-[12px] font-semibold">
           <div
             onClick={() => handleSort("clientCode")}
             className="px-4 py-2 border-r border-white/20 flex items-center justify-between cursor-pointer select-none"
@@ -342,11 +360,11 @@ export default function PhysicalAccountOpening() {
         {/* Body */}
         {results.length === 0 ? (
           <>
-            <div className="bg-white h-[90px] flex items-center px-6 text-[18px] text-gray-500 border-b">
+            <div className="bg-white h-[45px] flex items-center px-6 text-[15px] text-gray-500 border-b border-gray-200">
               No data to display
             </div>
 
-            <div className="bg-white px-6 py-5 text-gray-500">
+            <div className="bg-white px-6 py-2 text-black font-bold border-b border-gray-200 text-[14px]">
               0 total
             </div>
           </>
@@ -355,26 +373,44 @@ export default function PhysicalAccountOpening() {
             {results.map((row, index) => (
               <div
                 key={index}
-                className="grid grid-cols-10 bg-white border-b border-gray-200 text-[15px]"
+                className="grid grid-cols-10 bg-[#f2f2f2] border-b border-gray-200 text-[12px] hover:bg-gray-100 transition-colors"
               >
-                <div className="px-4 py-4">{row.clientCode}</div>
-                <div className="px-4 py-4">{row.clientName}</div>
-                <div className="px-4 py-4">{row.pan}</div>
-                <div className="px-4 py-4">{row.date}</div>
-                <div className="px-4 py-4">{row.searchCode}</div>
-                <div className="px-4 py-4">{row.requestType}</div>
-                <div className="px-4 py-4 text-green-600">{row.status}</div>
-                <div className="px-4 py-4">{row.remark}</div>
-                <div className="px-4 py-4">{row.remark2}</div>
-                <div className="px-4 py-4">{row.remark3}</div>
+                <div className="px-3 py-2 border-r border-gray-300 break-all">{row.clientCode}</div>
+                <div className="px-3 py-2 border-r border-gray-300 truncate">{row.clientName}</div>
+                <div className="px-3 py-2 border-r border-gray-300">{row.pan}</div>
+                <div className="px-3 py-2 border-r border-gray-300">{row.date}</div>
+                <div className="px-3 py-2 border-r border-gray-300">{row.searchCode}</div>
+                <div className="px-3 py-2 border-r border-gray-300">{row.requestType}</div>
+                <div className="px-3 py-2 border-r border-gray-300 text-green-600 font-bold truncate">{row.status}</div>
+                <div className="px-3 py-2 border-r border-gray-300 truncate">{row.remark}</div>
+                <div className="px-3 py-2 border-r border-gray-300 truncate">{row.remark2}</div>
+                <div className="px-3 py-2 truncate">{row.remark3}</div>
               </div>
             ))}
 
-            <div className="bg-white px-6 py-5 text-gray-500">
+            <div className="bg-white px-6 py-2 text-black font-bold border-b border-gray-200 text-[14px]">
               {results.length} total
             </div>
           </>
         )}
+        </div>
+      </div>
+
+      {/* 🚨 CUSTOM ERROR TOAST */}
+      <div
+        className={`fixed top-5 right-5 bg-[#e50046] text-white rounded-xl shadow-2xl px-6 py-2 min-w-[360px]
+                flex items-center justify-between z-[6000]
+                transition-all duration-500 transform ${showCustomError ? "translate-x-0 opacity-100" : "translate-x-[120%] opacity-0"}`}
+      >
+        <div>
+          <h2 className="text-2xl font-bold -mb-1">Error</h2>
+          <p className="text-base font-semibold">{customErrorMsg}</p>
+        </div>
+        <div className="ml-6 flex items-center">
+          <div className="w-9 h-9 border-[3px] border-white rounded-full relative">
+            <span className="absolute top-1/2 left-1/2 w-4 h-[2.5px] bg-white -translate-x-1/2 -translate-y-1/2 rotate-[-45deg] rounded"></span>
+          </div>
+        </div>
       </div>
     </div>
   );

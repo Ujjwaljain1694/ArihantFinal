@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import logo from "./logo-arihant-capital.png";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import Header from "./Header.jsx";
+import ArihantProductsSection from "./ArihantProducts.jsx";
 
 const tabs = [
   "Algo Brokerage",
@@ -25,10 +26,10 @@ export default function ProductDeck() {
       <Header />
 
       {/* MAIN CONTENT */}
-      <div className="p-4 pt-11">
+      <div className="p-4 pt-[60px]">
 
         {/* -------- TABS -------- */}
-        <div className="bg-white rounded-lg shadow-sm p-4 w-full mt-10">
+        <div className="bg-white rounded-lg shadow-sm p-4 w-full mt-4">
           <div className="flex gap-10 border-b overflow-x-auto w-full">
             {tabs.map((tab, i) => (
               <div
@@ -65,8 +66,11 @@ export default function ProductDeck() {
 
           </div>
 
+          </div>
+
         </div>
-      </div>
-    </>
-  );
-}
+
+        <ArihantProductsSection />
+      </>
+    );
+  }

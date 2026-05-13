@@ -4,6 +4,7 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Header from "./Header.jsx";
+import ArihantProductsSection from "./ArihantProducts.jsx";
 import { validateDates } from "./utils/dateValidation";
 import { toast } from "react-toastify";
 
@@ -23,6 +24,15 @@ function CustomDateFilter() {
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
   const [error, setError] = useState("");
+  const [customErrorMsg, setCustomErrorMsg] = useState("");
+  const [showCustomError, setShowCustomError] = useState(false);
+
+  React.useEffect(() => {
+    if (showCustomError) {
+      const timer = setTimeout(() => setShowCustomError(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showCustomError]);
 
   const fromRef = useRef();
   const toRef = useRef();
@@ -33,7 +43,8 @@ function CustomDateFilter() {
     const errorMsg = validateDates(fromDate, toDate);
     if (errorMsg) {
       setError(errorMsg);
-      toast.error(errorMsg);
+      setCustomErrorMsg(errorMsg);
+      setShowCustomError(true);
       return;
     }
     setError("");
@@ -171,6 +182,22 @@ function CustomDateFilter() {
         </button>
       </div>
 
+      {/* 🚨 CUSTOM ERROR TOAST */}
+      <div
+        className={`fixed top-5 right-5 bg-[#e50046] text-white rounded-xl shadow-2xl px-6 py-2 min-w-[360px]
+                flex items-center justify-between z-[60000]
+                transition-all duration-500 transform ${showCustomError ? "translate-x-0 opacity-100" : "translate-x-[120%] opacity-0"}`}
+      >
+        <div>
+          <h2 className="text-2xl font-bold -mb-1">Error</h2>
+          <p className="text-base font-semibold">{customErrorMsg}</p>
+        </div>
+        <div className="ml-6 flex items-center">
+          <div className="w-9 h-9 border-[3px] border-white rounded-full relative">
+            <span className="absolute top-1/2 left-1/2 w-4 h-[2.5px] bg-white -translate-x-1/2 -translate-y-1/2 rotate-[-45deg] rounded"></span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -223,6 +250,7 @@ export default function AlgoBrokerage() {
           <Outlet />
         </div>
 
+        <ArihantProductsSection />
       </div>
     </>
   );

@@ -5,6 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { validateDates } from "../utils/dateValidation";
 import { toast } from "react-toastify";
 import { Calendar } from "lucide-react";
+import CalendarHeader from "../components/common/CalendarHeader";
 
 const PerformanceReport = () => {
     const [fromDate, setFromDate] = useState(null);
@@ -45,6 +46,7 @@ const PerformanceReport = () => {
                                 dateFormat="dd/MM/yyyy"
                                 placeholderText="DD/MM/YYYY"
                                 maxDate={new Date()}
+                                renderCustomHeader={(props) => <CalendarHeader {...props} />}
                                 className={`px-4 py-3 border rounded-lg focus:outline-none focus:border-[#34b350] text-sm w-52 bg-white shadow-sm transition-all h-[44px] font-bold ${showCustomError && !fromDate ? "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.5)]" : "border-gray-200"}`}
                                 ref={fromRef}
                                 onFocus={(e) => e.target.blur()}
@@ -65,6 +67,7 @@ const PerformanceReport = () => {
                                 dateFormat="dd/MM/yyyy"
                                 placeholderText="DD/MM/YYYY"
                                 maxDate={new Date()}
+                                renderCustomHeader={(props) => <CalendarHeader {...props} />}
                                 className={`px-4 py-3 border rounded-lg focus:outline-none focus:border-[#34b350] text-sm w-52 bg-white shadow-sm transition-all h-[44px] font-bold ${showCustomError && !toDate ? "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.5)]" : "border-gray-200"}`}
                                 ref={toRef}
                                 onFocus={(e) => e.target.blur()}

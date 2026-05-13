@@ -74,10 +74,10 @@ const OTPLogin = () => {
     return (
         <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-6 font-sans">
             <div className="w-full max-w-md bg-white rounded-[32px] shadow-2xl shadow-gray-200 border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-500">
-                
+
                 {/* Header Decoration */}
                 <div className="h-2 bg-[#34b350] w-full"></div>
-                
+
                 <div className="p-8 lg:p-12">
                     <div className="text-center mb-10">
                         <h1 className="text-3xl font-black text-gray-800 tracking-tighter mb-2">Arihant Capital</h1>

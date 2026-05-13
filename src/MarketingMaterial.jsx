@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import Header from "./Header.jsx";
 import ComplianceCertificate from "./ComplianceCertificate.jsx";
 import ComplianceCircular from "./ComplianceCircular.jsx";
 import Download from "./Download.jsx";
 import Training from "./Training.jsx";
 import { ToastContainer, toast } from "react-toastify";
+import ArihantProductsSection from "./ArihantProducts.jsx";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function MarketingMaterial() {
@@ -128,178 +130,179 @@ export default function MarketingMaterial() {
 
   return (
     <>
-      <div className="bg-gray-100 min-h-screen mt-9">
+      <div className="bg-white min-h-screen pt-[60px]">
         <Header />
 
-        <div className="p-6">
-          <div className="bg-white p-4 rounded-xl shadow mt-2">
-            {/* TABS */}
-            <div className="flex gap-8 border-b pb-2 text-lg font-semibold">
-              {tabs.map((tab) => (
-                <span
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`pb-2 cursor-pointer relative z-10 ${activeTab === tab
-                      ? "border-b-4 border-green-600 text-black"
-                      : "text-gray-400 hover:text-black"
-                    }`}
-                >
-                  {tab}
-                </span>
-              ))}
+        {/* CONTENT WRAPPER */}
+        <div className="bg-white p-6 rounded-md shadow-md border mx-6 mt-6">
+          {/* TABS */}
+          <div className="flex gap-8 border-b pb-2 text-lg font-semibold">
+            {tabs.map((tab) => (
+              <span
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`pb-2 cursor-pointer relative z-10 ${activeTab === tab
+                    ? "border-b-4 border-green-600 text-black"
+                    : "text-gray-400 hover:text-black"
+                  }`}
+              >
+                {tab}
+              </span>
+            ))}
+          </div>
+
+          {/* Compliance Certificate Sub-tabs - Second Line */}
+          {activeTab === "Compliance Certificate" && (
+            <div className="flex gap-8 pt-4 text-lg font-semibold border-b pb-2">
+              <span
+                className={`cursor-pointer pb-2 relative z-10 ${activeSubTab === "certificate"
+                    ? "border-b-4 border-green-600 text-black"
+                    : "text-gray-400 hover:text-black"
+                  }`}
+                onClick={() => setActiveSubTab("certificate")}
+              >
+                Certificate
+              </span>
+
+              <span
+                className={`cursor-pointer pb-2 relative z-10 ${activeSubTab === "upload"
+                    ? "border-b-4 border-green-600 text-black"
+                    : "text-gray-400 hover:text-black"
+                  }`}
+                onClick={() => setActiveSubTab("upload")}
+              >
+                Upload Certificate
+              </span>
             </div>
+          )}
 
-            {/* Compliance Certificate Sub-tabs - Second Line */}
-            {activeTab === "Compliance Certificate" && (
-              <div className="flex gap-8 pt-4 text-lg font-semibold border-b pb-2">
-                <span
-                  className={`cursor-pointer pb-2 relative z-10 ${activeSubTab === "certificate"
-                      ? "border-b-4 border-green-600 text-black"
-                      : "text-gray-400 hover:text-black"
-                    }`}
-                  onClick={() => setActiveSubTab("certificate")}
-                >
-                  Certificate
-                </span>
+          {/* CONTENT */}
+          {activeTab === "Marketing Material" && (
+            <div className="mt-6">
+              {/* HORIZONTAL LAYOUT */}
+              <div className="flex flex-wrap gap-10">
+                {Object.keys(data).map((category) => (
+                  <div key={category} className="w-[200px]">
 
-                <span
-                  className={`cursor-pointer pb-2 relative z-10 ${activeSubTab === "upload"
-                      ? "border-b-4 border-green-600 text-black"
-                      : "text-gray-400 hover:text-black"
-                    }`}
-                  onClick={() => setActiveSubTab("upload")}
-                >
-                  Upload Certificate
-                </span>
-              </div>
-            )}
-
-            {/* CONTENT */}
-            {activeTab === "Marketing Material" && (
-              <div className="mt-6">
-                {/* HORIZONTAL LAYOUT */}
-                <div className="flex flex-wrap gap-10">
-                  {Object.keys(data).map((category) => (
-                    <div key={category} className="w-[200px]">
-
-                      {/* CATEGORY */}
+                    {/* CATEGORY */}
+                    <div
+                      className="flex items-center gap-3 cursor-pointer"
+                      onClick={() => toggleCategory(category)}
+                    >
                       <div
-                        className="flex items-center gap-3 cursor-pointer"
-                        onClick={() => toggleCategory(category)}
-                      >
-                        <div
-                          className={`w-5 h-5 rounded-full border flex items-center justify-center
-                          ${open[category]
-                              ? "bg-[#34b350] border-[#34b350]"
-                              : "border-gray-400"
-                            }`}
-                        >
-                          {open[category] && (
-                            <div className="w-2 h-2 bg-white rounded-full"></div>
-                          )}
-                        </div>
-
-                        <span className="font-medium text-gray-800">
-                          {category}
-                        </span>
-                      </div>
-
-                      {/* FILE LIST */}
-                      <div
-                        className={`ml-6 mt-3 transition-all duration-300 overflow-hidden
+                        className={`w-5 h-5 rounded-full border flex items-center justify-center
                         ${open[category]
-                            ? "max-h-[400px] opacity-100"
-                            : "max-h-0 opacity-0"
+                            ? "bg-[#34b350] border-[#34b350]"
+                            : "border-gray-400"
                           }`}
                       >
-                        {data[category].map((file, i) => (
-                          <div key={i} className="flex items-center gap-3 mt-2">
-                            <div
-                              onClick={() => toggleFile(file)}
-                              className={`w-4 h-4 rounded-full border flex items-center justify-center cursor-pointer
-                              ${selected[file]
-                                  ? "bg-blue-600 border-blue-600"
-                                  : "border-gray-400"
-                                }`}
-                            >
-                              {selected[file] && (
-                                <div className="w-2 h-2 bg-white rounded-full"></div>
-                              )}
-                            </div>
+                        {open[category] && (
+                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                        )}
+                      </div>
 
-                            <a
-                              href={`https://intranet.arihantcapital.com/Files/ConnectFile/${file}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-blue-600 hover:underline cursor-pointer no-underline"
-                            >
-                              {file}
-                            </a>
+                      <span className="font-medium text-gray-800">
+                        {category}
+                      </span>
+                    </div>
+
+                    {/* FILE LIST */}
+                    <div
+                      className={`ml-6 mt-3 transition-all duration-300 overflow-hidden
+                      ${open[category]
+                          ? "max-h-[400px] opacity-100"
+                          : "max-h-0 opacity-0"
+                        }`}
+                    >
+                      {data[category].map((file, i) => (
+                        <div key={i} className="flex items-center gap-3 mt-2">
+                          <div
+                            onClick={() => toggleFile(file)}
+                            className={`w-4 h-4 rounded-full border flex items-center justify-center cursor-pointer
+                            ${selected[file]
+                                ? "bg-blue-600 border-blue-600"
+                                : "border-gray-400"
+                              }`}
+                          >
+                            {selected[file] && (
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            )}
                           </div>
-                        ))}
-                      </div>
+
+                          <a
+                            href={`https://intranet.arihantcapital.com/Files/ConnectFile/${file}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline cursor-pointer no-underline"
+                          >
+                            {file}
+                          </a>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "Compliance Certificate" && (
+            <div className="mt-6">
+              {/* UPLOAD SECTION */}
+              {activeSubTab === "upload" && (
+                <div>
+
+                  {/* LABEL */}
+                  <label className="block text-sm font-medium mb-2">
+                    Upload File
+                  </label>
+                  <div className="flex items-center gap-6">
+                    <div className="border rounded-md px-4 py-3 bg-gray-50 flex items-center gap-3">
+                      <input
+                        type="file"
+                        onChange={(e) => setFile(e.target.files[0])}
+                        className="cursor-pointer"
+                      />
+                    </div>
+                    <button
+                      onClick={handleSubmit}
+                      className="bg-gradient-to-r from-green-500 to-green-700 
+                      hover:from-green-600 hover:to-green-800 
+                      text-white px-8 py-3 rounded-full font-semibold 
+                      shadow-md hover:shadow-xl 
+                      transition-all duration-300 
+                      flex items-center gap-2 active:scale-95"
+                    >
+                      SUBMIT
+                      <span className="text-lg">→</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {activeTab === "Compliance Certificate" && (
-              <div className="mt-6">
-                {/* UPLOAD SECTION */}
-                {activeSubTab === "upload" && (
-                  <div>
+              {/* CERTIFICATE SECTION */}
+              {activeSubTab === "certificate" && (
+                <div className="w-full h-2">
+                  {/* Certificate content area */}
+                </div>
+              )}
+            </div>
+          )}
 
-                    {/* LABEL */}
-                    <label className="block text-sm font-medium mb-2">
-                      Upload File
-                    </label>
-                    <div className="flex items-center gap-6">
-                      <div className="border rounded-md px-4 py-3 bg-gray-50 flex items-center gap-3">
-                        <input
-                          type="file"
-                          onChange={(e) => setFile(e.target.files[0])}
-                          className="cursor-pointer"
-                        />
-                      </div>
-                      <button
-                        onClick={handleSubmit}
-                        className="bg-gradient-to-r from-green-500 to-green-700 
-                        hover:from-green-600 hover:to-green-800 
-                        text-white px-8 py-3 rounded-full font-semibold 
-                        shadow-md hover:shadow-xl 
-                        transition-all duration-300 
-                        flex items-center gap-2 active:scale-95"
-                      >
-                        SUBMIT
-                        <span className="text-lg">→</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
+          {activeTab === "Compliance Circular" && (
+            <ComplianceCircular />
+          )}
 
-                {/* CERTIFICATE SECTION */}
-                {activeSubTab === "certificate" && (
-                  <div className="w-full h-2">
-                    {/* Certificate content area */}
-                  </div>
-                )}
-              </div>
-            )}
+          {activeTab === "Download" && (
+            <Download />
+          )}
 
-            {activeTab === "Compliance Circular" && (
-              <ComplianceCircular />
-            )}
-
-            {activeTab === "Download" && (
-              <Download />
-            )}
-
-            {activeTab === "Training" && (
-              <Training />
-            )}
-          </div>
+          {activeTab === "Training" && (
+            <Training />
+          )}
         </div>
+
+        <ArihantProductsSection />
       </div>
 
       <ToastContainer />

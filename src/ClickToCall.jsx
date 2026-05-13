@@ -401,26 +401,23 @@ export default function ClickToCall() {
         {filtered.length} total
       </p>
 
-      {/* ERROR POPUP (RIGHT SIDE) */}
-      {showError && (
-        <div className="fixed top-4 right-4 bg-red-600 text-white px-8 py-4 rounded-lg shadow-lg z-50 flex items-center justify-between min-w-[350px] transition-all duration-300 ease-in-out mt-12">
-
-          {/* TEXT */}
-          <div>
-            <p className="font-semibold text-lg">Error</p>
-            <p className="text-sm">{errorMessage}</p>
-          </div>
-
-          {/* CLOSE BUTTON */}
-          <div
-            onClick={() => setShowError(false)}
-            className="w-6 h-6 border-2 border-white rounded-full flex items-center justify-center cursor-pointer"
-          >
-            <span className="text-xs">×</span>
-          </div>
-
+      {/* 🚨 CUSTOM ERROR TOAST */}
+      <div
+        className={`fixed top-5 right-5 bg-[#e50046] text-white rounded-xl shadow-2xl px-6 py-2 min-w-[360px]
+                flex items-center justify-between z-[60000]
+                transition-all duration-500 transform ${showError ? "translate-x-0 opacity-100" : "translate-x-[120%] opacity-0"}`}
+      >
+        <div>
+          <h2 className="text-2xl font-bold -mb-1 text-white">Error</h2>
+          <p className="text-base font-semibold text-white">{errorMessage}</p>
         </div>
-      )}
+        <div className="ml-6 flex items-center">
+          <div className="w-9 h-9 border-[3px] border-white rounded-full relative">
+            <span className="absolute top-1/2 left-1/2 w-4 h-[2.5px] bg-white -translate-x-1/2 -translate-y-1/2 rotate-[-45deg] rounded"></span>
+            <span className="absolute top-1/2 left-1/2 w-4 h-[2.5px] bg-white -translate-x-1/2 -translate-y-1/2 rotate-[45deg] rounded"></span>
+          </div>
+        </div>
+      </div>
 
       {/* MODAL (Dealer Code List) */}
       {showModal && (

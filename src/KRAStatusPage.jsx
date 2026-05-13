@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Header from "./Header.jsx";
 import HoldKRAStatus from "./HoldKRAStatus.jsx";
 import PhysicalModification from "./PhysicalModification.jsx";
@@ -8,10 +9,20 @@ import RekycTAT from "./RekycTAT.jsx";
 import ReactivationTAT from "./Reactivation TAT.jsx";
 import ContactDetailsPage from "./ContactDetailsPage.jsx";
 import EKYCTAT from "./EKYCTAT.jsx";
+import ArihantProducts from "./ArihantProducts.jsx";
 import { Eye, ChevronDown, ChevronUp, ChevronsUpDown, Search, ChevronRight } from "lucide-react";
 
 export default function KRAStatusPage() {
-  const [activeTab, setActiveTab] = useState("Hold KRA Status");
+  const [activeTab, setActiveTab] = useState("KRA & UCC Status");
+  const location = useLocation();
+
+  useEffect(() => {
+    // When navigating to /account-opening or /kra-status from the header, reset to default tab
+    if (location.pathname === "/account-opening" || location.pathname === "/kra-status") {
+      setActiveTab("KRA & UCC Status");
+    }
+  }, [location.key, location.pathname]);
+
   const [clientCode, setClientCode] = useState("");
   const [uccStatus, setUccStatus] = useState("");
   const [kraStatus, setKraStatus] = useState("");
@@ -43,10 +54,7 @@ export default function KRAStatusPage() {
       name: "",
       pan: "N/A",
       kra: "",
-      ucc: [
-        { exchange: "NSE", segment: "Cash", status: "Active", trade: "Yes" },
-        { exchange: "BSE", segment: "FO", status: "Active", trade: "Yes" },
-      ],
+      ucc: [],
     };
 
     setResults([newData]);
@@ -72,17 +80,17 @@ export default function KRAStatusPage() {
   };
 
   return (
-    <div className="bg-[#f3f3f3] p-2">
+    <div className="bg-[#f3f3f3]">
       <Header />
 
       {/* CONTENT WRAPPER - Like Contests Page */}
-      <div className="p-6 bg-[#f4f6f9] min-h-screen mt-16">
+      <div className="px-6 py-2 bg-[#f3f3f3] min-h-screen mt-[60px]">
 
         {/* Main Box */}
-        <div className="bg-[#efefef] rounded-2xl shadow-sm border border-gray-200 w-full px-5 pt-6 pb-10">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 w-full px-5 pt-4 pb-10">
 
           {/* Tabs */}
-          <div className="flex flex-wrap gap-8 text-[15px] text-black font-semibold border-b border-gray-300 pb-1" mt-11px>
+          <div className="flex flex-wrap gap-8 text-[15px] text-black font-semibold border-b border-gray-300 pb-1 mt-0">
             {tabs.map((tab) => (
               <button
                 key={tab}
@@ -281,8 +289,7 @@ export default function KRAStatusPage() {
                           <span>Status</span>
                           <span>Trade</span>
                         </div>
-
-                        {item.ucc.map((row, index) => (
+                        {item.ucc && item.ucc.length > 0 && item.ucc.map((row, index) => (
                           <div
                             key={index}
                             className="grid grid-cols-4 text-[14px] py-3 border-b last:border-0"
@@ -305,6 +312,8 @@ export default function KRAStatusPage() {
               )}
             </div>
           )}
+          
+          <ArihantProducts />
         </div>
       </div>
     </div>

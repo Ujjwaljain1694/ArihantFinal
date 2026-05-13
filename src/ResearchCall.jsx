@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import '@fortawesome/fontawesome-free/css/all.css';
 import logo from "./logo-arihant-capital.png";
 import Header from "./Header.jsx";
+import ArihantProductsSection from "./ArihantProducts.jsx";
 
 function ResearchCall() {
   const [activeTopTab, setActiveTopTab] = useState("research");
@@ -17,11 +18,11 @@ function ResearchCall() {
   ];
 
   return (
-    <div className="bg-gray-100 min-h-screen">
+    <div className="bg-white min-h-screen">
       <Header />
 
       {/* CONTENT WRAPPER */}
-      <div className="mt-20 bg-yellow-50 p-3 rounded-md shadow-md border">
+      <div className="mt-20 bg-white p-3 rounded-md shadow-md border">
 
         {/* Top Tabs */}
         <div className="flex gap-6 border-b pb-3">
@@ -110,6 +111,8 @@ function ResearchCall() {
         </div>
 
       </div>
+
+      <ArihantProductsSection />
 
     </div>
   );

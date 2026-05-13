@@ -1,17 +1,18 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "./Header.jsx";
+import ArihantProductsSection from "./ArihantProducts.jsx";
 
 function MinorDriveCreatives() {
   const [activeTab, setActiveTab] = useState("creatives");
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
-    <div className="download-container">
+    <div className="bg-white min-h-screen pt-[60px]">
       <Header />
 
       {/* CONTENT WRAPPER */}
-      <div className="bg-yellow-50 p-6 mt-16 rounded-md shadow-md border">
+      <div className="bg-white p-6 rounded-md shadow-md border mx-6 mt-6">
 
         {/* Tabs */}
         <div className="flex gap-8 bg-white px-6 py-4 rounded-t-md text-[14px] border mt-1">
@@ -148,6 +149,8 @@ function MinorDriveCreatives() {
         )}
 
       </div>
+
+      <ArihantProductsSection />
 
     </div>
   );

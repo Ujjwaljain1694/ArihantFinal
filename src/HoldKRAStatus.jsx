@@ -12,9 +12,22 @@ export default function HoldKRAStatus() {
     key: "",
     direction: "asc",
   });
+  const [showCustomError, setShowCustomError] = useState(false);
+  const [customErrorMsg, setCustomErrorMsg] = useState("");
+
+  React.useEffect(() => {
+    if (showCustomError) {
+      const timer = setTimeout(() => setShowCustomError(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showCustomError]);
 
   const handleSearch = async () => {
-    if (filter.trim() === "") return;
+    if (filter.trim() === "") {
+      setCustomErrorMsg("Please enter client code to search");
+      setShowCustomError(true);
+      return;
+    }
 
     try {
       // API call example - replace with your actual API endpoint
@@ -102,8 +115,8 @@ export default function HoldKRAStatus() {
   ];
 
   return (
-    <div className="space-y-8">
-      <p className="text-[18px] text-[#222] mb-2 pt-4">
+    <div className="bg-white px-2">
+      <p className="text-[14px] text-gray-500 my-2 py-2 font-medium uppercase tracking-wider">
         Search results({results.length})
       </p>
 
@@ -114,7 +127,10 @@ export default function HoldKRAStatus() {
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Filter by Client Code"
-            className="w-[560px] h-[56px] pl-12 pr-5 rounded-xl border border-gray-300 bg-white text-[18px] outline-none focus:border-[#34b44a] focus:ring-2 focus:ring-[#34b44a]/20 transition-all duration-200"
+            className="w-[400px] h-[40px] pl-10 pr-5 rounded-full border border-gray-300 bg-white text-[15px] outline-none focus:border-[#34b44a] transition-all duration-200"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSearch();
+            }}
           />
           
           {/* Search Icon */}
@@ -159,9 +175,10 @@ export default function HoldKRAStatus() {
       </div>
 
       {/* Table */}
-      <div className="w-full">
-        {/* Header */}
-        <div className="grid grid-cols-[180px_150px_230px_180px_190px_240px_1fr] bg-[#34b44a] text-white text-[14px] font-semibold border border-gray-300">
+      <div className="w-full overflow-x-auto border-t border-gray-200 mt-6">
+        <div className="min-w-[1200px]">
+          {/* Header */}
+          <div className="grid grid-cols-[150px_150px_250px_150px_180px_180px_1fr] bg-[#34b44a] text-white text-[13px] font-semibold">
           {headers.map((item, index) => (
             <div
               key={index}
@@ -177,38 +194,55 @@ export default function HoldKRAStatus() {
         {/* Body */}
         {results.length === 0 ? (
           <>
-            <div className="bg-white h-[90px] flex items-center px-6 text-[18px] text-gray-500 border-b">
+            <div className="bg-white h-[45px] flex items-center px-6 text-[15px] text-gray-500 border-x border-b border-gray-200">
               No data to display
             </div>
 
-            <div className="bg-white px-6 py-5 text-gray-500">
+            <div className="bg-white px-6 py-2 text-gray-400 border-x border-b border-gray-200 text-[13px]">
               0 total
             </div>
           </>
         ) : (
           <>
-            {results.map((row, index) => (
               <div
                 key={index}
-                className="grid grid-cols-[180px_150px_230px_180px_190px_240px_1fr] bg-white border-b border-gray-200 text-[15px]"
+                className="grid grid-cols-[150px_150px_250px_150px_180px_180px_1fr] bg-[#f2f2f2] border-b border-gray-200 text-[14px] hover:bg-gray-100 transition-colors"
               >
-                <div className="px-4 py-4">{row.clientCode}</div>
-                <div className="px-4 py-4">{row.pan}</div>
-                <div className="px-4 py-4">{row.clientName}</div>
-                <div className="px-4 py-4">{row.branchCode}</div>
-                <div className="px-4 py-4">{row.kraName}</div>
-                <div className="px-4 py-4 text-green-600">
+                <div className="px-4 py-4 border-r border-gray-300">{row.clientCode}</div>
+                <div className="px-4 py-4 border-r border-gray-300">{row.pan}</div>
+                <div className="px-4 py-4 border-r border-gray-300">{row.clientName}</div>
+                <div className="px-4 py-4 border-r border-gray-300">{row.branchCode}</div>
+                <div className="px-4 py-4 border-r border-gray-300">{row.kraName}</div>
+                <div className="px-4 py-4 border-r border-gray-300 text-green-600 font-bold">
                   {row.kraStatus}
                 </div>
                 <div className="px-4 py-4">{row.reason}</div>
               </div>
             ))}
 
-            <div className="bg-white px-6 py-5 text-gray-500">
+            <div className="bg-white px-6 py-2 text-black font-bold border-b border-gray-200 text-[14px]">
               {results.length} total
             </div>
           </>
         )}
+        </div>
+      </div>
+
+      {/* 🚨 CUSTOM ERROR TOAST */}
+      <div
+        className={`fixed top-5 right-5 bg-[#e50046] text-white rounded-xl shadow-2xl px-6 py-2 min-w-[360px]
+                flex items-center justify-between z-[6000]
+                transition-all duration-500 transform ${showCustomError ? "translate-x-0 opacity-100" : "translate-x-[120%] opacity-0"}`}
+      >
+        <div>
+          <h2 className="text-2xl font-bold -mb-1">Error</h2>
+          <p className="text-base font-semibold">{customErrorMsg}</p>
+        </div>
+        <div className="ml-6 flex items-center">
+          <div className="w-9 h-9 border-[3px] border-white rounded-full relative">
+            <span className="absolute top-1/2 left-1/2 w-4 h-[2.5px] bg-white -translate-x-1/2 -translate-y-1/2 rotate-[-45deg] rounded"></span>
+          </div>
+        </div>
       </div>
     </div>
   );

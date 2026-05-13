@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "./Header.jsx";
+import ArihantProductsSection from "./ArihantProducts.jsx";
 import { toast } from "react-toastify";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
@@ -14,6 +15,15 @@ export default function Bonds() {
   const [showModal, setShowModal] = useState(false);
   const [clientCode, setClientCode] = useState("");
   const [error, setError] = useState("");
+  const [customErrorMsg, setCustomErrorMsg] = useState("");
+  const [showCustomError, setShowCustomError] = useState(false);
+
+  useEffect(() => {
+    if (showCustomError) {
+      const timer = setTimeout(() => setShowCustomError(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showCustomError]);
 
   // API CALL
   useEffect(() => {
@@ -109,7 +119,8 @@ export default function Bonds() {
   const handleSubmit = async () => {
     if (!clientCode.trim()) {
       setError("Client code is required");
-      toast.error("Client code is required");
+      setCustomErrorMsg("Please Enter Client Code");
+      setShowCustomError(true);
       return;
     }
 
@@ -120,7 +131,8 @@ export default function Bonds() {
 
     if (codes.length === 0) {
       setError("Enter valid client code");
-      toast.error("Enter valid client code");
+      setCustomErrorMsg("Please Enter Valid Client Code");
+      setShowCustomError(true);
       return;
     }
 
@@ -128,7 +140,8 @@ export default function Bonds() {
 
     if (!isValid) {
       setError("Only numeric client codes allowed");
-      toast.error("Only numeric client codes allowed");
+      setCustomErrorMsg("Only Numeric Client Codes Allowed");
+      setShowCustomError(true);
       return;
     }
 
@@ -325,6 +338,8 @@ export default function Bonds() {
         </div>
       </div>
 
+      <ArihantProductsSection />
+
       {/* MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
@@ -381,6 +396,23 @@ export default function Bonds() {
           </div>
         </div>
       )}
+
+      {/* 🚨 CUSTOM ERROR TOAST */}
+      <div
+        className={`fixed top-5 right-5 bg-[#e50046] text-white rounded-xl shadow-2xl px-6 py-2 min-w-[360px]
+                flex items-center justify-between z-[60000]
+                transition-all duration-500 transform ${showCustomError ? "translate-x-0 opacity-100" : "translate-x-[120%] opacity-0"}`}
+      >
+        <div>
+          <h2 className="text-2xl font-bold -mb-1">Error</h2>
+          <p className="text-base font-semibold">{customErrorMsg}</p>
+        </div>
+        <div className="ml-6 flex items-center">
+          <div className="w-9 h-9 border-[3px] border-white rounded-full relative">
+            <span className="absolute top-1/2 left-1/2 w-4 h-[2.5px] bg-white -translate-x-1/2 -translate-y-1/2 rotate-[-45deg] rounded"></span>
+          </div>
+        </div>
+      </div>
     </>
   );
 }

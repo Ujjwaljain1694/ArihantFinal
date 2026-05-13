@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ChevronDown, ChevronUp, ChevronsUpDown, Eye, EyeOff } from 'lucide-react';
 import Header from "./Header.jsx";
 
 export default function ContestsData() {
@@ -7,7 +8,6 @@ export default function ContestsData() {
   const [data, setData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
   const [visibleRows, setVisibleRows] = useState({});
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,22 +51,16 @@ export default function ContestsData() {
     }));
   };
 
-  // SORT ICON (EXACT LOOK)
-  const SortIcon = ({ column }) => {
-    const isActive = sortConfig.key === column;
-    const isAsc = isActive && sortConfig.direction === "asc";
-    const isDesc = isActive && sortConfig.direction === "desc";
-
-    return (
-      <span className="ml-1 flex flex-col">
-        <svg width="8" height="5" viewBox="0 0 10 6" className={isAsc ? "fill-black" : "fill-green-200"}>
-          <path d="M5 0 L10 6 H0 Z" />
-        </svg>
-        <svg width="8" height="5" viewBox="0 0 10 6" className={isDesc ? "fill-black" : "fill-green-200 mt-[1px]"}>
-          <path d="M0 0 L10 0 L5 6 Z" />
-        </svg>
-      </span>
-    );
+  // SORT ICON (MATCHING HOLDING REPORT)
+  const renderSortIcon = (column) => {
+    if (sortConfig.key === column) {
+      return sortConfig.direction === "asc" ? (
+        <ChevronUp size={14} className="text-white ml-2" />
+      ) : (
+        <ChevronDown size={14} className="text-white ml-2" />
+      );
+    }
+    return <ChevronsUpDown size={14} className="text-white/60 ml-2" />;
   };
 
   return (
@@ -97,10 +91,10 @@ export default function ContestsData() {
 
       {/* TABLE */}
       {activeTab === "data" && (
-        <div className="bg-white border border-gray-200 rounded-b-md py-3">
+        <div className="bg-white border border-gray-200 rounded-b-md py-3 shadow-sm">
 
           {/* Header */}
-          <div className="px-6 py-2 text-sm text-gray-700 pb-8px">
+          <div className="px-6 py-2 text-sm text-gray-700 pb-8px font-semibold">
             Search results ({data.length})
           </div>
 
@@ -108,40 +102,40 @@ export default function ContestsData() {
           <table className="w-[95%] mx-auto text-[12px] border border-gray-300 table-fixed">
 
             <thead>
-              <tr className="bg-[#2fb344] text-white">
+              <tr className="bg-[#1EB04C] text-white">
 
-                <th className="px-3 py-2 border-r border-gray-200">
-                  <div onClick={() => handleSort("branch")} className="flex items-center cursor-pointer">
-                    Branch Code
-                    <SortIcon column="branch" />
+                <th className="px-3 py-3 border-r border-white/10 cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort("branch")}>
+                  <div className="flex items-center justify-between">
+                    <span className="uppercase font-bold tracking-wider">Branch Code</span>
+                    {renderSortIcon("branch")}
                   </div>
                 </th>
 
-                <th className="px-3 py-2 border-r border-gray-200">
-                  <div onClick={() => handleSort("client")} className="flex items-center cursor-pointer">
-                    Client Code
-                    <SortIcon column="client" />
+                <th className="px-3 py-3 border-r border-white/10 cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort("client")}>
+                  <div className="flex items-center justify-between">
+                    <span className="uppercase font-bold tracking-wider">Client Code</span>
+                    {renderSortIcon("client")}
                   </div>
                 </th>
 
-                <th className="px-3 py-2 border-r border-gray-200">
-                  <div onClick={() => handleSort("name")} className="flex items-center cursor-pointer">
-                    Name
-                    <SortIcon column="name" />
+                <th className="px-3 py-3 border-r border-white/10 cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort("name")}>
+                  <div className="flex items-center justify-between">
+                    <span className="uppercase font-bold tracking-wider">Name</span>
+                    {renderSortIcon("name")}
                   </div>
                 </th>
 
-                <th className="px-3 py-2 border-r border-gray-200">
-                  <div onClick={() => handleSort("email")} className="flex items-center cursor-pointer">
-                    Email
-                    <SortIcon column="email" />
+                <th className="px-3 py-3 border-r border-white/10 cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort("email")}>
+                  <div className="flex items-center justify-between">
+                    <span className="uppercase font-bold tracking-wider">Email</span>
+                    {renderSortIcon("email")}
                   </div>
                 </th>
 
-                <th className="px-3 py-2">
-                  <div onClick={() => handleSort("mobile")} className="flex items-center cursor-pointer">
-                    Mobile Number
-                    <SortIcon column="mobile" />
+                <th className="px-3 py-3 border-white/10 cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort("mobile")}>
+                  <div className="flex items-center justify-between">
+                    <span className="uppercase font-bold tracking-wider">Mobile Number</span>
+                    {renderSortIcon("mobile")}
                   </div>
                 </th>
 

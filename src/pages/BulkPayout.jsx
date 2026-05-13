@@ -1,35 +1,13 @@
 import React from "react";
+import Header from "./Header.jsx";
 
 const BulkPayout = () => {
     return (
-        <div className="min-h-screen bg-[#f6f6f6] font-sans selection:bg-arihant-primary selection:text-white">
-            {/* 🟢 TOP NAVBAR */}
-            <div className="bg-[#34b350] px-8 h-[64px] flex items-center justify-between sticky top-0 z-[100] shadow-md">
-                <div className="flex items-center gap-12">
-                    <div className="flex items-baseline gap-1">
-                        <span className="text-white font-black text-2xl tracking-tighter">ArihantCapital</span>
-                        <span className="text-white/70 text-[10px] font-medium uppercase tracking-widest hidden lg:block">Generating Wealth</span>
-                    </div>
-                    <nav className="flex items-center gap-6 text-white text-[13px] font-bold opacity-95">
-                        <span>Dashboard</span>
-                        <span className="border-b-2 border-white pb-1">Reports</span>
-                        <span>Account Opening</span>
-                        <span>Download</span>
-                        <span>Research Call</span>
-                        <span>Deal Slip</span>
-                        <span>Third Party</span>
-                        <span>Contests</span>
-                        <div className="relative">
-                            <span>Portfolio <span className="absolute -top-3 -right-6 bg-red-500 text-[8px] px-1 rounded-sm flex items-center h-3">BETA</span></span>
-                        </div>
-                        <span>Click To Call</span>
-                        <span>Payout</span>
-                    </nav>
-                </div>
-            </div>
-
+        <div className="min-h-screen bg-[#f6f6f6] font-sans selection:bg-[#34b350] selection:text-white">
+            <Header />
+            
             {/* 🔵 BREADCRUMB */}
-            <div className="bg-[#e6f7ff] px-[40px] py-[14px] flex items-center gap-3 text-[12px] text-gray-800 font-bold uppercase tracking-widest">
+            <div className="bg-[#e6f7ff] px-[40px] py-[14px] flex items-center gap-3 text-[12px] text-gray-800 font-bold uppercase tracking-widest mt-[60px]">
                 <div className="w-[8px] h-[8px] bg-[#34b350] rounded-full shadow-[0_0_10px_rgba(52,179,80,0.4)]"></div>
                 <span>Report</span>
                 <span className="text-gray-300">/</span>

@@ -12,10 +12,26 @@ export default function PhysicalModification() {
     direction: "asc",
   });
   const [error, setError] = useState("");
+  const [showCustomError, setShowCustomError] = useState(false);
+  const [customErrorMsg, setCustomErrorMsg] = useState("");
+
+  React.useEffect(() => {
+    if (showCustomError) {
+      const timer = setTimeout(() => setShowCustomError(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showCustomError]);
 
   // SEARCH / BACKEND READY
   const handleApply = async () => {
     setError(""); // Reset error
+
+    if (search.trim() === "") {
+      const msg = "Please enter client code to search";
+      setCustomErrorMsg(msg);
+      setShowCustomError(true);
+      return;
+    }
     
     // API Example:
     // const res = await fetch("/api/physical-modification");
@@ -83,7 +99,7 @@ export default function PhysicalModification() {
   const Head = ({ title, field }) => (
     <div
       onClick={() => handleSort(field)}
-      className="px-4 h-[58px] border-r border-white/30 flex items-center justify-between cursor-pointer text-[14px] font-semibold"
+      className="px-4 py-2 border-r border-white/30 flex items-center justify-center gap-2 cursor-pointer text-[13px] font-semibold text-center leading-tight"
     >
       <span>{title}</span>
 
@@ -138,7 +154,7 @@ export default function PhysicalModification() {
   );
 
   return (
-    <>
+    <div className="bg-white px-2">
       {/* SUB TABS */}
       <div className="flex gap-10 text-[15px] border-b border-gray-300 mt-6 pb-2">
 
@@ -164,604 +180,63 @@ export default function PhysicalModification() {
           Rekyc Modification
         </button>
 
-        <button 
-          onClick={() => setActiveSubTab("Reactivation TAT")}
-          className={`pb-2 ${
-            activeSubTab === "Reactivation TAT"
-              ? "font-semibold border-b-[4px] border-[#33b34a]"
-              : "font-normal"
-          }`}
-        >
-          Reactivation TAT
-        </button>
-
       </div>
 
-      <p className="text-[18px] text-[#222] mb-2 pt-2">
-        Search results({results.length})
+      <p className="text-[14px] text-gray-500 my-2 py-2 font-medium uppercase tracking-wider">
+        Search results({activeSubTab === "Physical Modification" ? results.length : 2})
       </p>
 
-      <div className="flex items-center gap-8 mb-8">
-        <div className="relative w-[430px]">
+      <div className="flex items-center gap-6 mb-6">
+        <div className="relative w-[380px]">
           <Search
-            size={22}
-            className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"
+            size={18}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
           />
           <input
             type="text"
             placeholder="Search client code"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-[54px] rounded-full border border-gray-300 pl-14 pr-4 text-[18px] outline-none bg-white"
+            className="w-full h-[40px] rounded-full border border-gray-300 pl-12 pr-4 text-[15px] outline-none bg-white focus:border-[#34b44a] transition-all"
           />
         </div>
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={handleApply}
-            className="bg-gradient-to-r from-[#35b34a] to-[#2f9f42] hover:from-[#2f9f42] hover:to-[#28a845] text-white font-bold text-[18px] px-8 h-[44px] rounded-full flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-          >
-            APPLY
-            <ChevronRight size={20} />
-          </button>
-        </div>
+        <button 
+          onClick={handleApply}
+          className="bg-[#34b44a] text-white font-bold text-[14px] px-8 h-[40px] rounded-full flex items-center gap-2 shadow-md hover:bg-[#2e9d41] transition-all active:scale-95"
+        >
+          APPLY
+          <ChevronRight size={16} />
+        </button>
       </div>
+
+
 
       {/* Conditional Content Based on Active Sub Tab */}
       {activeSubTab === "Physical Modification" ? (
         <>
           {/* Table */}
-          <div className="w-full">
-            {/* Header */}
-            <div className="grid grid-cols-10 bg-[#34b44a] text-white text-[14px] font-semibold border border-gray-300">
-              <div
-                onClick={() => handleSort("clientCode")}
-                className="px-4 py-2 border-r border-white/20 flex items-center justify-between cursor-pointer select-none"
-              >
-                <span>Client Code</span>
-                <span className="ml-2">
-                  {sortConfig.key === "clientCode" ? (
-                    sortConfig.direction === "asc" ? (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 15l7-7 7 7"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    )
-                  ) : (
-                    <svg
-                      className="w-4 h-4 text-white opacity-80"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 10l4-4 4 4M16 14l-4 4-4-4"
-                      />
-                    </svg>
-                  )}
-                </span>
+          <div className="w-full border-t border-gray-200 mt-6">
+            <div className="w-full">
+              {/* Header */}
+              <div className="grid grid-cols-8 bg-[#34b44a] text-white text-[13px] font-semibold">
+                <Head title="Client Code" field="clientCode" />
+                <Head title="Client Name" field="clientName" />
+                <Head title="PAN" field="pan" />
+                <Head title="Date" field="requestDate" />
+                <Head title="Branch" field="branchCode" />
+                <Head title="Type" field="requestType" />
+                <Head title="Status" field="status" />
+                <Head title="Remark" field="remark" />
               </div>
-              
-              <div
-                onClick={() => handleSort("clientName")}
-                className="px-4 py-2 border-r border-white/20 flex items-center justify-between cursor-pointer select-none"
-              >
-                <span>Client Name</span>
-                <span className="ml-2">
-                  {sortConfig.key === "clientName" ? (
-                    sortConfig.direction === "asc" ? (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 15l7-7 7 7"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    )
-                  ) : (
-                    <svg
-                      className="w-4 h-4 text-white opacity-80"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 10l4-4 4 4M16 14l-4 4-4-4"
-                      />
-                    </svg>
-                  )}
-                </span>
-              </div>
-
-              <div
-                onClick={() => handleSort("pan")}
-                className="px-4 py-2 border-r border-white/20 flex items-center justify-between cursor-pointer select-none"
-              >
-                <span>PAN</span>
-                <span className="ml-2">
-                  {sortConfig.key === "pan" ? (
-                    sortConfig.direction === "asc" ? (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 15l7-7 7 7"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    )
-                  ) : (
-                    <svg
-                      className="w-4 h-4 text-white opacity-80"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 10l4-4 4 4M16 14l-4 4-4-4"
-                      />
-                    </svg>
-                  )}
-                </span>
-              </div>
-
-              <div
-                onClick={() => handleSort("date")}
-                className="px-4 py-2 border-r border-white/20 flex items-center justify-between cursor-pointer select-none"
-              >
-                <span>Date</span>
-                <span className="ml-2">
-                  {sortConfig.key === "date" ? (
-                    sortConfig.direction === "asc" ? (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 15l7-7 7 7"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    )
-                  ) : (
-                    <svg
-                      className="w-4 h-4 text-white opacity-80"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 10l4-4 4 4M16 14l-4 4-4-4"
-                      />
-                    </svg>
-                  )}
-                </span>
-              </div>
-
-              <div
-                onClick={() => handleSort("searchCode")}
-                className="px-4 py-2 border-r border-white/20 flex items-center justify-between cursor-pointer select-none"
-              >
-                <span>SearchCode</span>
-                <span className="ml-2">
-                  {sortConfig.key === "searchCode" ? (
-                    sortConfig.direction === "asc" ? (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 15l7-7 7 7"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    )
-                  ) : (
-                    <svg
-                      className="w-4 h-4 text-white opacity-80"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 10l4-4 4 4M16 14l-4 4-4-4"
-                      />
-                    </svg>
-                  )}
-                </span>
-              </div>
-
-              <div
-                onClick={() => handleSort("requestType")}
-                className="px-4 py-2 border-r border-white/20 flex items-center justify-between cursor-pointer select-none"
-              >
-                <span>Request Type</span>
-                <span className="ml-2">
-                  {sortConfig.key === "requestType" ? (
-                    sortConfig.direction === "asc" ? (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 15l7-7 7 7"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    )
-                  ) : (
-                    <svg
-                      className="w-4 h-4 text-white opacity-80"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 10l4-4 4 4M16 14l-4 4-4-4"
-                      />
-                    </svg>
-                  )}
-                </span>
-              </div>
-
-              <div
-                onClick={() => handleSort("status")}
-                className="px-4 py-2 border-r border-white/20 flex items-center justify-between cursor-pointer select-none"
-              >
-                <span>Status</span>
-                <span className="ml-2">
-                  {sortConfig.key === "status" ? (
-                    sortConfig.direction === "asc" ? (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 15l7-7 7 7"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    )
-                  ) : (
-                    <svg
-                      className="w-4 h-4 text-white opacity-80"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 10l4-4 4 4M16 14l-4 4-4-4"
-                      />
-                    </svg>
-                  )}
-                </span>
-              </div>
-
-              <div
-                onClick={() => handleSort("remark")}
-                className="px-4 py-2 border-r border-white/20 flex items-center justify-between cursor-pointer select-none"
-              >
-                <span>Remark</span>
-                <span className="ml-2">
-                  {sortConfig.key === "remark" ? (
-                    sortConfig.direction === "asc" ? (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 15l7-7 7 7"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    )
-                  ) : (
-                    <svg
-                      className="w-4 h-4 text-white opacity-80"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 10l4-4 4 4M16 14l-4 4-4-4"
-                      />
-                    </svg>
-                  )}
-                </span>
-              </div>
-
-              <div
-                onClick={() => handleSort("remark2")}
-                className="px-4 py-2 border-r border-white/20 flex items-center justify-between cursor-pointer select-none"
-              >
-                <span>Remark2</span>
-                <span className="ml-2">
-                  {sortConfig.key === "remark2" ? (
-                    sortConfig.direction === "asc" ? (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 15l7-7 7 7"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    )
-                  ) : (
-                    <svg
-                      className="w-4 h-4 text-white opacity-80"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 10l4-4 4 4M16 14l-4 4-4-4"
-                      />
-                    </svg>
-                  )}
-                </span>
-              </div>
-
-              <div
-                onClick={() => handleSort("remark3")}
-                className="px-4 py-2 flex items-center justify-between cursor-pointer select-none"
-              >
-                <span>Remark3</span>
-                <span className="ml-2">
-                  {sortConfig.key === "remark3" ? (
-                    sortConfig.direction === "asc" ? (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 15l7-7 7 7"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    )
-                  ) : (
-                    <svg
-                      className="w-4 h-4 text-white opacity-80"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 10l4-4 4 4M16 14l-4 4-4-4"
-                      />
-                    </svg>
-                  )}
-                </span>
-              </div>
-            </div>
 
             {/* Body */}
             {results.length === 0 ? (
               <>
-                <div className="bg-white h-[90px] flex items-center px-6 text-[18px] text-gray-500 border-b">
+                <div className="bg-white h-[45px] flex items-center px-6 text-[15px] text-gray-500 border-b border-gray-200">
                   No data to display
                 </div>
 
-                <div className="bg-white px-6 py-5 text-gray-500">
+                <div className="bg-white px-6 py-2 text-gray-400 border-b border-gray-200 text-[13px]">
                   0 total
                 </div>
               </>
@@ -770,35 +245,49 @@ export default function PhysicalModification() {
                 {results.map((row, index) => (
                   <div
                     key={index}
-                    className="grid grid-cols-[180px_220px_220px_180px_180px_220px_180px_1fr] bg-white border-b border-gray-200 text-[15px]"
+                    className="grid grid-cols-8 bg-[#f2f2f2] border-b border-gray-200 text-[14px] hover:bg-gray-100 transition-colors"
                   >
-                    <div className="px-4 py-4">{row.clientCode}</div>
-                    <div className="px-4 py-4">{row.clientName}</div>
-                    <div className="px-4 py-4">{row.pan}</div>
-                    <div className="px-4 py-4">{row.requestDate}</div>
-                    <div className="px-4 py-4">{row.branchCode}</div>
-                    <div className="px-4 py-4">{row.requestType}</div>
-                    <div className="px-4 py-4 text-green-600">
+                    <div className="px-4 py-2 border-r border-gray-300">{row.clientCode}</div>
+                    <div className="px-4 py-2 border-r border-gray-300">{row.clientName}</div>
+                    <div className="px-4 py-2 border-r border-gray-300">{row.pan}</div>
+                    <div className="px-4 py-2 border-r border-gray-300">{row.requestDate}</div>
+                    <div className="px-4 py-2 border-r border-gray-300">{row.branchCode}</div>
+                    <div className="px-4 py-2 border-r border-gray-300">{row.requestType}</div>
+                    <div className="px-4 py-2 border-r border-gray-300 text-green-600 font-bold">
                       {row.status}
                     </div>
-                    <div className="px-4 py-4">{row.remark}</div>
+                    <div className="px-4 py-2">{row.remark}</div>
                   </div>
                 ))}
 
-                <div className="bg-white px-6 py-5 text-gray-500">
+                <div className="bg-white px-6 py-2 text-black font-bold border-b border-gray-200 text-[14px]">
                   {results.length} total
                 </div>
               </>
             )}
+            </div>
           </div>
         </>
       ) : activeSubTab === "Rekyc Modification" ? (
-        <ReKYCModification />
-      ) : (
-        <div className="flex items-center justify-center h-[400px]">
-          <p className="text-gray-500 text-[18px]">Reactivation TAT content coming soon...</p>
+        <ReKYCModification search={search} />
+      ) : null}
+
+      {/* 🚨 CUSTOM ERROR TOAST */}
+      <div
+        className={`fixed top-5 right-5 bg-[#e50046] text-white rounded-xl shadow-2xl px-6 py-2 min-w-[360px]
+                flex items-center justify-between z-[6000]
+                transition-all duration-500 transform ${showCustomError ? "translate-x-0 opacity-100" : "translate-x-[120%] opacity-0"}`}
+      >
+        <div>
+          <h2 className="text-2xl font-bold -mb-1">Error</h2>
+          <p className="text-base font-semibold">{customErrorMsg}</p>
         </div>
-      )}
-    </>
+        <div className="ml-6 flex items-center">
+          <div className="w-9 h-9 border-[3px] border-white rounded-full relative">
+            <span className="absolute top-1/2 left-1/2 w-4 h-[2.5px] bg-white -translate-x-1/2 -translate-y-1/2 rotate-[-45deg] rounded"></span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

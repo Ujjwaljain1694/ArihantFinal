@@ -45,7 +45,7 @@ export default function NomineePending() {
       {
         clientCode: "CL003",
         clientName: "Amit Kumar",
-        mobile: "9876543212",
+        mobile: "8765432109",
         email: "amit.kumar@email.com",
         nomineeName: "Sunita Devi",
         nomineeRelation: "Wife",
@@ -107,49 +107,40 @@ export default function NomineePending() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f2f2f2] p-6">
+    <div className="bg-white">
       <p className="text-[18px] text-[#222] mb-2 pt-2">
         Search results({results.length})
       </p>
 
       {/* Filter Inputs */}
-      <div className="flex gap-6 mb-8">
+      <div className="flex gap-6 mb-8 mt-4">
         <div className="flex-1">
-          <label className="block text-[14px] font-semibold text-[#333] mb-2">
-            1. Filter by Client
-          </label>
           <input
             type="text"
-            placeholder="Enter client code"
+            placeholder="1. Filter by Client"
             value={filterClient}
             onChange={(e) => setFilterClient(e.target.value)}
-            className="w-full h-[45px] rounded-lg border border-gray-300 px-4 text-[16px] outline-none bg-white"
+            className="w-full h-[45px] rounded-lg border border-gray-300 px-4 text-[15px] outline-none bg-white focus:border-green-500 transition-all"
           />
         </div>
 
         <div className="flex-1">
-          <label className="block text-[14px] font-semibold text-[#333] mb-2">
-            2. Filter by Client Name
-          </label>
           <input
             type="text"
-            placeholder="Enter client name"
+            placeholder="2. Filter by Client Name"
             value={filterClientName}
             onChange={(e) => setFilterClientName(e.target.value)}
-            className="w-full h-[45px] rounded-lg border border-gray-300 px-4 text-[16px] outline-none bg-white"
+            className="w-full h-[45px] rounded-lg border border-gray-300 px-4 text-[15px] outline-none bg-white focus:border-green-500 transition-all"
           />
         </div>
 
         <div className="flex-1">
-          <label className="block text-[14px] font-semibold text-[#333] mb-2">
-            3. Filter by Mobile
-          </label>
           <input
             type="text"
-            placeholder="Enter mobile number"
+            placeholder="3. Filter by Mobile"
             value={filterMobile}
             onChange={(e) => setFilterMobile(e.target.value)}
-            className="w-full h-[45px] rounded-lg border border-gray-300 px-4 text-[16px] outline-none bg-white"
+            className="w-full h-[45px] rounded-lg border border-gray-300 px-4 text-[15px] outline-none bg-white focus:border-green-500 transition-all"
           />
         </div>
       </div>
@@ -258,11 +249,11 @@ export default function NomineePending() {
         {/* Body */}
         {results.length === 0 ? (
           <>
-            <div className="bg-white h-[90px] flex items-center px-6 text-[18px] text-gray-500 border-b">
+            <div className="bg-[#f2f2f2] h-[90px] flex items-center px-6 text-[18px] text-gray-500 border-x border-b border-gray-300">
               No data to display
             </div>
 
-            <div className="bg-white px-6 py-5 text-gray-500">
+            <div className="bg-[#f2f2f2] px-6 py-5 text-gray-500 border-x border-b border-gray-300">
               0 total
             </div>
           </>
@@ -271,40 +262,40 @@ export default function NomineePending() {
             {results.map((row, index) => (
               <div
                 key={index}
-                className="grid grid-cols-4 bg-white border-b border-gray-200 text-[15px]"
+                className="grid grid-cols-4 bg-[#f2f2f2] border-x border-b border-gray-300 text-[15px] hover:bg-gray-200 transition-colors"
               >
-                <div className="px-4 py-4">{row.clientCode}</div>
-                <div className="px-4 py-4">{row.clientName}</div>
-                <div className="px-4 py-4">
+                <div className="px-4 py-2 border-r border-gray-200">{row.clientCode}</div>
+                <div className="px-4 py-2 border-r border-gray-200">{row.clientName}</div>
+                <div className="px-4 py-2 border-r border-gray-200">
                   {visibleData[index] ? (
-                    <span className="cursor-pointer hover:text-blue-600" onClick={() => toggleVisibility('mobile', index)}>
+                    <span className="cursor-pointer hover:text-blue-600 inline-flex items-center" onClick={() => toggleVisibility('mobile', index)}>
                       {row.mobile}
-                      <EyeOff size={10} className="ml-2" />
+                      <EyeOff size={14} className="ml-2 opacity-50" />
                     </span>
                   ) : (
-                    <span className="cursor-pointer hover:text-blue-600" onClick={() => toggleVisibility('mobile', index)}>
-                      {row.mobile.replace(/(\d{3})(\d{2})(\d)/, '$1***$2***$3')}
-                      <Eye size={10} className="ml-2" />
+                    <span className="cursor-pointer hover:text-blue-600 inline-flex items-center" onClick={() => toggleVisibility('mobile', index)}>
+                      {row.mobile.substring(0, 2)}xxxxxx{row.mobile.substring(8)}
+                      <Eye size={14} className="ml-2 opacity-50" />
                     </span>
                   )}
                 </div>
-                <div className="px-4 py-4">
+                <div className="px-4 py-2">
                   {visibleData[index] ? (
-                    <span className="cursor-pointer hover:text-blue-600" onClick={() => toggleVisibility('email', index)}>
+                    <span className="cursor-pointer hover:text-blue-600 inline-flex items-center" onClick={() => toggleVisibility('email', index)}>
                       {row.email}
-                      <EyeOff size={10} className="ml-2" />
+                      <EyeOff size={14} className="ml-2 opacity-50" />
                     </span>
                   ) : (
-                    <span className="cursor-pointer hover:text-blue-600" onClick={() => toggleVisibility('email', index)}>
-                      {row.email.replace(/(.{2})(.*@(.{2}).*)/, '$***@$3***')}
-                      <Eye size={10} className="ml-2" />
+                    <span className="cursor-pointer hover:text-blue-600 inline-flex items-center" onClick={() => toggleVisibility('email', index)}>
+                      {row.email.substring(0, 2)}xxxxxx@{row.email.split('@')[1]}
+                      <Eye size={14} className="ml-2 opacity-50" />
                     </span>
                   )}
                 </div>
               </div>
             ))}
 
-            <div className="bg-white px-6 py-5 text-gray-500">
+            <div className="bg-[#f2f2f2] px-6 py-2 text-gray-500 border-x border-b border-gray-300">
               {results.length} total
             </div>
           </>

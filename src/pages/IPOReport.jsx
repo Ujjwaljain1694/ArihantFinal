@@ -5,6 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { validateDates } from "../utils/dateValidation";
 import { toast } from "react-toastify";
 import { Calendar } from "lucide-react";
+import CalendarHeader from "../components/common/CalendarHeader";
 
 const IPOReport = () => {
     const [fromDate, setFromDate] = useState(null);
@@ -69,6 +70,7 @@ const IPOReport = () => {
                                     dateFormat="dd/MM/yyyy"
                                     placeholderText="DD/MM/YYYY"
                                     maxDate={new Date()}
+                                    renderCustomHeader={(props) => <CalendarHeader {...props} />}
                                     className="px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:border-[#34b350] text-sm w-56 bg-white shadow-sm transition-all h-[48px] font-bold"
                                     ref={fromRef}
                                     onFocus={(e) => e.target.blur()}
@@ -89,6 +91,7 @@ const IPOReport = () => {
                                     dateFormat="dd/MM/yyyy"
                                     placeholderText="DD/MM/YYYY"
                                     maxDate={new Date()}
+                                    renderCustomHeader={(props) => <CalendarHeader {...props} />}
                                     className="px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:border-[#34b350] text-sm w-56 bg-white shadow-sm transition-all h-[48px] font-bold"
                                     ref={toRef}
                                     onFocus={(e) => e.target.blur()}

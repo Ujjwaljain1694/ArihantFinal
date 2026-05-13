@@ -1,6 +1,7 @@
 import React from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import CalendarHeader from "./CalendarHeader";
 
 const FilterBar = ({ children }) => {
   return (
@@ -33,6 +34,7 @@ export const SearchInput = ({ placeholder = "Search", width = "220px", value, on
     </div>
 );
 
+
 export const DateInput = ({ selected, onChange, placeholder = "DD/MM/YYYY", width = "140px", error }) => {
     const dateRef = React.useRef();
     return (
@@ -43,6 +45,7 @@ export const DateInput = ({ selected, onChange, placeholder = "DD/MM/YYYY", widt
                 dateFormat="dd/MM/yyyy"
                 placeholderText={placeholder}
                 maxDate={new Date()}
+                renderCustomHeader={(props) => <CalendarHeader {...props} />}
                 className={`h-[44px] border rounded-lg px-3 text-[13px] text-gray-700 font-bold outline-none bg-white focus:border-[#34b350] transition-all ${error ? "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.5)]" : "border-gray-200"}`}
                 style={{ width }}
                 ref={dateRef}

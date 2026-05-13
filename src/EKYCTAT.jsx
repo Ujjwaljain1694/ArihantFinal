@@ -47,7 +47,7 @@ export default function EKYCTAT () {
           <tr>
             <th
               colSpan="4"
-              className="border border-gray-300 bg-[#f2f2f2] py-4 font-medium text-center"
+              className="border border-gray-300 bg-white py-6 font-bold text-[22px] text-center"
             >
               Online account open via e-KYC
             </th>

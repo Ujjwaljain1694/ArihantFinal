@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import Header from "./Header.jsx";
 import contestImage from "./assets/contest.jpg";
 // Import 6 contest images
@@ -13,7 +14,7 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 
 function Contests() {
   const [activeTab, setActiveTab] = useState("contest");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
   const [data, setData] = useState([
     { branch: "BRAP05", client: "188003119", name: "ANAND PATEL", email: "*****@yahoo.com", mobile: "******5" },
     { branch: "BRAP05", client: "AP0110283", name: "RADHESHYAM PANCHAL", email: "*****@gmail.com", mobile: "******1" },
@@ -21,6 +22,39 @@ function Contests() {
     { branch: "BRAP05", client: "138000287", name: "SHOBHA LALWANI", email: "*****@gmail.com", mobile: "******2" },
   ]);
   const navigate = useNavigate();
+
+  // SORT
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    } else if (sortConfig.key === key && sortConfig.direction === "desc") {
+      direction = "";
+    }
+
+    let sorted = [...data];
+    if (direction !== "") {
+      sorted.sort((a, b) => {
+        if (a[key] < b[key]) return direction === "asc" ? -1 : 1;
+        if (a[key] > b[key]) return direction === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+    setSortConfig({ key, direction });
+    setData(sorted);
+  };
+
+  // SORT ICON (MATCHING HOLDING REPORT)
+  const renderSortIcon = (column) => {
+    if (sortConfig.key === column) {
+      return sortConfig.direction === "asc" ? (
+        <ChevronUp size={14} className="text-white ml-2" />
+      ) : (
+        <ChevronDown size={14} className="text-white ml-2" />
+      );
+    }
+    return <ChevronsUpDown size={14} className="text-white/60 ml-2" />;
+  };
 
   return (
     <div className="download-container">
@@ -79,40 +113,55 @@ function Contests() {
         )}
 
         {activeTab === "data" && (
-          <div className="bg-white border border-gray-200 rounded-b-md py-3">
+          <div className="bg-white border border-gray-200 rounded-b-md py-3 shadow-sm">
             {/* Header */}
-            <div className="px-6 py-2 text-sm text-gray-700 pb-8px">
+            <div className="px-6 py-2 text-sm text-gray-700 pb-8px font-semibold">
               Search results ({data.length})
             </div>
 
             {/* Table */}
             <table className="w-[95%] mx-auto text-[12px] border border-gray-300 table-fixed">
               <thead>
-                <tr className="bg-[#2fb344] text-white">
-                  <th className="px-3 py-2 border-r border-gray-200">
-                    Branch
+                <tr className="bg-[#1EB04C] text-white">
+                  <th className="px-3 py-3 border-r border-white/10 cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort("branch")}>
+                    <div className="flex items-center justify-between">
+                      <span className="uppercase font-bold tracking-wider">Branch Code</span>
+                      {renderSortIcon("branch")}
+                    </div>
                   </th>
-                  <th className="px-3 py-2 border-r border-gray-200">
-                    Client
+                  <th className="px-3 py-3 border-r border-white/10 cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort("client")}>
+                    <div className="flex items-center justify-between">
+                      <span className="uppercase font-bold tracking-wider">Client Code</span>
+                      {renderSortIcon("client")}
+                    </div>
                   </th>
-                  <th className="px-3 py-2 border-r border-gray-200">
-                    Name
+                  <th className="px-3 py-3 border-r border-white/10 cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort("name")}>
+                    <div className="flex items-center justify-between">
+                      <span className="uppercase font-bold tracking-wider">Name</span>
+                      {renderSortIcon("name")}
+                    </div>
                   </th>
-                  <th className="px-3 py-2 border-r border-gray-200">
-                    Email
+                  <th className="px-3 py-3 border-r border-white/10 cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort("email")}>
+                    <div className="flex items-center justify-between">
+                      <span className="uppercase font-bold tracking-wider">Email</span>
+                      {renderSortIcon("email")}
+                    </div>
                   </th>
-                  <th className="px-3 py-2">
-                    Mobile
+                  <th className="px-3 py-3 border-white/10 cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort("mobile")}>
+                    <div className="flex items-center justify-between">
+                      <span className="uppercase font-bold tracking-wider">Mobile Number</span>
+                      {renderSortIcon("mobile")}
+                    </div>
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {data.map((item, index) => (
-                  <tr key={index} className="border-b border-gray-200">
+                  <tr key={index} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
                     <td className="px-3 py-2 border-r border-gray-200">
                       {item.branch}
                     </td>
-                    <td className="px-3 py-2 border-r border-gray-200">
+                    <td className="px-3 py-2 border-r border-gray-200 font-semibold">
                       {item.client}
                     </td>
                     <td className="px-3 py-2 border-r border-gray-200">

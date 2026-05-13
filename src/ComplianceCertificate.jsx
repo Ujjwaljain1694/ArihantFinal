@@ -17,7 +17,7 @@ export default function ComplianceCertificate() {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen p-6">
+    <div className="bg-white min-h-screen p-6">
       <div className="bg-white rounded-lg shadow p-6">
 
         {/* SUB TABS */}

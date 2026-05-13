@@ -77,10 +77,17 @@ export default function FollowUpReport() {
 
   // 🔹 Apply validation
   const handleApply = () => {
-    if (!search.trim() || !selectedDate) {
-      setErrorMessage("please enter a valid client code");
+    if (!search.trim()) {
+      setErrorMessage("Please Enter Client Code");
       setShowError(true);
       setTimeout(() => setShowError(false), 3000);
+      return;
+    }
+    if (!selectedDate) {
+      setErrorMessage("Please Select Date");
+      setShowError(true);
+      setTimeout(() => setShowError(false), 3000);
+      return;
     }
   };
 
@@ -119,7 +126,7 @@ export default function FollowUpReport() {
                     placeholder="Search client code"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-10 pr-4 h-[44px] rounded-full border border-gray-300 w-[250px] bg-white outline-none focus:border-green-600 transition-all"
+                    className={`pl-10 pr-4 h-[44px] rounded-full border bg-white outline-none focus:border-green-600 transition-all ${showError && !search.trim() ? "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.5)]" : "border-gray-300"}`}
                   />
                   <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
                 </div>
@@ -129,7 +136,7 @@ export default function FollowUpReport() {
               <div ref={calendarRef}>
                 <p className="text-sm text-black mb-0 pb-2">As On (Date)</p>
                 <div className="relative group">
-                  <div className="flex items-center bg-white border border-gray-300 rounded-lg px-4 h-[44px] w-[250px] focus-within:border-green-600 transition-all">
+                  <div className={`flex items-center bg-white border rounded-lg px-4 h-[44px] w-[250px] focus-within:border-green-600 transition-all ${showError && search.trim() && !selectedDate ? "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.5)]" : "border-gray-300"}`}>
                     <input
                       type="text"
                       placeholder="DD/MM/YYYY"
@@ -174,21 +181,23 @@ export default function FollowUpReport() {
           </div>
         </div>
 
-        {/* ERROR POPUP (RIGHT SIDE) */}
-        {showError && (
-          <div className="fixed top-4 right-4 bg-red-600 text-white px-8 py-4 rounded-lg shadow-lg z-50 flex items-center justify-between min-w-[350px] transition-all duration-300 ease-in-out mt-12">
-            <div>
-              <p className="font-semibold text-lg">Error</p>
-              <p className="text-sm">{errorMessage}</p>
-            </div>
-            <div
-              onClick={() => setShowError(false)}
-              className="w-6 h-6 border-2 border-white rounded-full flex items-center justify-center cursor-pointer"
-            >
-              <span className="text-xs">×</span>
+        {/* 🚨 CUSTOM ERROR TOAST */}
+        <div
+          className={`fixed top-5 right-5 bg-[#e50046] text-white rounded-xl shadow-2xl px-6 py-2 min-w-[360px]
+                  flex items-center justify-between z-[60000]
+                  transition-all duration-500 transform ${showError ? "translate-x-0 opacity-100" : "translate-x-[120%] opacity-0"}`}
+        >
+          <div>
+            <h2 className="text-2xl font-bold -mb-1 text-white">Error</h2>
+            <p className="text-base font-semibold text-white">{errorMessage}</p>
+          </div>
+          <div className="ml-6 flex items-center">
+            <div className="w-9 h-9 border-[3px] border-white rounded-full relative">
+              <span className="absolute top-1/2 left-1/2 w-4 h-[2.5px] bg-white -translate-x-1/2 -translate-y-1/2 rotate-[-45deg] rounded"></span>
+              <span className="absolute top-1/2 left-1/2 w-4 h-[2.5px] bg-white -translate-x-1/2 -translate-y-1/2 rotate-[45deg] rounded"></span>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Meaning Text */}
         <div className="flex items-center justify-center gap-8 my-16">

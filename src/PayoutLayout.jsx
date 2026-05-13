@@ -7,7 +7,7 @@ const PayoutLayout = ({ children }) => {
   const tabs = [
     { name: "Payout", path: "/payout" },
     { name: "Bulk Payout", path: "/bulk-payout" },
-    { name: "Payout Request", path: "/payout-request" },
+    { name: "Payout Report", path: "/payout-report" },
     { name: "Cancel Request", path: "/cancel-request" },
   ];
 

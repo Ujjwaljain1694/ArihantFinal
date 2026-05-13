@@ -4,7 +4,7 @@ import { getPayoutReport } from "./api/apiService";
 import useFetch from "./hooks/useFetch";
 import { ChevronUp, ChevronDown, ChevronsUpDown, XCircle, Search, AlertCircle, FileText, CheckCircle } from "lucide-react";
 
-const PayoutRequest = () => {
+const PayoutReport = () => {
   const [date, setDate] = useState("");
   const [showError, setShowError] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
@@ -62,26 +62,30 @@ const PayoutRequest = () => {
 
   const handleDownload = () => {
     if (sortedData.length === 0) return;
-    const headers = ["Date", "Client Code", "Client Name", "BankAccount", "Request Amount", "Status"];
-    const csvContent = [
-      headers.join(","),
-      ...sortedData.map(item => [
-        item.date,
-        item.clientCode,
-        item.clientName,
-        item.bankAccount,
-        item.amount.replace(/,/g, ''),
-        item.status
-      ].join(","))
-    ].join("\n");
+    const csv = [
+      ["Date", "Client Code", "Client Name", "Bank Account", "Amount", "Status"],
+      ...sortedData.map((item) => [
+        item.date || "",
+        item.clientCode || "",
+        `"${item.clientName || ""}"`, // Wrap in quotes to handle commas in names
+        item.bankAccount || "",
+        (item.amount || "").toString().replace(/,/g, ''),
+        item.status || ""
+      ]),
+    ]
+      .map((row) => row.join(","))
+      .join("\n");
 
-    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute("download", `Payout_Request_${date || "Report"}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const blob = new Blob(["\uFEFF" + csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Payout_Report_${date || "All"}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -218,4 +222,4 @@ const PayoutRequest = () => {
   );
 };
 
-export default PayoutRequest;
+export default PayoutReport;

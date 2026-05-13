@@ -4,13 +4,14 @@ import banner from "./assets/position-call-banner.jpg";
 import '@fortawesome/fontawesome-free/css/all.css';
 import logo from "./logo-arihant-capital.png";
 import Header from "./Header.jsx";
+import ArihantProductsSection from "./ArihantProducts.jsx";
 
 function ResearchSection() {
   const [activeTab, setActiveTab] = useState("zoom");
   const navigate = useNavigate();
 
   return (
-    <div className="bg-gray-100 min-h-screen">
+    <div className="bg-white min-h-screen">
       <Header />
 
       <div className="mt-20 px-6">
@@ -53,6 +54,8 @@ function ResearchSection() {
         </div>
 
       </div>
+
+      <ArihantProductsSection />
 
     </div>
   );

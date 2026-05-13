@@ -9,6 +9,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { validateDates } from "../utils/dateValidation";
 import { toast } from "react-toastify";
 import { getBrokerageLedger } from "../api/apiService";
+import CalendarHeader from "../components/common/CalendarHeader";
 
 const clientCodesList = [
     "23CGST - 23CGSTMadhya Pradesh",
@@ -158,6 +159,7 @@ const Ledger = () => {
         item.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+
     return (
         <div className="px-0 pt-4 pb-10 max-w-[1600px] mx-auto">
             {/* 🧭 SUB TABS */}
@@ -222,7 +224,9 @@ const Ledger = () => {
                                     dateFormat="dd/MM/yyyy"
                                     placeholderText="DD/MM/YYYY"
                                     maxDate={new Date()}
-                                    className={`h-[44px] w-[150px] border rounded-lg px-3 text-[13px] text-black font-bold outline-none bg-white focus:border-[#34b350] transition-all ${showCustomError && !fromDate ? "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.5)]" : "border-gray-200"}`}
+                                    renderCustomHeader={(props) => <CalendarHeader {...props} />}
+                                    className={`h-[44px] w-[150px] border rounded-lg pl-3 pr-10 text-[13px] text-black font-bold outline-none bg-white focus:border-[#34b350] transition-all ${showCustomError && !fromDate ? "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.5)]" : "border-gray-200"}`}
+                                    wrapperClassName="w-full"
                                     ref={fromRef}
                                     onFocus={(e) => e.target.blur()}
                                 />
@@ -243,7 +247,9 @@ const Ledger = () => {
                                     dateFormat="dd/MM/yyyy"
                                     placeholderText="DD/MM/YYYY"
                                     maxDate={new Date()}
-                                    className={`h-[44px] w-[160px] border rounded-lg px-3 text-[13px] text-black font-bold outline-none bg-white focus:border-[#34b350] transition-all ${showCustomError && !toDate ? "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.5)]" : "border-gray-200"}`}
+                                    renderCustomHeader={(props) => <CalendarHeader {...props} />}
+                                    className={`h-[44px] w-[160px] border rounded-lg pl-3 pr-10 text-[13px] text-black font-bold outline-none bg-white focus:border-[#34b350] transition-all ${showCustomError && !toDate ? "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.5)]" : "border-gray-200"}`}
+                                    wrapperClassName="w-full"
                                     ref={toRef}
                                     onFocus={(e) => e.target.blur()}
                                 />

@@ -1,11 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Header from "./Header.jsx";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import CalendarHeader from "./components/common/CalendarHeader";
 
 export default function ComplianceCircular() {
   const [data, setData] = useState([]);
   const [type, setType] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
+  const fromRef = useRef();
+  const toRef = useRef();
   const [showError, setShowError] = useState(false);
   const [sortConfig, setSortConfig] = useState({
     key: "",
@@ -79,10 +84,10 @@ export default function ComplianceCircular() {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen">
+    <div className="bg-white min-h-screen">
       <Header />
 
-      <div className="p-6 pt-0">
+      <div className="p-6 pt-6">
 
         {/* FILTER SECTION */}
         <div className="bg-gray-200 p-5 rounded-lg flex flex-wrap gap-6 items-end pt-3 pb-4 ">
@@ -90,23 +95,45 @@ export default function ComplianceCircular() {
           {/* FROM DATE */}
           <div className="mt-0">
             <p className="text-sm mb-1">From Date</p>
-            <input
-              type="date"
-              className="px-4 py-2 rounded border w-52"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-            />
+            <div className="relative group">
+              <DatePicker
+                selected={fromDate}
+                onChange={(d) => setFromDate(d)}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="DD/MM/YYYY"
+                maxDate={new Date()}
+                renderCustomHeader={(props) => <CalendarHeader {...props} />}
+                className="px-4 py-2 rounded border w-52 bg-white outline-none focus:border-[#34b350] transition-all"
+                ref={fromRef}
+                onFocus={(e) => e.target.blur()}
+              />
+              <i
+                className="fa fa-calendar absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 group-hover:text-[#34b350] transition-colors"
+                onClick={() => fromRef.current.setOpen(true)}
+              />
+            </div>
           </div>
 
           {/* TO DATE */}
           <div className="mt-0">
             <p className="text-sm mb-1">To Date</p>
-            <input
-              type="date"
-              className="px-4 py-2 rounded border w-52"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-            />
+            <div className="relative group">
+              <DatePicker
+                selected={toDate}
+                onChange={(d) => setToDate(d)}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="DD/MM/YYYY"
+                maxDate={new Date()}
+                renderCustomHeader={(props) => <CalendarHeader {...props} />}
+                className="px-4 py-2 rounded border w-52 bg-white outline-none focus:border-[#34b350] transition-all"
+                ref={toRef}
+                onFocus={(e) => e.target.blur()}
+              />
+              <i
+                className="fa fa-calendar absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 group-hover:text-[#34b350] transition-colors"
+                onClick={() => toRef.current.setOpen(true)}
+              />
+            </div>
           </div>
 
           {/* DROPDOWN */}

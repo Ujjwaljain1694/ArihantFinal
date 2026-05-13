@@ -1,7 +1,7 @@
 import React from 'react';
 import Dashboard from './Dashboard';
 import Payout from './Payout';
-import PayoutRequest from './PayoutRequest';
+import PayoutReport from './PayoutReport';
 import BulkPayout from './BulkPayout.jsx';
 import CancelRequest from './CancelRequest';
 import DealSlip from './DealSlip';
@@ -61,7 +61,7 @@ function App() {
           <Route path="/third-party" element={<ThirdParty />} />
           <Route path="/profile" element={<ProfileBeta />} />
           <Route path="/payout" element={<Payout />} />
-          <Route path="/payout-request" element={<PayoutRequest />} />
+          <Route path="/payout-report" element={<PayoutReport />} />
           <Route path="/bulk-payout" element={<BulkPayout />} />
           <Route path="/cancel-request" element={<CancelRequest />} />
           <Route path="/clicktocall" element={<ClickToCall />} />
