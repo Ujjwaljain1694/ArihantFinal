@@ -103,7 +103,7 @@ export default function FollowUpReport() {
         {/* TABS CONTAINER */}
         <div className="bg-white rounded-[18px] shadow-sm px-7 pt-6 pb-0">
           <div className="flex gap-8 text-sm border-b border-gray-300 pb-3">
-            <button 
+            <button
               onClick={() => navigate("/clicktocall")}
               className="pb-2 text-gray-500 hover:text-black transition-colors"
             >
@@ -145,20 +145,20 @@ export default function FollowUpReport() {
                       className="outline-none text-sm w-full font-medium cursor-pointer"
                       onClick={() => setShowCalendar(!showCalendar)}
                     />
-                    <Calendar 
-                      className="text-gray-400 cursor-pointer hover:text-green-600 transition-colors" 
+                    <Calendar
+                      className="text-gray-400 cursor-pointer hover:text-green-600 transition-colors"
                       size={18}
                       onClick={() => setShowCalendar(!showCalendar)}
                     />
                   </div>
-                  
+
                   {/* Calendar Popup */}
                   {showCalendar && (
                     <div className="absolute top-full mt-2 left-0 bg-white border border-gray-300 rounded-lg shadow-xl p-3 z-50 w-64 animate-in fade-in zoom-in duration-200">
                       <div className="flex items-center justify-between mb-3">
-                        <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-gray-100 rounded-full transition-colors"><ChevronLeft size={16}/></button>
+                        <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-gray-100 rounded-full transition-colors"><ChevronLeft size={16} /></button>
                         <h3 className="font-bold text-sm text-gray-800">{currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h3>
-                        <button onClick={() => changeMonth(1)} className="p-1 hover:bg-gray-100 rounded-full transition-colors"><ChevronRight size={16}/></button>
+                        <button onClick={() => changeMonth(1)} className="p-1 hover:bg-gray-100 rounded-full transition-colors"><ChevronRight size={16} /></button>
                       </div>
                       <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-gray-400 uppercase mb-2">
                         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => <div key={day}>{day}</div>)}
@@ -170,7 +170,7 @@ export default function FollowUpReport() {
               </div>
 
               {/* Apply Button */}
-              <button 
+              <button
                 onClick={handleApply}
                 className="bg-green-600 hover:bg-green-700 text-white px-10 h-[44px] rounded-full font-bold text-sm shadow-md transition-all active:scale-95 flex items-center gap-2"
               >

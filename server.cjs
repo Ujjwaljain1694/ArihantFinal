@@ -13,10 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/otp-system', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/otp-system')
 .then(() => console.log('MongoDB Connected'))
 .catch(err => console.log('MongoDB Connection Error:', err));
 
@@ -45,13 +42,29 @@ function generateOTP() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+// Demo Branch Mapping
+const branchMobileMap = {
+    'MP21': '8349509911',
+    'BR001': '8959928800'
+};
+
 // Send OTP API
 app.post('/api/send-otp', async (req, res) => {
     try {
-        const { mobile } = req.body;
+        let { mobile, branchCode, manager_id } = req.body;
+        
+        // Support multiple field names for branch code
+        const bCode = branchCode || manager_id;
+
+        if (!mobile && bCode) {
+            mobile = branchMobileMap[bCode];
+            if (!mobile) {
+                return res.status(400).json({ success: false, message: 'Invalid branch code' });
+            }
+        }
 
         if (!mobile) {
-            return res.status(400).json({ success: false, message: 'Mobile number is required' });
+            return res.status(400).json({ success: false, message: 'Mobile number or Branch Code is required' });
         }
 
         // Generate OTP
@@ -83,7 +96,13 @@ app.post('/api/send-otp', async (req, res) => {
 // Verify OTP API
 app.post('/api/verify-otp', async (req, res) => {
     try {
-        const { mobile, otp } = req.body;
+        let { mobile, otp, branchCode, manager_id } = req.body;
+        
+        const bCode = branchCode || manager_id;
+
+        if (!mobile && bCode) {
+            mobile = branchMobileMap[bCode];
+        }
 
         if (!mobile || !otp) {
             return res.status(400).json({ success: false, message: 'Mobile number and OTP are required' });
