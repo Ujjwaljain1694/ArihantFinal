@@ -1,188 +1,142 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { getCsrfToken, sendOtp, verifyOtp } from './api/authApi';
 import banner from './left-banner.svg';
 import logo from './logo-arihant-capital.png';
 import smartphone from './smartphone.svg';
 import Footer from './Footer';
 
 const LoginPage = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [branchCode, setBranchCode] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [showOTP, setShowOTP] = useState(false);
-  const [showLoader, setShowLoader] = useState(false);
   const [otp, setOTP] = useState('');
   const [otpError, setOTPError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [token, setToken] = useState('');
+  const [csrfToken, setCsrfToken] = useState('');
+  const [maskedMobile, setMaskedMobile] = useState('+91******000');
 
   // Resend timer states
-  const [resendTimer, setResendTimer] = useState(120);
   const [canResend, setCanResend] = useState(false);
+  const [resendTimer, setResendTimer] = useState(120);
 
-  // Start resend timer
+  useEffect(() => {
+    let timer;
+    if (showOTP && resendTimer > 0) {
+      timer = setInterval(() => {
+        setResendTimer(prev => prev - 1);
+      }, 1000);
+    } else if (resendTimer === 0) {
+      setCanResend(true);
+    }
+    return () => clearInterval(timer);
+  }, [showOTP, resendTimer]);
+
   const startResendTimer = () => {
     setCanResend(false);
     setResendTimer(120);
-
-    const timer = setInterval(() => {
-      setResendTimer((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setCanResend(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
   };
 
-  // STEP 1: Branch Code Verification API Call
-  const handleBranchCodeSubmit = async (e) => {
-    e.preventDefault();
+  const handleSendOTP = async (e) => {
+    if (e) e.preventDefault();
 
-    // Handle empty branch code
     if (!branchCode.trim()) {
-      setError('Please enter your branch code');
+      toast.error('Please enter Branch Code');
       return;
     }
 
     setLoading(true);
     setError('');
+    setSuccess('');
 
     try {
-      const response = await axios.post(
-        'http://localhost:5000/api/send-otp',
-        {
-          manager_id: branchCode.trim()
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const csrfRes = await getCsrfToken(branchCode.trim());
+      const currentCsrf = csrfRes.data?.message;
 
-      console.log('Branch Code API Response:', response.data);
-
-      // STEP 2: Show OTP card on success
-      setShowOTP(true);
-      startResendTimer();
-
-    } catch (error) {
-      console.error('Branch Code API Error:', error);
-
-      // STEP 5: Error handling
-      if (error.response) {
-        // Server responded with error status
-        setError(error.response.data.message || 'Invalid branch code. Please try again.');
-      } else if (error.request) {
-        // Network error
-        setError('Network error. Please check your connection and try again.');
-      } else {
-        // Other error
-        setError('An error occurred. Please try again.');
+      if (!currentCsrf) {
+        throw new Error('Failed to obtain security token');
       }
+      setCsrfToken(currentCsrf);
+
+      const response = await sendOtp(branchCode.trim(), currentCsrf);
+
+      if (response.data && response.data.success) {
+        const mobile = response.data.result?.mobile || '';
+        if (mobile) setMaskedMobile(`+91${mobile}`);
+
+        setShowOTP(true);
+        setSuccess('OTP sent successfully!');
+        toast.success('OTP sent successfully!');
+        startResendTimer();
+      } else {
+        toast.error(response.data?.message || 'Failed to send OTP');
+      }
+    } catch (error) {
+      console.error('Send OTP full error:', error?.response);
+      const message = error?.response?.data?.message || error?.message || 'Failed to send OTP. Please try again.';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Simple OTP functions (without Firebase)
-  const sendOTP = (mobile) => {
-    setLoading(true);
-    setError('');
-
-    console.log(' Simulating OTP to:', mobile);
-
-    // Simulate OTP sending
-    setTimeout(() => {
-      setShowOTP(true);
-      setLoading(false);
-      console.log(' OTP simulated to:', mobile);
-      alert('OTP sent! (For demo: 123456)');
-      // Start timer when OTP is sent
-      startResendTimer();
-    }, 2000);
-  };
-
-  // STEP 3: OTP Verification API Call
-  const handleOTPSubmit = async (e) => {
+  const handleVerifyOTP = async (e) => {
     e.preventDefault();
 
-    // Handle empty OTP
-    if (!otp.trim()) {
-      setOTPError('Please enter your OTP');
+    if (otp.length !== 6) {
+      toast.error('Please enter valid 6-digit OTP');
       return;
     }
 
     setLoading(true);
-    setOTPError('');
+    setError('');
+    setSuccess('');
 
     try {
-      const response = await axios.post(
-        'http://localhost:5000/api/verify-otp',
-        {
-          manager_id: branchCode.trim(),
-          otp: otp.trim()
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await verifyOtp(branchCode, otp, csrfToken);
 
-      console.log('OTP Verification API Response:', response.data);
+      if (response.data && response.data.success) {
+        setSuccess('OTP verified successfully!');
+        toast.success('OTP verified successfully!');
 
-      // STEP 4: Store token and show main content
-      const authToken = response.data.token || response.data.access_token;
-      if (authToken) {
-        localStorage.setItem('authToken', authToken);
-        localStorage.setItem('branchCode', branchCode.trim());
         localStorage.setItem('isLoggedIn', 'true');
-        setToken(authToken);
+        localStorage.setItem('branchCode', branchCode);
+        if (response.data.result) {
+          localStorage.setItem('userData', JSON.stringify(response.data.result));
+        }
+
         setIsAuthenticated(true);
-        setShowOTP(false);
-        console.log('Login Successful! Token stored.');
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1500);
       } else {
-        setOTPError('Login successful but no token received. Please try again.');
+        toast.error(response.data?.message || 'Invalid OTP');
       }
-
     } catch (error) {
-      console.error('OTP Verification API Error:', error);
-
-      // STEP 5: Error handling
-      if (error.response) {
-        // Server responded with error status
-        setOTPError(error.response.data.message || 'Invalid OTP. Please try again.');
-      } else if (error.request) {
-        // Network error
-        setOTPError('Network error. Please check your connection and try again.');
-      } else {
-        // Other error
-        setOTPError('An error occurred. Please try again.');
-      }
+      console.error('Verify OTP full error:', error?.response);
+      const message = error?.response?.data?.message || error?.message || 'Failed to verify OTP. Please try again.';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Resend OTP function
   const resendOTP = () => {
     if (!canResend) return;
-
-    console.log('📱 Resending OTP...');
-    alert('OTP resent! (For demo: 123456)');
-
-    // Restart timer
-    startResendTimer();
+    handleSendOTP();
   };
 
   return (
     <div className="login-container min-h-screen flex flex-col bg-[#f1f9f2]">
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+      
       {/* Loading Overlay */}
-      {showLoader && (
+      {loading && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] backdrop-blur-sm">
           <div className="text-center text-white">
             <div className="flex gap-3 mb-6 justify-center">
@@ -252,7 +206,7 @@ const LoginPage = () => {
                 <p className="text-[#666] text-[0.85rem] font-medium">Get access to the detailed reports</p>
               </div>
 
-              <form className="mb-4" onSubmit={handleBranchCodeSubmit}>
+              <form className="mb-4" onSubmit={handleSendOTP}>
                 <div className="mb-4 text-left">
                   <label htmlFor="branchCode" className="block mb-1.5 font-bold text-[#333] text-[0.8rem]">
                     Enter Your Branch Code *
@@ -264,7 +218,7 @@ const LoginPage = () => {
                     placeholder="Enter Your Branch Code*"
                     value={branchCode}
                     onChange={(e) => {
-                      setBranchCode(e.target.value);
+                      setBranchCode(e.target.value.toUpperCase());
                       if (error) setError('');
                     }}
                   />
@@ -291,27 +245,29 @@ const LoginPage = () => {
             <div className="bg-white rounded-[30px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-10 w-full max-w-[450px] animate-fadeIn text-center font-sans">
               <div className="mb-6">
                 <h2 className="text-[1.8rem] font-bold text-[#333] mb-2 leading-tight">Verify Access</h2>
-                <p className="text-[#666] text-sm font-medium mb-4">OTP Sent on +91******911</p>
+                <p className="text-[#666] text-sm font-medium mb-4">OTP Sent on {maskedMobile}</p>
               </div>
 
               <img src={smartphone} alt="Smartphone" className="w-14 h-14 my-4 opacity-80 block mx-auto" />
 
-              <form className="mb-4" onSubmit={handleOTPSubmit}>
+              <form className="mb-4" onSubmit={handleVerifyOTP}>
                 <div className="mb-5 px-2 text-left">
                   <label htmlFor="otp" className="block mb-2 font-bold text-[#333] text-[0.85rem]">Enter OTP</label>
                   <input
                     type="text"
                     id="otp"
-                    className={`w-full px-4 py-3 border border-gray-300 rounded-xl text-[1.1rem] text-center tracking-[0.25rem] font-medium transition-all focus:outline-none focus:ring-2 focus:ring-[#34b350]/20 focus:border-[#34b350] ${otpError ? 'border-red-500' : ''}`}
+                    className={`w-full px-4 py-3 border border-gray-300 rounded-xl text-[1.1rem] text-center tracking-[0.25rem] font-medium transition-all focus:outline-none focus:ring-2 focus:ring-[#34b350]/20 focus:border-[#34b350] ${error || otpError ? 'border-red-500' : ''}`}
                     placeholder="Enter 6-digit OTP"
                     value={otp}
                     onChange={(e) => {
-                      setOTP(e.target.value);
+                      const val = e.target.value.replace(/\D/g, '');
+                      if (val.length <= 6) setOTP(val);
                       if (otpError) setOTPError('');
+                      if (error) setError('');
                     }}
                     maxLength={6}
                   />
-                  {otpError && <span className="block text-red-500 text-xs mt-1 font-medium">{otpError}</span>}
+                  {(otpError || error) && <span className="block text-red-500 text-xs mt-1 font-medium">{otpError || error}</span>}
                 </div>
                 <button type="submit" className="w-fit min-w-[200px] mx-auto px-10 py-3.5 bg-[#42ba61] text-white border-none rounded-xl text-base font-bold cursor-pointer transition-all hover:bg-[#34b350] hover:shadow-lg active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2" disabled={loading}>
                   {loading ? 'VERIFYING...' : 'VERIFY OTP >'}
@@ -333,6 +289,7 @@ const LoginPage = () => {
                     Resend OTP in {Math.floor(resendTimer / 60)}:{(resendTimer % 60).toString().padStart(2, '0')}
                   </p>
                 )}
+                <button type="button" className="block mx-auto mt-6 text-gray-400 hover:text-gray-600 font-bold text-[10px] uppercase tracking-widest bg-transparent border-none cursor-pointer" onClick={() => setShowOTP(false)}>← Back to Login</button>
               </div>
             </div>
           )}

@@ -204,6 +204,7 @@ export default function HoldKRAStatus() {
           </>
         ) : (
           <>
+            {results.map((row, index) => (
               <div
                 key={index}
                 className="grid grid-cols-[150px_150px_250px_150px_180px_180px_1fr] bg-[#f2f2f2] border-b border-gray-200 text-[14px] hover:bg-gray-100 transition-colors"

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Calendar, Wifi, User, Folder } from "lucide-react";
+import { Eye, EyeOff, Calendar, Wifi, User, Folder, Loader2 } from "lucide-react";
 import Header from "./Header.jsx";
+import korpInstance, { getDashboardData, korpSendOtp, getClientDetailByType } from "./api/korpApiService";
+import { verifyOtp } from "./api/authApi";
 import "@fortawesome/fontawesome-free/css/all.css";
+import { toast as toastify } from "react-toastify";
 
 // Internal VideoCard component converted to Tailwind
 const VideoCard = () => {
@@ -86,6 +89,101 @@ function Dashboard() {
     type: "",
     message: "",
   });
+  const [loading, setLoading] = useState(true);
+  const [dashboardMetrics, setDashboardMetrics] = useState({
+    newClient: "0",
+    totalClients: "0",
+    activeClients: "0",
+    totalAppLogin: "0",
+    inactiveClients: "0"
+  });
+  const [revenueData, setRevenueData] = useState({
+    ytdRevenue: "0",
+    ytdTradedClients: "0",
+    mtdRevenue: "0",
+    mtdTradedClients: "0",
+    mtdClientsAcquired: "0"
+  });
+
+  // Fetch Dashboard Data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        // Define our robust fallback fetchers
+        const safeFetch = async (type) => {
+          try {
+            const res = await korpInstance.get("/dashboard/korpgetclientDetail", {
+              params: { pageNumber: 0, size: 50, Type: type }
+            });
+            return res.data?.result?.all_Count;
+          } catch (e) {
+            return undefined;
+          }
+        };
+
+        const safeAppLoginFetch = async () => {
+          try {
+            const res = await korpInstance.get("/reports/getMobileAppLogin");
+            return res.data?.count;
+          } catch (e) {
+            return undefined;
+          }
+        };
+
+        // Fire both main dashboard API and the detailed metric APIs in parallel
+        const [dashRes, nc, tc, ac, al, ic] = await Promise.allSettled([
+          getDashboardData(),
+          safeFetch("NC"),
+          safeFetch("TC"),
+          safeFetch("AC"),
+          safeAppLoginFetch(),
+          safeFetch("IC")
+        ]);
+
+        // 1. Process Main Dashboard Data (for Revenue, etc.)
+        if (dashRes.status === "fulfilled" && dashRes.value) {
+          const resData = dashRes.value.data;
+          if (dashRes.value.status === 200 || resData?.success) {
+            const res = resData.result || resData.data || resData || {};
+            setRevenueData({
+              ytdRevenue: res.ytdRevenue || "0",
+              ytdTradedClients: res.ytdTradedClients || "0",
+              mtdRevenue: res.mtdRevenue || "0",
+              mtdTradedClients: res.mtdTradedClients || "0",
+              mtdClientsAcquired: res.mtdClientsAcquired || "0"
+            });
+            
+            // If the main API unexpectedly gives us the metrics, use them as backup if our detailed endpoints fail
+            setDashboardMetrics(prev => ({
+              newClient: prev.newClient !== "0" ? prev.newClient : (res.newClient || "0"),
+              totalClients: prev.totalClients !== "0" ? prev.totalClients : (res.totalClients || "0"),
+              activeClients: prev.activeClients !== "0" ? prev.activeClients : (res.activeClients || "0"),
+              totalAppLogin: prev.totalAppLogin !== "0" ? prev.totalAppLogin : (res.totalAppLogin || "0"),
+              inactiveClients: prev.inactiveClients !== "0" ? prev.inactiveClients : (res.inactiveClients || "0")
+            }));
+          }
+        }
+
+        // 2. Process Detailed Metrics (these take priority as they are real-time)
+        setDashboardMetrics(prev => ({
+          ...prev,
+          newClient: nc.status === "fulfilled" && nc.value !== undefined ? nc.value : prev.newClient,
+          totalClients: tc.status === "fulfilled" && tc.value !== undefined ? tc.value : prev.totalClients,
+          activeClients: ac.status === "fulfilled" && ac.value !== undefined ? ac.value : prev.activeClients,
+          totalAppLogin: al.status === "fulfilled" && al.value !== undefined ? al.value : prev.totalAppLogin,
+          inactiveClients: ic.status === "fulfilled" && ic.value !== undefined ? ic.value : prev.inactiveClients
+        }));
+
+      } catch (err) {
+        console.error("Dashboard data fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const slides = [
     "480920250448563074856",
@@ -150,68 +248,65 @@ function Dashboard() {
   };
 
   // Eye Icon Click Handler
-  const handleEyeClick = () => {
-    if (isRevealed) {
-      return; // Do nothing if already revealed, keep it visible as requested
-    }
+  const handleEyeClick = async () => {
+    if (isRevealed) return;
 
-    setShowOtpModal(true);
-    setResendTimer(120); // Reset timer to 2 min
-    setCanResend(false);
+    try {
+      setLoading(true);
+      const branchCode = localStorage.getItem("branchCode");
+      const response = await korpSendOtp(branchCode); // Using branchCode to trigger OTP
 
-    // Initial message
-    setToast({
-      show: true,
-      type: "error",
-      message: "Next SMS will be send after 2 min!",
-    });
-
-    setTimeout(() => {
-      setToast({
-        show: false,
-        type: "",
-        message: "",
-      });
-    }, 3000);
-  };
-
-  // OTP Submit Handler
-  const handleSubmitOtp = () => {
-    if (otp === "123456") {
-      setShowOtpModal(false);
-      setIsRevealed(true);
-      sessionStorage.setItem("revenue_verified", "true");
-      setOtp(""); // Clear OTP input
-
-      // Success Popup
-      setToast({
-        show: true,
-        type: "success",
-        message: "OTP Verified Successfully!",
-      });
-
-      setTimeout(() => {
+      if (response.data?.success) {
+        setShowOtpModal(true);
+        setResendTimer(120);
+        setCanResend(false);
         setToast({
-          show: false,
-          type: "",
-          message: "",
+          show: true,
+          type: "success",
+          message: "OTP sent to your registered mobile number",
         });
-      }, 3000);
-    } else {
-      // Wrong OTP
+      } else {
+        throw new Error(response.data?.message || "Failed to send OTP");
+      }
+    } catch (err) {
       setToast({
         show: true,
         type: "error",
-        message: "Invalid OTP",
+        message: err.message || "Failed to send OTP",
       });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setToast({ show: false, type: "", message: "" }), 3000);
+    }
+  };
 
-      setTimeout(() => {
-        setToast({
-          show: false,
-          type: "",
-          message: "",
-        });
-      }, 3000);
+  // OTP Submit Handler
+  const handleSubmitOtp = async () => {
+    if (otp.length !== 6) {
+      setToast({ show: true, type: "error", message: "Enter 6-digit OTP" });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const branchCode = localStorage.getItem("branchCode");
+      const csrfToken = ""; // Dashboard verification might not need new CSRF if session is active
+      const response = await verifyOtp(branchCode, otp, csrfToken);
+
+      if (response.data?.success) {
+        setShowOtpModal(false);
+        setIsRevealed(true);
+        sessionStorage.setItem("revenue_verified", "true");
+        setOtp("");
+        setToast({ show: true, type: "success", message: "OTP Verified Successfully!" });
+      } else {
+        setToast({ show: true, type: "error", message: response.data?.message || "Invalid OTP" });
+      }
+    } catch (err) {
+      setToast({ show: true, type: "error", message: "Verification Failed" });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setToast({ show: false, type: "", message: "" }), 3000);
     }
   };
 
@@ -266,15 +361,15 @@ function Dashboard() {
       {/* Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-[15px] p-[15px] mt-[60px]">
         {[
-          { label: "Total Branch", value: "10" },
-          { label: "Total Clients", value: "15,596" },
-          { label: "Active Clients", value: "11,594" },
-          { label: "Traded Clients", value: "1,587" },
-          { label: "Inactive Clients", value: "4,002" },
+          { label: "New Client", value: dashboardMetrics.newClient },
+          { label: "Total Clients", value: dashboardMetrics.totalClients },
+          { label: "Active Clients", value: dashboardMetrics.activeClients },
+          { label: "Total App Login", value: dashboardMetrics.totalAppLogin },
+          { label: "Inactive Clients", value: dashboardMetrics.inactiveClients },
         ].map((card, idx) => (
           <div
             key={idx}
-            className="bg-white p-2.5 rounded-xl text-center shadow-[0_2px_8px_rgba(0,0,0,0.05)] w-full max-w-[210px] mx-auto cursor-pointer flex flex-col justify-center transition-all hover:shadow-lg hover:-translate-y-1"
+            className="bg-white p-2.5 rounded-none text-center shadow-[0_2px_8px_rgba(0,0,0,0.05)] w-full max-w-[210px] mx-auto cursor-pointer flex flex-col justify-center transition-all hover:shadow-lg hover:-translate-y-1"
           >
             <h2 className="m-0 text-gray-900 text-base font-normal">{card.value}</h2>
             <p className="m-0 mt-1 text-[9px] text-gray-400 font-bold uppercase tracking-widest">{card.label}</p>
@@ -283,18 +378,18 @@ function Dashboard() {
       </div>
 
       {/* New Revenue Dashboard Component */}
-      <div className="bg-white p-6 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] m-[15px] border border-gray-50">
+      <div className="bg-white p-6 rounded-none shadow-[0_4px_20px_rgba(0,0,0,0.05)] m-[15px] border border-gray-50">
         <h2 className="m-0 mb-0.5 text-[15px] text-gray-800 font-normal uppercase tracking-tight">My revenue details</h2>
 
         {/* Horizontal Divider Line */}
         <div className="my-2 border-t border-gray-100"></div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-[15px]">
-          <StatItem icon={Calendar} label="YTD Revenue" value="5,20,000" onEyeClick={handleEyeClick} isRevealed={isRevealed} />
-          <StatItem icon={Wifi} label="YTD Traded Clients" value="120" onEyeClick={handleEyeClick} isRevealed={isRevealed} />
-          <StatItem icon="fa fa-suitcase" label="MTD Revenue" value="80,000" onEyeClick={handleEyeClick} isRevealed={isRevealed} />
-          <StatItem icon={User} label="MTD Traded Clients" value="25" onEyeClick={handleEyeClick} isRevealed={isRevealed} />
-          <StatItem icon={Folder} label="MTD Clients Acquired" value="18" onEyeClick={handleEyeClick} isRevealed={isRevealed} />
+          <StatItem icon={Calendar} label="YTD Revenue" value={revenueData.ytdRevenue} onEyeClick={handleEyeClick} isRevealed={isRevealed} />
+          <StatItem icon={Wifi} label="YTD Traded Clients" value={revenueData.ytdTradedClients} onEyeClick={handleEyeClick} isRevealed={isRevealed} />
+          <StatItem icon="fa fa-suitcase" label="MTD Revenue" value={revenueData.mtdRevenue} onEyeClick={handleEyeClick} isRevealed={isRevealed} />
+          <StatItem icon={User} label="MTD Traded Clients" value={revenueData.mtdTradedClients} onEyeClick={handleEyeClick} isRevealed={isRevealed} />
+          <StatItem icon={Folder} label="MTD Clients Acquired" value={revenueData.mtdClientsAcquired} onEyeClick={handleEyeClick} isRevealed={isRevealed} />
         </div>
       </div>
 
@@ -398,10 +493,13 @@ function Dashboard() {
               type="text"
               maxLength={6}
               value={otp}
-              onChange={(e) => setOtp(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, '');
+                if (val.length <= 6) setOtp(val);
+              }}
+              className="w-full h-14 bg-gray-100 rounded-xl px-4 text-2xl tracking-[0.5rem] font-bold outline-none focus:bg-white focus:ring-2 focus:ring-[#34b350] transition-all border-none"
+              placeholder="000000"
               onKeyDown={(e) => e.key === "Enter" && handleSubmitOtp()}
-              placeholder="Enter your 6-digit OTP"
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-xl outline-none focus:border-green-500 transition-all"
             />
 
             <div className="text-center mt-6 text-gray-600">

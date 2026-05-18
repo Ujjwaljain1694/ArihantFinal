@@ -7,7 +7,15 @@ const Header = () => {
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const isActive = (path) => location.pathname === path;
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('branchCode');
+    localStorage.removeItem('userData');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('connect_token');
+    localStorage.removeItem('connect_manager');
+    navigate('/');
+  };
 
   return (
     <div className="bg-[#34b350] px-6 h-[60px] flex items-center justify-between fixed top-0 z-[1000] shadow-md w-full">
@@ -19,7 +27,7 @@ const Header = () => {
         <nav className="hidden lg:flex items-center gap-6 h-full text-white/90 text-[14px] font-semibold">
           <span
             onClick={() => navigate("/dashboard")}
-            className={`cursor-pointer transition-all hover:text-white py-5 ${location.pathname.startsWith("/dashboard") ? "border-b-4 border-white text-white font-black" : ""}`}
+            className={`cursor-pointer transition-all hover:text-white py-5 ${location.pathname.startsWith("/dashboard") ? "text-white font-black" : ""}`}
           >
             Dashboard
           </span>
@@ -108,7 +116,10 @@ const Header = () => {
                 <i className="fa fa-headset mr-3 text-gray-400"></i>
                 Customer Support
               </a>
-              <div className="px-5 py-3 text-sm text-red-600 hover:bg-red-50 cursor-pointer flex items-center border-t border-gray-50 transition-colors">
+              <div 
+                onClick={handleLogout}
+                className="px-5 py-3 text-sm text-red-600 hover:bg-red-50 cursor-pointer flex items-center border-t border-gray-50 transition-colors"
+              >
                 <i className="fa fa-sign-out-alt mr-3"></i>
                 <span className="font-bold">Logout</span>
               </div>

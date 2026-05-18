@@ -1,8 +1,9 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "https://connectarihant.onrender.com",
+  baseURL: "https://korpapuatapi.arihantcapital.com/api/V1",
   timeout: 30000,
+  withCredentials: true,
   headers: { "Content-Type": "application/json" },
 });
 
