@@ -38,6 +38,11 @@ import KRAStatusPage from './KRAStatusPage.jsx';
 import HoldingReport from './HoldingReport.jsx';
 import ArihantProducts from './ArihantProducts.jsx';
 import LoginPage from './LoginPage.jsx';
+import ClientCodeList from './ClientCodeList.jsx';
+import NewClient from './NewClient.jsx';
+import InactiveClient from './InactiveClient.jsx';
+import ActiveClient from './ActiveClient.jsx';
+import TotalClient from './TotalClient.jsx';
 
 function AppContent() {
   const location = useLocation();
@@ -82,6 +87,11 @@ function AppContent() {
         <Route path="/algo-brokerage" element={<AlgoBrokerage />} />
         <Route path="/kra-status" element={<KRAStatusPage />} />
         <Route path="/holding-report" element={<HoldingReport />} />
+        <Route path="/client-code-list" element={<ClientCodeList />} />
+        <Route path="/new-client" element={<NewClient />} />
+        <Route path="/inactive-client" element={<InactiveClient />} />
+        <Route path="/active-client" element={<ActiveClient />} />
+        <Route path="/total-client" element={<TotalClient />} />
 
         <Route path="/third-party" element={<ThirdParty />}>
           <Route path="algo-brokerage" element={<div></div>} />

@@ -90,19 +90,25 @@ function Dashboard() {
     message: "",
   });
   const [loading, setLoading] = useState(true);
-  const [dashboardMetrics, setDashboardMetrics] = useState({
-    newClient: "0",
-    totalClients: "0",
-    activeClients: "0",
-    totalAppLogin: "0",
-    inactiveClients: "0"
+  const [dashboardMetrics, setDashboardMetrics] = useState(() => {
+    const saved = sessionStorage.getItem("dashboard_metrics");
+    return saved ? JSON.parse(saved) : {
+      newClient: "0",
+      totalClients: "0",
+      activeClients: "0",
+      totalAppLogin: "0",
+      inactiveClients: "0"
+    };
   });
-  const [revenueData, setRevenueData] = useState({
-    ytdRevenue: "0",
-    ytdTradedClients: "0",
-    mtdRevenue: "0",
-    mtdTradedClients: "0",
-    mtdClientsAcquired: "0"
+  const [revenueData, setRevenueData] = useState(() => {
+    const saved = sessionStorage.getItem("revenue_data");
+    return saved ? JSON.parse(saved) : {
+      ytdRevenue: "0",
+      ytdTradedClients: "0",
+      mtdRevenue: "0",
+      mtdTradedClients: "0",
+      mtdClientsAcquired: "0"
+    };
   });
 
   // Fetch Dashboard Data
@@ -117,8 +123,10 @@ function Dashboard() {
             const res = await korpInstance.get("/dashboard/korpgetclientDetail", {
               params: { pageNumber: 0, size: 50, Type: type }
             });
+            console.log(`[Dashboard Debug] safeFetch(${type}) success:`, res.data);
             return res.data?.result?.all_Count;
           } catch (e) {
+            console.error(`[Dashboard Debug] safeFetch(${type}) error:`, e.response?.data || e.message || e);
             return undefined;
           }
         };
@@ -126,8 +134,10 @@ function Dashboard() {
         const safeAppLoginFetch = async () => {
           try {
             const res = await korpInstance.get("/reports/getMobileAppLogin");
+            console.log("[Dashboard Debug] safeAppLoginFetch success:", res.data);
             return res.data?.count;
           } catch (e) {
+            console.error("[Dashboard Debug] safeAppLoginFetch error:", e.response?.data || e.message || e);
             return undefined;
           }
         };
@@ -147,34 +157,44 @@ function Dashboard() {
           const resData = dashRes.value.data;
           if (dashRes.value.status === 200 || resData?.success) {
             const res = resData.result || resData.data || resData || {};
-            setRevenueData({
+            const nextRevenue = {
               ytdRevenue: res.ytdRevenue || "0",
               ytdTradedClients: res.ytdTradedClients || "0",
               mtdRevenue: res.mtdRevenue || "0",
               mtdTradedClients: res.mtdTradedClients || "0",
               mtdClientsAcquired: res.mtdClientsAcquired || "0"
-            });
-            
+            };
+            setRevenueData(nextRevenue);
+            sessionStorage.setItem("revenue_data", JSON.stringify(nextRevenue));
+
             // If the main API unexpectedly gives us the metrics, use them as backup if our detailed endpoints fail
-            setDashboardMetrics(prev => ({
-              newClient: prev.newClient !== "0" ? prev.newClient : (res.newClient || "0"),
-              totalClients: prev.totalClients !== "0" ? prev.totalClients : (res.totalClients || "0"),
-              activeClients: prev.activeClients !== "0" ? prev.activeClients : (res.activeClients || "0"),
-              totalAppLogin: prev.totalAppLogin !== "0" ? prev.totalAppLogin : (res.totalAppLogin || "0"),
-              inactiveClients: prev.inactiveClients !== "0" ? prev.inactiveClients : (res.inactiveClients || "0")
-            }));
+            setDashboardMetrics(prev => {
+              const nextMetrics = {
+                newClient: prev.newClient !== "0" ? prev.newClient : (res.newClient || "0"),
+                totalClients: prev.totalClients !== "0" ? prev.totalClients : (res.totalClients || "0"),
+                activeClients: prev.activeClients !== "0" ? prev.activeClients : (res.activeClients || "0"),
+                totalAppLogin: prev.totalAppLogin !== "0" ? prev.totalAppLogin : (res.totalAppLogin || "0"),
+                inactiveClients: prev.inactiveClients !== "0" ? prev.inactiveClients : (res.inactiveClients || "0")
+              };
+              sessionStorage.setItem("dashboard_metrics", JSON.stringify(nextMetrics));
+              return nextMetrics;
+            });
           }
         }
 
         // 2. Process Detailed Metrics (these take priority as they are real-time)
-        setDashboardMetrics(prev => ({
-          ...prev,
-          newClient: nc.status === "fulfilled" && nc.value !== undefined ? nc.value : prev.newClient,
-          totalClients: tc.status === "fulfilled" && tc.value !== undefined ? tc.value : prev.totalClients,
-          activeClients: ac.status === "fulfilled" && ac.value !== undefined ? ac.value : prev.activeClients,
-          totalAppLogin: al.status === "fulfilled" && al.value !== undefined ? al.value : prev.totalAppLogin,
-          inactiveClients: ic.status === "fulfilled" && ic.value !== undefined ? ic.value : prev.inactiveClients
-        }));
+        setDashboardMetrics(prev => {
+          const nextMetrics = {
+            ...prev,
+            newClient: nc.status === "fulfilled" && nc.value !== undefined ? String(nc.value) : prev.newClient,
+            totalClients: tc.status === "fulfilled" && tc.value !== undefined ? String(tc.value) : prev.totalClients,
+            activeClients: ac.status === "fulfilled" && ac.value !== undefined ? String(ac.value) : prev.activeClients,
+            totalAppLogin: al.status === "fulfilled" && al.value !== undefined ? String(al.value) : prev.totalAppLogin,
+            inactiveClients: ic.status === "fulfilled" && ic.value !== undefined ? String(ic.value) : prev.inactiveClients
+          };
+          sessionStorage.setItem("dashboard_metrics", JSON.stringify(nextMetrics));
+          return nextMetrics;
+        });
 
       } catch (err) {
         console.error("Dashboard data fetch error:", err);
@@ -361,14 +381,15 @@ function Dashboard() {
       {/* Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-[15px] p-[15px] mt-[60px]">
         {[
-          { label: "New Client", value: dashboardMetrics.newClient },
-          { label: "Total Clients", value: dashboardMetrics.totalClients },
-          { label: "Active Clients", value: dashboardMetrics.activeClients },
-          { label: "Total App Login", value: dashboardMetrics.totalAppLogin },
-          { label: "Inactive Clients", value: dashboardMetrics.inactiveClients },
+          { label: "New Client", value: dashboardMetrics.newClient, path: "/new-client" },
+          { label: "Total Clients", value: dashboardMetrics.totalClients, path: "/total-client" },
+          { label: "Active Clients", value: dashboardMetrics.activeClients, path: "/active-client" },
+          { label: "Total App Login", value: dashboardMetrics.totalAppLogin, path: "/client-code-list" },
+          { label: "Inactive Clients", value: dashboardMetrics.inactiveClients, path: "/inactive-client" },
         ].map((card, idx) => (
           <div
             key={idx}
+            onClick={() => card.path && navigate(card.path)}
             className="bg-white p-2.5 rounded-none text-center shadow-[0_2px_8px_rgba(0,0,0,0.05)] w-full max-w-[210px] mx-auto cursor-pointer flex flex-col justify-center transition-all hover:shadow-lg hover:-translate-y-1"
           >
             <h2 className="m-0 text-gray-900 text-base font-normal">{card.value}</h2>
@@ -398,7 +419,7 @@ function Dashboard() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Carousel Section */}
           <div className="w-full lg:w-[65%] my-auto relative group">
-            <div className="relative overflow-hidden shadow-2xl h-[330px] rounded-3xl border border-gray-100">
+            <div className="relative overflow-hidden shadow-2xl h-[380px] rounded-none border border-gray-100">
               <div
                 className={`flex h-full ${isTransitioning ? "transition-transform duration-700 ease-in-out" : ""}`}
                 style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -415,18 +436,18 @@ function Dashboard() {
                 ))}
               </div>
 
-              {/* Navigation Controls - Large Chevrons on Hover */}
+              {/* Navigation Controls - Transparent, Always Visible, and Smaller Arrows */}
               <button
                 onClick={handlePrev}
-                className="absolute left-6 top-1/2 -translate-y-1/2 z-50 text-white flex items-center justify-center transition-all opacity-70 hover:opacity-100 bg-black/10 hover:bg-black/30 w-12 h-12 rounded-full border-none cursor-pointer"
+                className="absolute left-6 top-1/2 -translate-y-1/2 z-50 text-white flex items-center justify-center transition-all opacity-75 hover:opacity-100 bg-transparent border-none cursor-pointer"
               >
-                <i className="fa-solid fa-chevron-left text-2xl drop-shadow-lg"></i>
+                <i className="fa-solid fa-chevron-left text-xl drop-shadow-md"></i>
               </button>
               <button
                 onClick={handleNext}
-                className="absolute right-6 top-1/2 -translate-y-1/2 z-20 text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 bg-transparent border-none p-0 outline-none cursor-pointer"
+                className="absolute right-6 top-1/2 -translate-y-1/2 z-50 text-white flex items-center justify-center transition-all opacity-75 hover:opacity-100 bg-transparent border-none cursor-pointer"
               >
-                <i className="fa-solid fa-chevron-right text-4xl drop-shadow-lg"></i>
+                <i className="fa-solid fa-chevron-right text-xl drop-shadow-md"></i>
               </button>
 
               {/* Minimal Dots */}
@@ -444,7 +465,7 @@ function Dashboard() {
                         setIsTransitioning(true);
                         setCurrentIndex(idx + 1);
                       }}
-                      className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${isActive ? "bg-[#34b350] w-6" : "bg-white/50 w-1.5"}`}
+                      className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${isActive ? "bg-white w-6" : "bg-white/50 w-1.5"}`}
                     ></div>
                   );
                 })}
@@ -453,7 +474,7 @@ function Dashboard() {
           </div>
 
           {/* Video Section */}
-          <div className="w-full lg:w-[35%] h-[330px]">
+          <div className="w-full lg:w-[35%] h-[380px]">
             <VideoCard />
           </div>
         </div>
