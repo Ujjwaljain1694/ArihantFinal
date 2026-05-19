@@ -8,12 +8,16 @@ import StatsCard from "../components/common/StatsCard";
 import { validateDates } from "../utils/dateValidation";
 import { toast } from "react-toastify";
 import ResultsHeader from "../components/common/ResultsHeader";
+import { getMobileLoginData } from "../api/korpApiService";
 
 const MobileLogin = () => {
     const [fromDate, setFromDate] = useState(null);
     const [toDate, setToDate] = useState(null);
     const [showCustomError, setShowCustomError] = useState(false);
     const [customErrorMsg, setCustomErrorMsg] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [tableRows, setTableRows] = useState([]);
+    const [stats, setStats] = useState({ active: 0, loggedIn: 0, traded: 0, nonTraded: 0 });
 
     // Clear error toast after 3 seconds
     useEffect(() => {
@@ -23,11 +27,78 @@ const MobileLogin = () => {
         }
     }, [showCustomError]);
 
+    const formatDate = (date) => {
+        if (!date) return "";
+        const dd = String(date.getDate()).padStart(2, "0");
+        const mm = String(date.getMonth() + 1).padStart(2, "0");
+        const yyyy = date.getFullYear();
+        return `${dd}/${mm}/${yyyy}`;
+    };
+
+    const fetchTableData = async (from = null, to = null) => {
+        setLoading(true);
+        try {
+            const params = {
+                pageNumber: 0,
+                size: 50,
+                datefrom: from ? formatDate(from) : "",
+                dateto: to ? formatDate(to) : "",
+                fromDate: from ? formatDate(from) : "",
+                toDate: to ? formatDate(to) : "",
+                fromdate: from ? formatDate(from) : "",
+                todate: to ? formatDate(to) : "",
+            };
+
+            const response = await getMobileLoginData(params);
+            console.log("MobileLogin API Response:", response.data);
+
+            const items = response?.data?.data || response?.data?.Data || response?.data?.result?.userList || response?.data || [];
+            
+            if (Array.isArray(items)) {
+                const formatted = items.map(item => [
+                    item.clientName || item.ClientName || item.name || "-",
+                    item.clientCode || item.ClientCode || item.code || "-",
+                    item.status || item.Status || "Active",
+                    item.tradeStatus || item.TradeStatus || item.traded || "NO",
+                    item.lastTradedDate || item.LastTradedDate || item.tradedDate || "-",
+                    item.lastLoginDate || item.LastLoginDate || item.loginDate || "-"
+                ]);
+                setTableRows(formatted);
+
+                // Dynamically calculate stats
+                const active = items.filter(i => (i.status || i.Status || "").toLowerCase() === "active").length || items.length;
+                const traded = items.filter(i => (i.tradeStatus || i.TradeStatus || i.traded || "").toLowerCase() === "yes").length;
+                const nonTraded = items.filter(i => (i.tradeStatus || i.TradeStatus || i.traded || "").toLowerCase() === "no").length;
+                const loggedIn = items.filter(i => i.lastLoginDate || i.LastLoginDate || i.loginDate).length;
+
+                setStats({
+                    active,
+                    loggedIn: loggedIn || items.length,
+                    traded,
+                    nonTraded
+                });
+            } else {
+                setTableRows([]);
+                setStats({ active: 0, loggedIn: 0, traded: 0, nonTraded: 0 });
+            }
+        } catch (error) {
+            console.error("MobileLogin API Error:", error);
+            setTableRows([]);
+            setStats({ active: 0, loggedIn: 0, traded: 0, nonTraded: 0 });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTableData();
+    }, []);
+
     const handleDownload = () => {
         const headers = ["Client Name", "Client Code", "Status", "Trade Status", "Last Traded Date", "Last Login Date"];
         const csvContent = "data:text/csv;charset=utf-8,"
             + headers.join(",") + "\n"
-            + data.map(row => row.join(",")).join("\n");
+            + tableRows.map(row => row.join(",")).join("\n");
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
@@ -66,14 +137,10 @@ const MobileLogin = () => {
             return;
         }
         
-        toast.success("Filters applied successfully");
+        fetchTableData(fromDate, toDate);
     };
 
     const headers = ["Client Name", "Client Code", "Status", "Trade Status", "Last Traded Date", "Last Login Date"];
-    const data = [
-        ["SURAJ SUNIL RAJOLE", "AP2100001", "Active", "NO", "19-12-2025", "16-04-2026"],
-        ["ANAND SUNIL RAJOLE", "28640A085", "Active", "NO", "13-04-2026", "16-04-2026"]
-    ];
 
     return (
         <div className="px-6 py-4 max-w-[1600px] mx-auto relative">
@@ -100,17 +167,23 @@ const MobileLogin = () => {
             </FilterSection>
 
             <div className="flex flex-wrap gap-4 mb-8">
-                <StatsCard title="Total Active Client" value="10" />
-                <StatsCard title="Total Login Clients" value="7" />
-                <StatsCard title="Total Traded Clients" value="4" />
-                <StatsCard title="Total NonTraded Clients" value="3" />
+                <StatsCard title="Total Active Client" value={loading ? "..." : stats.active.toString()} />
+                <StatsCard title="Total Login Clients" value={loading ? "..." : stats.loggedIn.toString()} />
+                <StatsCard title="Total Traded Clients" value={loading ? "..." : stats.traded.toString()} />
+                <StatsCard title="Total NonTraded Clients" value={loading ? "..." : stats.nonTraded.toString()} />
             </div>
 
-            <ResultsHeader count={data.length} onDownload={handleDownload} />
-            <DataTable
-                headers={headers}
-                rows={data}
-            />
+            <ResultsHeader count={tableRows.length} onDownload={handleDownload} />
+            {loading ? (
+                <div className="p-10 text-center text-gray-500 font-medium">
+                    Loading Mobile Login Report...
+                </div>
+            ) : (
+                <DataTable
+                    headers={headers}
+                    rows={tableRows}
+                />
+            )}
 
             {/* 🚨 CUSTOM ERROR TOAST */}
             <div

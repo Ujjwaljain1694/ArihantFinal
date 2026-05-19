@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { ChevronDown, Search, Download, Calendar, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { getHoldingReport } from '../api/korpApiService';
+import { getHoldingReport, getFreeHoldingsData } from '../api/korpApiService';
 
 export default function HoldingReport() {
   const [selectedOption, setSelectedOption] = useState('Select Option');
@@ -12,6 +13,45 @@ export default function HoldingReport() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showCustomError, setShowCustomError] = useState(false);
   const [customErrorMsg, setCustomErrorMsg] = useState("");
+  const [tableData, setTableData] = useState([]);
+
+  // ── Auto-fetch free holdings on mount ────────────────────────────────────
+  const formatDate = (date) => {
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  };
+
+  const fetchTableData = async () => {
+    console.log("API function called");
+    try {
+      const response = await getFreeHoldingsData({
+        datefrom: formatDate(new Date()),
+        size: 50,
+        pageNumber: 0,
+      });
+      
+      console.log("API Response:", response.data);
+      
+      const rows =
+        response?.data?.data ||
+        response?.data?.Data ||
+        response?.data ||
+        [];
+      
+      setTableData(Array.isArray(rows) ? rows : []);
+    } catch (error) {
+      console.error("API Error:", error);
+      console.error("Status:", error.response?.status);
+      console.error("Full URL:", error.config?.baseURL + error.config?.url);
+      console.error("Response:", error.response?.data);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchTableData();
+  }, []);
 
   React.useEffect(() => {
     if (showCustomError) {
@@ -30,125 +70,47 @@ export default function HoldingReport() {
     'Script Code',
   ];
 
-  const tableData = [
-    {
-      clientName: 'SURAJ SUNIL RAJOLE',
-      clientCode: 'AP2190001',
-      scriptCode: '839217',
-      scriptName: 'SREETHA',
-      isin: 'INE664K01049',
-      pledgePOA: 0,
-      freePOA: 282,
-      mtfQty: '',
-      netQty: 282,
-      stockValue: 73.08,
-      closeRate: 0.29
-    },
-    {
-      clientName: 'SURAJ SUNIL RAJOLE',
-      clientCode: 'AP2190001',
-      scriptCode: '840614',
-      scriptName: 'GOENG',
-      isin: 'INE694X01030',
-      pledgePOA: 0,
-      freePOA: 16,
-      mtfQty: '',
-      netQty: 16,
-      stockValue: 9.84,
-      closeRate: 0.93
-    },
-    {
-      clientName: 'SURAJ SUNIL RAJOLE',
-      clientCode: 'AP2190001',
-      scriptCode: 'INB517H01021',
-      scriptName: 'BURNPUR CEMENT LTD EG LI',
-      isin: 'INB517H01021',
-      pledgePOA: 0,
-      freePOA: 1,
-      mtfQty: '',
-      netQty: 1,
-      stockValue: 0,
-      closeRate: 0
-    },
-    {
-      clientName: 'RINAZ MUSHTAQUE SHAIKH',
-      clientCode: '29390016',
-      scriptCode: 'SIL0006',
-      scriptName: 'SILVERBEES',
-      isin: 'INF204KC1402',
-      pledgePOA: 0,
-      freePOA: 47,
-      mtfQty: '',
-      netQty: 47,
-      stockValue: 10837.4,
-      closeRate: 224.2
-    },
-    {
-      clientName: 'RINAZ MUSHTAQUE SHAIKH',
-      clientCode: '29390016',
-      scriptCode: '831642',
-      scriptName: 'MARICO',
-      isin: 'INE196A01026',
-      pledgePOA: 0,
-      freePOA: 2,
-      mtfQty: '',
-      netQty: 2,
-      stockValue: 1688.6,
-      closeRate: 779.3
-    },
-    {
-      clientName: 'RINAZ MUSHTAQUE SHAIKH',
-      clientCode: '29390016',
-      scriptCode: '813399',
-      scriptName: 'HINDCOPPER',
-      isin: 'INE531E01026',
-      pledgePOA: 0,
-      freePOA: 9,
-      mtfQty: '',
-      netQty: 9,
-      stockValue: 2776.23,
-      closeRate: 583.23
-    }
-  ];
+  const [filteredData, setFilteredData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
-  const [filteredData, setFilteredData] = useState(tableData);
-
-  const handleApply = () => {
-    // FILTER DATA
-    const filtered = tableData.filter((item) => {
-      return (
-        item.clientCode
-          .toLowerCase()
-          .includes(searchInput.toLowerCase())
-        ||
-        item.scriptName
-          .toLowerCase()
-          .includes(searchInput.toLowerCase())
-      );
-    });
-
-    // IF NO DATA FOUND
-    if (
-      searchInput.trim() !== "" &&
-      filtered.length === 0
-    ) {
-      setCustomErrorMsg("Please Enter Client Code or Script Name");
-      setShowCustomError(true);
-
-      // TABLE EMPTY
-      setFilteredData([]);
-      return;
-    }
-
-    // IF INPUT EMPTY
+  const handleApply = async () => {
+    // VALIDATE INPUT
     if (searchInput.trim() === "") {
       setCustomErrorMsg("Please Enter Client Code or Script Name");
       setShowCustomError(true);
       return;
     }
 
-    // DATA FOUND
-    setFilteredData(filtered);
+    setIsLoading(true);
+    setHasSearched(true);
+    setFilteredData([]);
+
+    try {
+      const params = {
+        clientCode: selectedOption === 'Client Name' ? searchInput.trim() : '',
+        scriptCode: selectedOption === 'Script Code' ? searchInput.trim() : '',
+        asOnDate: selectedDate
+          ? selectedDate.toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0],
+      };
+      const res = await getHoldingReport(params);
+      const data = res?.data?.data || res?.data || [];
+      const rows = Array.isArray(data) ? data : [];
+
+      if (rows.length === 0) {
+        setCustomErrorMsg("No records found for the given input.");
+        setShowCustomError(true);
+      }
+      setFilteredData(rows);
+    } catch (err) {
+      console.error('HoldingReport API error:', err);
+      setCustomErrorMsg("Failed to fetch data. Please try again.");
+      setShowCustomError(true);
+      setFilteredData([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSort = (key) => {
@@ -474,47 +436,47 @@ export default function HoldingReport() {
               </tr>
             </thead>
             <tbody>
-              {sortedData.map((row, idx) => (
-                <tr
-                  key={idx}
-                  className={`transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#f8fafc]'
-                    }`}
-                >
-                  <td className="px-3 py-2 text-xs text-gray-700 font-medium">
-                    {row.clientName}
-                  </td>
-                  <td className="px-3 py-2 text-xs text-gray-700 font-medium">
-                    {row.clientCode}
-                  </td>
-                  <td className="px-3 py-2 text-xs text-gray-700">
-                    {row.scriptCode}
-                  </td>
-                  <td className="px-3 py-2 text-xs text-gray-700">
-                    {row.scriptName}
-                  </td>
-                  <td className="px-3 py-2 text-xs text-gray-700">
-                    {row.isin}
-                  </td>
-                  <td className="px-3 py-2 text-xs text-gray-700 text-center">
-                    {row.pledgePOA}
-                  </td>
-                  <td className="px-3 py-2 text-xs text-gray-700 text-center font-bold">
-                    {row.freePOA}
-                  </td>
-                  <td className="px-3 py-2 text-xs text-gray-700 text-center">
-                    {row.mtfQty}
-                  </td>
-                  <td className="px-3 py-2 text-xs text-gray-700 text-center font-bold">
-                    {row.netQty}
-                  </td>
-                  <td className="px-3 py-2 text-xs text-gray-700 text-center">
-                    {row.stockValue}
-                  </td>
-                  <td className="px-3 py-2 text-xs text-gray-700 text-center">
-                    {row.closeRate}
+              {isLoading ? (
+                <tr>
+                  <td colSpan={11} className="py-16 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 size={32} className="animate-spin text-[#1EB04C]" />
+                      <span className="text-sm text-gray-500 font-medium">Fetching holding data...</span>
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : hasSearched && sortedData.length === 0 ? (
+                <tr>
+                  <td colSpan={11} className="py-16 text-center text-gray-400 text-sm font-medium">
+                    No records found.
+                  </td>
+                </tr>
+              ) : !hasSearched ? (
+                <tr>
+                  <td colSpan={11} className="py-16 text-center text-gray-400 text-sm font-medium">
+                    Enter a search term and click Apply to view holding data.
+                  </td>
+                </tr>
+              ) : (
+                sortedData.map((row, idx) => (
+                  <tr
+                    key={idx}
+                    className={`transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#f8fafc]'}`}
+                  >
+                    <td className="px-3 py-2 text-xs text-gray-700 font-medium">{row.clientName}</td>
+                    <td className="px-3 py-2 text-xs text-gray-700 font-medium">{row.clientCode}</td>
+                    <td className="px-3 py-2 text-xs text-gray-700">{row.scriptCode}</td>
+                    <td className="px-3 py-2 text-xs text-gray-700">{row.scriptName}</td>
+                    <td className="px-3 py-2 text-xs text-gray-700">{row.isin}</td>
+                    <td className="px-3 py-2 text-xs text-gray-700 text-center">{row.pledgePOA}</td>
+                    <td className="px-3 py-2 text-xs text-gray-700 text-center font-bold">{row.freePOA}</td>
+                    <td className="px-3 py-2 text-xs text-gray-700 text-center">{row.mtfQty}</td>
+                    <td className="px-3 py-2 text-xs text-gray-700 text-center font-bold">{row.netQty}</td>
+                    <td className="px-3 py-2 text-xs text-gray-700 text-center">{row.stockValue}</td>
+                    <td className="px-3 py-2 text-xs text-gray-700 text-center">{row.closeRate}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

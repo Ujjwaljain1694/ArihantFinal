@@ -1,10 +1,11 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Header from "./Header";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import '@fortawesome/fontawesome-free/css/all.css';
 import ArihantProducts from "./ArihantProducts";
 import Footer from "./Footer";
+import { getUserProfile } from "../api/korpApiService";
 
 function DealSlip() {
   const [fromDate, setFromDate] = useState(null);
@@ -15,7 +16,26 @@ function DealSlip() {
   const fromRef = useRef();
   const toRef = useRef();
 
-  React.useEffect(() => {
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await getUserProfile();
+        console.log("UserProfile Response on DealSlip:", response.data);
+        const data = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data;
+        if (data) {
+          const code = data.clientCode || data.clientcode || data.ClientCode || data.uccCode || data.ucc || "";
+          if (code) {
+            setClientCode(code);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch user profile on deal slip page:", err);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  useEffect(() => {
     if (showCustomError) {
       const timer = setTimeout(() => setShowCustomError(false), 3000);
       return () => clearTimeout(timer);

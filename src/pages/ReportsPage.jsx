@@ -6,19 +6,19 @@ import FOGlobalPosition from "./FoglobalPosition.jsx";
 import GlobalPosition from "./GlobalPosition.jsx";
 
 // Import other reports from src/pages/
-import ReactivationReport from "./pages/ReactivationReport.jsx";
-import SamparkReport from "./pages/SamparkReport.jsx";
-import Brokerage from "./pages/Brokerage.jsx";
-import TrialBalance from "./pages/TrialBalance.jsx";
-import Ledger from "./pages/Ledger.jsx";
-import ClientMIS from "./pages/ClientMIS.jsx";
-import ContractNote from "./pages/ContractNote.jsx";
-import AuditorPortal from "./pages/AuditorPortal.jsx";
-import RMS from "./pages/RMS.jsx";
-import MobileLogin from "./pages/MobileLogin.jsx";
-import MTFSetoff from "./pages/MTFSetoff.jsx";
-import IPOReport from "./pages/IPOReport.jsx";
-import PerformanceReport from "./pages/PerformanceReport.jsx";
+import ReactivationReport from "./ReactivationReport.jsx";
+import SamparkReport from "./SamparkReport.jsx";
+import Brokerage from "./Brokerage.jsx";
+import TrialBalance from "./TrialBalance.jsx";
+import Ledger from "./Ledger.jsx";
+import ClientMIS from "./ClientMIS.jsx";
+import ContractNote from "./ContractNote.jsx";
+import AuditorPortal from "./AuditorPortal.jsx";
+import RMS from "./RMS.jsx";
+import MobileLogin from "./MobileLogin.jsx";
+import MTFSetoff from "./MTFSetoff.jsx";
+import IPOReport from "./IPOReport.jsx";
+import PerformanceReport from "./PerformanceReport.jsx";
 import ArihantProducts from "./ArihantProducts";
 
 export default function ReportsPage() {

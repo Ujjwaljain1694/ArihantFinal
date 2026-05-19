@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Search, ChevronRight, Eye, EyeOff } from "lucide-react";
+import { getNomineeNotDone } from "../api/korpApiService";
+import { toast } from "react-toastify";
 
 export default function NomineePending() {
   const [filterClient, setFilterClient] = useState("");
   const [filterClientName, setFilterClientName] = useState("");
   const [filterMobile, setFilterMobile] = useState("");
   const [results, setResults] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [visibleData, setVisibleData] = useState({});
   const [sortConfig, setSortConfig] = useState({
     key: "",
@@ -19,64 +22,56 @@ export default function NomineePending() {
 
   // SEARCH / BACKEND READY
   const handleApply = async () => {
-    const data = [
-      {
-        clientCode: "CL001",
-        clientName: "Astha Gour",
-        mobile: "9876543210",
-        email: "astha.gour@email.com",
-        nomineeName: "Rahul Sharma",
-        nomineeRelation: "Father",
-        nomineePan: "XYZAB1234C",
-        status: "Pending",
-        submissionDate: "24-04-2026",
-      },
-      {
-        clientCode: "CL002",
-        clientName: "Riya Sharma",
-        mobile: "9876543211",
-        email: "riya.sharma@email.com",
-        nomineeName: "Priya Singh",
-        nomineeRelation: "Mother",
-        nomineePan: "ABCDF5678G",
-        status: "Approved",
-        submissionDate: "25-04-2026",
-      },
-      {
-        clientCode: "CL003",
-        clientName: "Amit Kumar",
-        mobile: "8765432109",
-        email: "amit.kumar@email.com",
-        nomineeName: "Sunita Devi",
-        nomineeRelation: "Wife",
-        nomineePan: "LMNOP9012H",
-        status: "Rejected",
-        submissionDate: "26-04-2026",
-      },
-    ];
+    setIsLoading(true);
+    try {
+      const params = {};
+      if (filterClient.trim()) {
+        params.clientCode = filterClient.trim();
+        params.Clientcode = filterClient.trim();
+        params.clientcode = filterClient.trim();
+      }
 
-    let filtered = data;
+      const response = await getNomineeNotDone(params);
+      console.log("GetNomineeNotDone API Response:", response.data);
 
-    // Apply all filters
-    if (filterClient.trim() !== "") {
-      filtered = filtered.filter((item) =>
-        item.clientCode.toLowerCase().includes(filterClient.toLowerCase())
-      );
+      const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
+
+      if (Array.isArray(items)) {
+        let filtered = items;
+
+        // Apply all filters locally as well for backup
+        if (filterClient.trim() !== "") {
+          filtered = filtered.filter((item) => {
+            const code = item.clientCode || item.clientcode || item.ClientCode || "";
+            return code.toLowerCase().includes(filterClient.toLowerCase());
+          });
+        }
+
+        if (filterClientName.trim() !== "") {
+          filtered = filtered.filter((item) => {
+            const name = item.clientName || item.clientname || item.ClientName || "";
+            return name.toLowerCase().includes(filterClientName.toLowerCase());
+          });
+        }
+
+        if (filterMobile.trim() !== "") {
+          filtered = filtered.filter((item) => {
+            const mobile = item.mobile || item.Mobile || item.mobileNo || item.mobileNumber || "";
+            return mobile.includes(filterMobile);
+          });
+        }
+
+        setResults(filtered);
+      } else {
+        setResults([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch pending nominees:", error);
+      toast.error("Failed to fetch pending nominees from UAT server");
+      setResults([]);
+    } finally {
+      setIsLoading(false);
     }
-
-    if (filterClientName.trim() !== "") {
-      filtered = filtered.filter((item) =>
-        item.clientName.toLowerCase().includes(filterClientName.toLowerCase())
-      );
-    }
-
-    if (filterMobile.trim() !== "") {
-      filtered = filtered.filter((item) =>
-        item.mobile.includes(filterMobile)
-      );
-    }
-
-    setResults(filtered);
   };
 
   // VISIBILITY TOGGLE
@@ -143,6 +138,14 @@ export default function NomineePending() {
             className="w-full h-[45px] rounded-lg border border-gray-300 px-4 text-[15px] outline-none bg-white focus:border-green-500 transition-all"
           />
         </div>
+
+        <button 
+          onClick={handleApply}
+          className="bg-[#34b44a] text-white font-bold text-[14px] px-8 h-[45px] rounded-lg flex items-center gap-2 shadow-md hover:bg-[#2e9d41] transition-all active:scale-95"
+        >
+          APPLY
+          <ChevronRight size={16} />
+        </button>
       </div>
 
       {/* Table */}
@@ -247,7 +250,11 @@ export default function NomineePending() {
         </div>
 
         {/* Body */}
-        {results.length === 0 ? (
+        {isLoading ? (
+          <div className="bg-[#f2f2f2] h-[100px] flex items-center justify-center px-6 text-[16px] text-gray-500 border-x border-b border-gray-300 font-semibold">
+            Loading pending nominee data from UAT...
+          </div>
+        ) : results.length === 0 ? (
           <>
             <div className="bg-[#f2f2f2] h-[90px] flex items-center px-6 text-[18px] text-gray-500 border-x border-b border-gray-300">
               No data to display
@@ -259,41 +266,56 @@ export default function NomineePending() {
           </>
         ) : (
           <>
-            {results.map((row, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-4 bg-[#f2f2f2] border-x border-b border-gray-300 text-[15px] hover:bg-gray-200 transition-colors"
-              >
-                <div className="px-4 py-2 border-r border-gray-200">{row.clientCode}</div>
-                <div className="px-4 py-2 border-r border-gray-200">{row.clientName}</div>
-                <div className="px-4 py-2 border-r border-gray-200">
-                  {visibleData[index] ? (
-                    <span className="cursor-pointer hover:text-blue-600 inline-flex items-center" onClick={() => toggleVisibility('mobile', index)}>
-                      {row.mobile}
-                      <EyeOff size={14} className="ml-2 opacity-50" />
-                    </span>
-                  ) : (
-                    <span className="cursor-pointer hover:text-blue-600 inline-flex items-center" onClick={() => toggleVisibility('mobile', index)}>
-                      {row.mobile.substring(0, 2)}xxxxxx{row.mobile.substring(8)}
-                      <Eye size={14} className="ml-2 opacity-50" />
-                    </span>
-                  )}
+            {results.map((row, index) => {
+              const clientCode = row.clientCode || row.clientcode || row.ClientCode || "-";
+              const clientName = row.clientName || row.clientname || row.ClientName || "-";
+              const mobile = row.mobile || row.Mobile || row.mobileNo || row.mobileNumber || row.phone || "-";
+              const email = row.email || row.Email || row.emailId || "-";
+
+              const displayMobile = mobile !== "-" && mobile.length >= 8 
+                ? `${mobile.substring(0, 2)}xxxxxx${mobile.substring(8)}` 
+                : mobile;
+
+              const displayEmail = email !== "-" && email.includes("@") 
+                ? `${email.substring(0, 2)}xxxxxx@${email.split('@')[1]}` 
+                : email;
+
+              return (
+                <div
+                  key={index}
+                  className="grid grid-cols-4 bg-[#f2f2f2] border-x border-b border-gray-300 text-[15px] hover:bg-gray-200 transition-colors"
+                >
+                  <div className="px-4 py-2 border-r border-gray-200">{clientCode}</div>
+                  <div className="px-4 py-2 border-r border-gray-200">{clientName}</div>
+                  <div className="px-4 py-2 border-r border-gray-200">
+                    {visibleData[index] ? (
+                      <span className="cursor-pointer hover:text-blue-600 inline-flex items-center" onClick={() => toggleVisibility('mobile', index)}>
+                        {mobile}
+                        <EyeOff size={14} className="ml-2 opacity-50" />
+                      </span>
+                    ) : (
+                      <span className="cursor-pointer hover:text-blue-600 inline-flex items-center" onClick={() => toggleVisibility('mobile', index)}>
+                        {displayMobile}
+                        <Eye size={14} className="ml-2 opacity-50" />
+                      </span>
+                    )}
+                  </div>
+                  <div className="px-4 py-2">
+                    {visibleData[index] ? (
+                      <span className="cursor-pointer hover:text-blue-600 inline-flex items-center" onClick={() => toggleVisibility('email', index)}>
+                        {email}
+                        <EyeOff size={14} className="ml-2 opacity-50" />
+                      </span>
+                    ) : (
+                      <span className="cursor-pointer hover:text-blue-600 inline-flex items-center" onClick={() => toggleVisibility('email', index)}>
+                        {displayEmail}
+                        <Eye size={14} className="ml-2 opacity-50" />
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="px-4 py-2">
-                  {visibleData[index] ? (
-                    <span className="cursor-pointer hover:text-blue-600 inline-flex items-center" onClick={() => toggleVisibility('email', index)}>
-                      {row.email}
-                      <EyeOff size={14} className="ml-2 opacity-50" />
-                    </span>
-                  ) : (
-                    <span className="cursor-pointer hover:text-blue-600 inline-flex items-center" onClick={() => toggleVisibility('email', index)}>
-                      {row.email.substring(0, 2)}xxxxxx@{row.email.split('@')[1]}
-                      <Eye size={14} className="ml-2 opacity-50" />
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
 
             <div className="bg-[#f2f2f2] px-6 py-2 text-gray-500 border-x border-b border-gray-300">
               {results.length} total

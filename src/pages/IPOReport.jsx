@@ -22,10 +22,7 @@ export const ipoList = [
     "SUDEEPPHRM", "TATACAP", "TENNIND", "URBANCO", "VIDYAWIRES", "VMSTMT", "WAKEFIT"
 ];
 
-export const tableData = [
-    { clientName: "ANAND SUNIL RAJOLE", clientCode: "28640A085", dpId: "IN301983", benId: "11046451", qty: 120, price: "124.00", amount: "14880.00", date: "12/4/2025 11:59:36 AM", upi: "anandsrajole24@oksbi", status: "100-Accepted", appSource: "Web", appNumber: "APP88291", mismatch: "No", blockedAmount: "14880.00" },
-    { clientName: "SURAJ SUNIL RAJOLE", clientCode: "AP2100001", dpId: "IN301983", benId: "20164299", qty: 120, price: "124.00", amount: "14880.00", date: "12/5/2025 3:50:14 PM", upi: "7990413742@ptsbi", status: "100-Accepted", appSource: "Mobile", appNumber: "APP99102", mismatch: "No", blockedAmount: "14880.00" },
-];
+export const tableData = [];
 
 export const validateDateRange = (fromDate, toDate) => {
     if (!fromDate || !toDate) return { isValid: false, error: "Please select both dates." };

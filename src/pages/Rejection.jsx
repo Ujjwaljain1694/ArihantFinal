@@ -6,8 +6,9 @@ import "react-datepicker/dist/react-datepicker.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import Header from "./Header";
 import ArihantProductsSection from "./ArihantProducts";
-import { validateDates } from "./utils/dateValidation";
+import { validateDates } from "../utils/dateValidation";
 import { toast } from "react-toastify";
+import { getSipRejections } from "../api/korpApiService";
 
 const tabs = [
   { name: "Algo Brokerage", path: "/algo-brokerage" },
@@ -25,13 +26,13 @@ export default function Rejection() {
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
   const [error, setError] = useState("");
 
   const fromRef = useRef();
   const toRef = useRef();
-  const [clientCode, setClientCode] = useState("");
+  const [clientCode, setClientCode] = useState("BRAP09");
   const [customErrorMsg, setCustomErrorMsg] = useState("");
   const [showCustomError, setShowCustomError] = useState(false);
 
@@ -43,38 +44,63 @@ export default function Rejection() {
   }, [showCustomError]);
 
   const navigate = useNavigate();
-
   const today = new Date();
 
-  // API CALL
+  // API CALL ON MOUNT
   useEffect(() => {
-    fetch("YOUR_API_URL_HERE")
-      .then((res) => res.json())
-      .then((resData) => {
-        setData(resData); 
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
+    fetchRejectionData(true);
   }, []);
 
-  const handleApply = () => {
+  const fetchRejectionData = async (isInitial = false) => {
     if (!clientCode.trim()) {
       setCustomErrorMsg("Please Enter Client Code");
       setShowCustomError(true);
       return;
     }
 
-    const errorMsg = validateDates(fromDate, toDate);
-    if (errorMsg) {
-      setCustomErrorMsg(errorMsg);
-      setShowCustomError(true);
-      return;
+    if (!isInitial && (fromDate || toDate)) {
+      const errorMsg = validateDates(fromDate, toDate);
+      if (errorMsg) {
+        setCustomErrorMsg(errorMsg);
+        setShowCustomError(true);
+        return;
+      }
     }
+
     setLoading(true);
     setError("");
+    try {
+      const queryParams = {
+        size: 50,
+        pageNumber: 0,
+      };
+
+      const body = {
+        apcode: clientCode.trim(),
+      };
+      if (fromDate) body.fromDate = fromDate.toLocaleDateString('en-GB'); // dd/MM/yyyy
+      if (toDate) body.toDate = toDate.toLocaleDateString('en-GB');
+
+      const response = await getSipRejections(queryParams, body);
+      console.log("SipRejections API Response:", response.data);
+      const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
+
+      if (Array.isArray(items)) {
+        setData(items);
+      } else {
+        setData([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch SIP rejections:", err);
+      toast.error("Failed to fetch Rejection report from UAT");
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApply = () => {
+    fetchRejectionData(false);
   };
 
   const handleSort = (key) => {
@@ -98,19 +124,31 @@ export default function Rejection() {
 
   const handleDownload = () => {
     const headers = [
-      "Client Code", "Client Name", "Ammount", "Buys Sell", "Dp Transfer", 
+      "Client Code", "Client Name", "Amount", "Buy Sell", "Dp Transfer", 
       "Dp Folio No", "Eun", "Order No", "Order Remark", "Order Type", 
       "Schema Name", "Set Type", "Sip Date", "Sip Regn Date", "Units"
     ];
     const csvContent = [
       headers.join(","),
-      ...data.map(item => [
-        item.clientCode || "", item.clientName || "", item.amount || "", 
-        item.buySell || "", item.dpTransfer || "", item.dpFolioNo || "", 
-        item.eun || "", item.orderNo || "", item.orderRemark || "", 
-        item.orderType || "", item.schemeName || "", item.setType || "", 
-        item.sipDate || "", item.sipRegnDate || "", item.units || ""
-      ].join(","))
+      ...data.map(item => {
+        const code = item.clientCode || item.clientcode || item.ClientCode || item.ucc || "-";
+        const name = item.clientName || item.clientname || item.ClientName || "-";
+        const amount = item.amount || item.amountPaid || "-";
+        const buySell = item.buySell || "-";
+        const dpTransfer = item.dpTransfer || "-";
+        const dpFolioNo = item.dpFolioNo || item.folioNo || "-";
+        const eun = item.eun || item.euin || "-";
+        const orderNo = item.orderNo || "-";
+        const orderRemark = item.orderRemark || "-";
+        const orderType = item.orderType || "-";
+        const schemeName = item.schemeName || item.scheme || "-";
+        const setType = item.setType || "-";
+        const sipDate = item.sipDate || "-";
+        const sipRegnDate = item.sipRegnDate || "-";
+        const units = item.units || "-";
+
+        return [code, name, amount, buySell, dpTransfer, dpFolioNo, eun, orderNo, orderRemark, orderType, schemeName, setType, sipDate, sipRegnDate, units].join(",");
+      })
     ].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
@@ -198,8 +236,6 @@ export default function Rejection() {
       </button>
     </div>
   );
-
-
 
   return (
     <>
@@ -337,29 +373,47 @@ export default function Rejection() {
                 {loading ? (
                   <tr>
                     <td colSpan="15" className="p-4 text-center text-gray-500 font-medium">
-                      Loading...
+                      Loading Rejection report from UAT...
                     </td>
                   </tr>
                 ) : data.length > 0 ? (
-                  data.map((item, index) => (
-                    <tr key={index} className={`transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-[#f8fafc]'} h-[28px] hover:bg-gray-50`}>
-                      <td className="px-3 py-[4px] text-xs text-gray-700 font-medium">{item.clientCode}</td>
-                      <td className="px-3 py-[4px] text-xs text-gray-700 font-medium">{item.clientName}</td>
-                      <td className="px-3 py-[4px] text-xs text-gray-700 font-bold">{item.amount}</td>
-                      <td className="px-3 py-[4px] text-xs text-gray-700">{item.buySell}</td>
-                      <td className="px-3 py-[4px] text-xs text-gray-700">{item.dpTransfer}</td>
-                      <td className="px-3 py-[4px] text-xs text-gray-700">{item.dpFolioNo}</td>
-                      <td className="px-3 py-[4px] text-xs text-gray-700">{item.eun}</td>
-                      <td className="px-3 py-[4px] text-xs text-gray-700">{item.orderNo}</td>
-                      <td className="px-3 py-[4px] text-xs text-gray-700">{item.orderRemark}</td>
-                      <td className="px-3 py-[4px] text-xs text-gray-700">{item.orderType}</td>
-                      <td className="px-3 py-[4px] text-xs text-gray-700">{item.schemeName}</td>
-                      <td className="px-3 py-[4px] text-xs text-gray-700">{item.setType}</td>
-                      <td className="px-3 py-[4px] text-xs text-gray-700">{item.sipDate}</td>
-                      <td className="px-3 py-[4px] text-xs text-gray-700">{item.sipRegnDate}</td>
-                      <td className="px-3 py-[4px] text-xs text-gray-700">{item.units}</td>
-                    </tr>
-                  ))
+                  data.map((item, index) => {
+                    const code = item.clientCode || item.clientcode || item.ClientCode || item.ucc || "-";
+                    const name = item.clientName || item.clientname || item.ClientName || "-";
+                    const amount = item.amount || item.amountPaid || "-";
+                    const buySell = item.buySell || "-";
+                    const dpTransfer = item.dpTransfer || "-";
+                    const dpFolioNo = item.dpFolioNo || item.folioNo || "-";
+                    const eun = item.eun || item.euin || "-";
+                    const orderNo = item.orderNo || "-";
+                    const orderRemark = item.orderRemark || "-";
+                    const orderType = item.orderType || "-";
+                    const schemeName = item.schemeName || item.scheme || "-";
+                    const setType = item.setType || "-";
+                    const sipDate = item.sipDate || "-";
+                    const sipRegnDate = item.sipRegnDate || "-";
+                    const units = item.units || "-";
+
+                    return (
+                      <tr key={index} className={`transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-[#f8fafc]'} h-[28px] hover:bg-gray-50`}>
+                        <td className="px-3 py-[4px] text-xs text-gray-700 font-medium">{code}</td>
+                        <td className="px-3 py-[4px] text-xs text-gray-700 font-medium">{name}</td>
+                        <td className="px-3 py-[4px] text-xs text-gray-700 font-bold">{amount}</td>
+                        <td className="px-3 py-[4px] text-xs text-gray-700">{buySell}</td>
+                        <td className="px-3 py-[4px] text-xs text-gray-700">{dpTransfer}</td>
+                        <td className="px-3 py-[4px] text-xs text-gray-700">{dpFolioNo}</td>
+                        <td className="px-3 py-[4px] text-xs text-gray-700">{eun}</td>
+                        <td className="px-3 py-[4px] text-xs text-gray-700">{orderNo}</td>
+                        <td className="px-3 py-[4px] text-xs text-gray-700">{orderRemark}</td>
+                        <td className="px-3 py-[4px] text-xs text-gray-700">{orderType}</td>
+                        <td className="px-3 py-[4px] text-xs text-gray-700">{schemeName}</td>
+                        <td className="px-3 py-[4px] text-xs text-gray-700">{setType}</td>
+                        <td className="px-3 py-[4px] text-xs text-gray-700">{sipDate}</td>
+                        <td className="px-3 py-[4px] text-xs text-gray-700">{sipRegnDate}</td>
+                        <td className="px-3 py-[4px] text-xs text-gray-700">{units}</td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
                     <td colSpan="15" className="p-4 text-left text-gray-500 text-base font-medium">

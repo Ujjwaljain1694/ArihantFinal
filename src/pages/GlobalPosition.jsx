@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, Calendar } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { validateDates } from './utils/dateValidation';
+import { validateDates } from '../utils/dateValidation';
 import { toast } from 'react-toastify';
 import CalendarHeader from '../components/common/CalendarHeader';
 

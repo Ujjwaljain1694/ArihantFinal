@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, ChevronsUpDown, Search, Download } from 'lucide-react';
+import { getOpenPositionData } from '../api/korpApiService';
 
 export default function OpenPosition() {
   const [selectedOption, setSelectedOption] = useState('Select Option');
@@ -24,98 +25,34 @@ export default function OpenPosition() {
     'Script Code'
   ];
 
-  const tableData = [
-    {
-      clientName: 'DHRUVIK BHAVESHKUMAR',
-      clientCode: '26640002S',
-      scriptName: 'SENSEX',
-      optionType: 'PE',
-      mtm: '38092.00',
-      strikePrice: '76000.0',
-      expDate: '30-04-2026',
-      openBuy: '600.0',
-      openSell: '2660.0'
-    },
-    {
-      clientName: 'VIVEK SHAH',
-      clientCode: '26640002G',
-      scriptName: 'WIPRO',
-      optionType: 'FF',
-      mtm: '-1169040.00',
-      strikePrice: '0.0',
-      expDate: '26-03-2026',
-      openBuy: '0.0',
-      openSell: '0.0'
-    },
-    {
-      clientName: 'VIVEK SHAH',
-      clientCode: '26640002G',
-      scriptName: 'SENSEX',
-      optionType: 'PE',
-      mtm: '12487.00',
-      strikePrice: '75800.0',
-      expDate: '30-04-2026',
-      openBuy: '0.0',
-      openSell: '2000.0'
-    },
-    {
-      clientName: 'VIVEK SHAH',
-      clientCode: '26640002G',
-      scriptName: 'SENSEX',
-      optionType: 'CE',
-      mtm: '3089.00',
-      strikePrice: '75800.0',
-      expDate: '30-04-2026',
-      openBuy: '0.0',
-      openSell: '1000.0'
-    },
-    {
-      clientName: 'VIVEK SHAH',
-      clientCode: '26640002G',
-      scriptName: 'SENSEX',
-      optionType: 'CE',
-      mtm: '1400.00',
-      strikePrice: '80000.0',
-      expDate: '30-04-2026',
-      openBuy: '0.0',
-      openSell: '1000.0'
-    },
-    {
-      clientName: 'VINAY SHAH',
-      clientCode: '26640004G',
-      scriptName: 'SENSEX',
-      optionType: 'PE',
-      mtm: '6000.00',
-      strikePrice: '75800.0',
-      expDate: '30-04-2026',
-      openBuy: '0.0',
-      openSell: '1000.0'
-    },
-    {
-      clientName: 'VINAY SHAH',
-      clientCode: '26640004G',
-      scriptName: 'SENSEX',
-      optionType: 'CE',
-      mtm: '2440.00',
-      strikePrice: '75800.0',
-      expDate: '30-04-2026',
-      openBuy: '0.0',
-      openSell: '800.0'
-    },
-    {
-      clientName: 'VINAY SHAH',
-      clientCode: '26640004G',
-      scriptName: 'SENSEX',
-      optionType: 'CE',
-      mtm: '870.00',
-      strikePrice: '80000.0',
-      expDate: '30-04-2026',
-      openBuy: '0.0',
-      openSell: '600.0'
-    }
-  ];
+  const [tableData, setTableData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
 
-  const [filteredData, setFilteredData] = useState(tableData);
+  const fetchTableData = async () => {
+    console.log("Fetching Open Position API...");
+    try {
+      const response = await getOpenPositionData({
+        pageNumber: 0,
+        size: 50,
+      });
+      console.log("Open Position API Response:", response.data);
+
+      const rows =
+        response?.data?.data ||
+        response?.data?.Data ||
+        response?.data ||
+        [];
+
+      setTableData(Array.isArray(rows) ? rows : []);
+      setFilteredData(Array.isArray(rows) ? rows : []);
+    } catch (error) {
+      console.error("API Error:", error);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchTableData();
+  }, []);
 
   const handleApply = () => {
     // FILTER DATA

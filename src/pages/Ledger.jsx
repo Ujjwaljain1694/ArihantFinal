@@ -9,6 +9,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { validateDates } from "../utils/dateValidation";
 import { toast } from "react-toastify";
 import { getBrokerageLedger } from "../api/apiService";
+import { getGeneralLedgerList } from "../api/korpApiService";
 import CalendarHeader from "../components/common/CalendarHeader";
 
 const clientCodesList = [
@@ -118,17 +119,53 @@ const Ledger = () => {
         fetchData();
     };
 
-    const handleGeneralSearch = () => {
+    const handleGeneralSearch = async () => {
         if (!selectedClient) {
             setCustomErrorMsg("Please select client code");
             setShowCustomError(true);
             return;
         }
-        setLedgerData([
-            { voucher: "JV/2024/001", voucherDate: "01/05/2024", narration: "TEST DATA FOR " + selectedClient, exchange: "NSE", bookType: "JOURNAL", transactionDate: "01/05/2024", debit: "0.00", credit: "1,000.00", balance: "1,000.00 Cr" }
-        ]);
-        setHasSearched(true);
-        toast.success("Data loaded for: " + selectedClient);
+
+        const clientCodeParsed = selectedClient.split(" - ")[0];
+        setLoading(true);
+        try {
+            const params = {
+                pageNumber: 0,
+                size: 50,
+                clientCode: clientCodeParsed,
+                ClientCode: clientCodeParsed,
+                Search: clientCodeParsed,
+            };
+            const response = await getGeneralLedgerList(params);
+            console.log("General Ledger API Response:", response.data);
+
+            const items = response?.data?.data || response?.data?.Data || response?.data?.result?.userList || response?.data || [];
+            
+            if (Array.isArray(items)) {
+                const formatted = items.map(item => ({
+                    voucher: item.voucher || item.Voucher || item.voucherNo || "-",
+                    voucherDate: item.voucherDate || item.VoucherDate || item.date || "-",
+                    narration: item.narration || item.Narration || "-",
+                    exchange: item.exchange || item.Exchange || "-",
+                    bookType: item.bookType || item.BookType || "-",
+                    transactionDate: item.transactionDate || item.TransactionDate || "-",
+                    debit: item.debit || item.Debit || "0.00",
+                    credit: item.credit || item.Credit || "0.00",
+                    balance: item.balance || item.Balance || "0.00",
+                }));
+                setLedgerData(formatted);
+            } else {
+                setLedgerData([]);
+            }
+            setHasSearched(true);
+            toast.success("Data loaded for: " + clientCodeParsed);
+        } catch (err) {
+            console.error("General Ledger API Error:", err);
+            toast.error("Failed to fetch General Ledger data");
+            setLedgerData([]);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleDownload = () => {
@@ -331,9 +368,11 @@ const Ledger = () => {
                         </button>
                     </div>
                 </div>
-            )}
-
-            {hasSearched && (
+            )}            {loading ? (
+                <div className="p-16 text-center text-gray-500 font-semibold text-[15px]">
+                    Loading General Ledger data from UAT...
+                </div>
+            ) : hasSearched && (
                 <div className="mt-1">
                     {activeSubTab === "General Ledger" && selectedClient && (
                         <div className="mb-6 px-2">
@@ -348,13 +387,13 @@ const Ledger = () => {
                                     <span className="text-black font-bold text-[15px]">{selectedClient.split(" - ")[1] || "N/A"}</span>
                                 </div>
                             </div>
-
+ 
                             {/* Summary Cards */}
                             <div className="flex gap-4 mb-6">
                                 {[
-                                    { title: "Total Debit", value: ledgerData.reduce((acc, curr) => acc + parseFloat(curr.debit || 0), 0).toFixed(2) },
-                                    { title: "Total Credit", value: ledgerData.reduce((acc, curr) => acc + parseFloat(curr.credit || 0), 0).toFixed(2) },
-                                    { title: "Total Balance", value: "0.42" }
+                                    { title: "Total Debit", value: ledgerData.reduce((acc, curr) => acc + parseFloat(curr.debit?.toString().replace(/,/g, "") || 0), 0).toFixed(2) },
+                                    { title: "Total Credit", value: ledgerData.reduce((acc, curr) => acc + parseFloat(curr.credit?.toString().replace(/,/g, "") || 0), 0).toFixed(2) },
+                                    { title: "Total Balance", value: ledgerData.length > 0 ? (ledgerData[ledgerData.length - 1].balance || "0.00") : "0.00" }
                                 ].map((card, idx) => (
                                     <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 w-[200px] shadow-sm">
                                         <p className="text-gray-500 font-bold text-[13px] mb-1">{card.title}</p>
@@ -362,7 +401,7 @@ const Ledger = () => {
                                     </div>
                                 ))}
                             </div>
-
+ 
                         </div>
                     )}
                     <ResultsHeader count={ledgerData.length} onDownload={handleDownload} />

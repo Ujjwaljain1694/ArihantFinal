@@ -36,17 +36,7 @@ export default function HoldKRAStatus() {
       
       // If API is not ready, fallback to mock data
       if (!response.ok || data.length === 0) {
-        const mockData = [
-          {
-            clientCode: filter,
-            pan: "ABCDE1234F",
-            clientName: "Astha Gour",
-            branchCode: "BR001",
-            kraName: "CVL KRA",
-            kraStatus: "Approved",
-            reason: "-",
-          },
-        ];
+        const mockData = [];
         setResults(mockData);
       } else {
         setResults(data);
@@ -54,17 +44,7 @@ export default function HoldKRAStatus() {
     } catch (error) {
       console.error("API Error:", error);
       // Fallback to mock data on error
-      const mockData = [
-        {
-          clientCode: filter,
-          pan: "ABCDE1234F",
-          clientName: "Astha Gour",
-          branchCode: "BR001",
-          kraName: "CVL KRA",
-          kraStatus: "Approved",
-          reason: "-",
-        },
-      ];
+      const mockData = [];
       setResults(mockData);
     }
   };

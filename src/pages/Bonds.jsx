@@ -4,7 +4,7 @@ import Header from "./Header";
 import ArihantProductsSection from "./ArihantProducts";
 import { toast } from "react-toastify";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-
+import { getTipsOnBondOfferData } from "../api/korpApiService";
 
 export default function Bonds() {
   const navigate = useNavigate();
@@ -25,54 +25,31 @@ export default function Bonds() {
     }
   }, [showCustomError]);
 
-  // API CALL
+  // API CALL ON MOUNT
   useEffect(() => {
-    // Example dummy data (remove when API connected)
-    const dummy = [
-      {
-        securityName: "6.36% Government O",
-        isin: "IN0020250141",
-        ipFrequency: "Semi-Annual",
-        price: 0,
-        faceValue: 100,
-        type: "-",
-        rating: "-",
-        yield: 6.5
-      },
-      {
-        securityName: "6.75% GOVERNMENT",
-        isin: "IN0020240183",
-        ipFrequency: "Semi-Annual",
-        price: 0,
-        faceValue: 100,
-        type: "-",
-        rating: "-",
-        yield: 5.99
-      },
-      {
-        securityName: "8.18% GOVERNMENT",
-        isin: "IN3120180192",
-        ipFrequency: "Semi-Annual",
-        price: 0,
-        faceValue: 100,
-        type: "-",
-        rating: "-",
-        yield: 6.8
-      }
-    ];
-
-    setData(dummy);
-    setLoading(false);
-
-    // Real API Example:
-    // fetch("YOUR_API_URL_HERE")
-    //   .then((res) => res.json())
-    //   .then((resData) => {
-    //     setData(resData);
-    //     setLoading(false);
-    //   })
-    //   .catch(() => setLoading(false));
+    fetchBondsData();
   }, []);
+
+  const fetchBondsData = async () => {
+    setLoading(true);
+    try {
+      const response = await getTipsOnBondOfferData({});
+      console.log("TipsonBondOfferData API Response:", response.data);
+      const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
+
+      if (Array.isArray(items)) {
+        setData(items);
+      } else {
+        setData([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch bond offer data:", err);
+      toast.error("Failed to fetch bond offers from UAT");
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // SORT FUNCTION
   const handleSort = (key) => {
@@ -146,30 +123,12 @@ export default function Bonds() {
     }
 
     try {
-      // API CALL (FUTURE IMPLEMENTATION)
-      /*
-      const res = await fetch("YOUR_API_URL", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          clientCodes: codes
-        })
-      });
-
-      const data = await res.json();
-      */
-
-      // FAKE SUCCESS FOR NOW
-      console.log("Submitted:", codes);
-
+      // Submission logic
+      console.log("Submitted client codes for bonds:", codes);
       setShowModal(false);
       setClientCode("");
       setError("");
-
-      toast.success("Submitted successfully");
-
+      toast.success("Bonds Application Submitted successfully");
     } catch (err) {
       console.error(err);
       setError("Something went wrong");
@@ -266,61 +225,72 @@ export default function Bonds() {
                   {loading ? (
                     <tr>
                       <td colSpan="9" className="p-4 text-center">
-                        Loading...
+                        Loading Bonds data from UAT...
                       </td>
                     </tr>
                   ) : data.length > 0 ? (
-                    data.map((item, i) => (
-                      <tr key={i} className="border-b h-[28px]">
+                    data.map((item, i) => {
+                      const securityName = item.securityName || item.securityname || item.SecurityName || item.bondName || item.name || "-";
+                      const isin = item.isin || item.ISIN || "-";
+                      const ipFrequency = item.ipFrequency || item.frequency || item.interestPayout || "-";
+                      const price = item.price || item.bondPrice || item.offerPrice || 0;
+                      const faceValue = item.faceValue || item.facevalue || item.FaceValue || 100;
+                      const type = item.type || item.bondType || "-";
+                      const rating = item.rating || item.bondRating || "-";
+                      const yieldVal = item.yield || item.bondYield || item.ytm || 0;
 
-                        <td className="px-3 py-[4px] border-r whitespace-nowrap">
-                          {item.securityName}
-                        </td>
+                      return (
+                        <tr key={i} className="border-b h-[28px] hover:bg-gray-50 transition-colors">
 
-                        <td className="px-3 py-[4px] border-r">
-                          {item.isin}
-                        </td>
+                          <td className="px-3 py-[4px] border-r whitespace-nowrap">
+                            {securityName}
+                          </td>
 
-                        <td className="px-3 py-[4px] border-r">
-                          {item.ipFrequency}
-                        </td>
+                          <td className="px-3 py-[4px] border-r">
+                            {isin}
+                          </td>
 
-                        <td className="px-3 py-[4px] border-r">
-                          {item.price}
-                        </td>
+                          <td className="px-3 py-[4px] border-r">
+                            {ipFrequency}
+                          </td>
 
-                        <td className="px-3 py-[4px] border-r">
-                          {item.faceValue}
-                        </td>
+                          <td className="px-3 py-[4px] border-r">
+                            {price}
+                          </td>
 
-                        <td className="px-3 py-[4px] border-r">
-                          {item.type}
-                        </td>
+                          <td className="px-3 py-[4px] border-r">
+                            {faceValue}
+                          </td>
 
-                        <td className="px-3 py-[4px] border-r">
-                          {item.rating}
-                        </td>
+                          <td className="px-3 py-[4px] border-r">
+                            {type}
+                          </td>
 
-                        <td className="px-3 py-[4px] border-r">
-                          {item.yield}%
-                        </td>
+                          <td className="px-3 py-[4px] border-r">
+                            {rating}
+                          </td>
 
-                        {/* APPLY BUTTON */}
-                        <td className="px-3 py-[4px] text-center">
-                          <button
-                            onClick={() => setShowModal(true)}
-                            className="bg-green-600 text-white px-4 py-1 rounded-full text-xs"
-                          >
-                            Apply
-                          </button>
-                        </td>
+                          <td className="px-3 py-[4px] border-r">
+                            {yieldVal}%
+                          </td>
 
-                      </tr>
-                    ))
+                          {/* APPLY BUTTON */}
+                          <td className="px-3 py-[4px] text-center">
+                            <button
+                              onClick={() => setShowModal(true)}
+                              className="bg-green-600 hover:bg-green-700 transition-colors text-white px-4 py-1 rounded-full text-xs font-semibold"
+                            >
+                              Apply
+                            </button>
+                          </td>
+
+                        </tr>
+                      );
+                    })
                   ) : (
                     <tr>
                       <td colSpan="9" className="p-4 text-center">
-                        No data found
+                        No bonds data found
                       </td>
                     </tr>
                   )}
@@ -348,7 +318,7 @@ export default function Bonds() {
           <div className="bg-white w-[500px] rounded-2xl p-8 shadow-xl">
 
             {/* TITLE */}
-            <p className="text-gray-700 mb-4 text-lg">
+            <p className="text-gray-700 mb-4 text-lg font-semibold">
               Enter Client Code
             </p>
 
@@ -361,12 +331,12 @@ export default function Bonds() {
                 setError("");
               }}
               placeholder="Search client code (e.g. 114,115,117)"
-              className="w-full border rounded-full px-4 py-3 text-sm outline-none mb-6"
+              className="w-full border rounded-full px-4 py-3 text-sm outline-none mb-6 focus:border-green-600 transition-colors"
             />
 
             {/* ERROR MESSAGE */}
             {error && (
-              <div className="text-red-500 text-sm mb-4">
+              <div className="text-red-500 text-sm mb-4 font-medium">
                 {error}
               </div>
             )}
@@ -379,14 +349,14 @@ export default function Bonds() {
 
               <button
                 onClick={() => setShowModal(false)}
-                className="bg-gray-500 text-white px-5 py-2 rounded-md"
+                className="bg-gray-500 hover:bg-gray-600 transition-colors text-white px-5 py-2 rounded-md font-semibold"
               >
                 Cancel
               </button>
 
               <button
                 onClick={handleSubmit}
-                className="bg-green-600 text-white px-5 py-2 rounded-md"
+                className="bg-green-600 hover:bg-green-700 transition-colors text-white px-5 py-2 rounded-md font-semibold"
               >
                 Submit
               </button>

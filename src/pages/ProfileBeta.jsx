@@ -3,12 +3,15 @@ import { Link, useNavigate } from "react-router-dom";
 import logo from "../logo-arihant-capital.png";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import Header from "./Header";
+import { getClientPortfolio } from "../api/korpApiService";
+import { toast } from "react-toastify";
 
 export default function ProfileBeta() {
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState("AP210001");
   const [loading, setLoading] = useState(false);
   const [clientData, setClientData] = useState(null);
+  const [portfolioItems, setPortfolioItems] = useState([]);
   const [showCustomError, setShowCustomError] = useState(false);
   const [customErrorMsg, setCustomErrorMsg] = useState("");
 
@@ -27,19 +30,34 @@ export default function ProfileBeta() {
     }
 
     setLoading(true);
-
+    setClientData(null);
+    setPortfolioItems([]);
     try {
-      // Dummy Response
-      setTimeout(() => {
-        setClientData({
-          clientName: "JASPAL SINGH GOUD",
-          clientCode: search,
-          branch: "Indore",
-          mobile: "XXXXXX4934",
-        });
-        setLoading(false);
-      }, 800);
+      const params = {
+        ClientCode: search.trim()
+      };
+      const response = await getClientPortfolio(params, {});
+      console.log("GetClientPortfolio UAT Response:", response.data);
+
+      const resObj = response?.data;
+      if (resObj) {
+        // Store parent object or structure
+        setClientData(resObj);
+
+        // Find list of holdings/assets in portfolio if present
+        const list = resObj.data || resObj.Data || resObj.result || resObj.holdings || resObj.Holdings || [];
+        if (Array.isArray(list)) {
+          setPortfolioItems(list);
+        } else if (Array.isArray(resObj)) {
+          setPortfolioItems(resObj);
+        }
+      } else {
+        toast.info("No portfolio data returned from UAT");
+      }
     } catch (error) {
+      console.error("Failed to fetch client portfolio:", error);
+      toast.error("Failed to fetch Client Portfolio from UAT");
+    } finally {
       setLoading(false);
     }
   };
@@ -62,7 +80,7 @@ export default function ProfileBeta() {
 
           {/* Search Area */}
           <div className="bg-[#efefef] rounded-md px-4 py-4">
-            <p className="text-[15px] font-medium text-gray-700 mb-4 -mt-2">
+            <p className="text-[15px] font-medium text-gray-700 mb-4 -mt-2 font-bold">
               Search By Client
             </p>
 
@@ -73,21 +91,103 @@ export default function ProfileBeta() {
                   placeholder="Search client code"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-[275px] h-[44px] rounded-full border border-gray-300 bg-white pl-14 pr-4 text-[16px] outline-none"
+                  className="w-[275px] h-[44px] rounded-full border border-gray-300 bg-white pl-14 pr-4 text-[16px] outline-none font-bold"
                 />
                 <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-xl"></i>
               </div>
 
               <button
                 onClick={handleSearch}
-                className="h-[40px] px-3 rounded-full bg-[#31b44b] text-white text-[14px] font-semibold flex items-center gap-2"
+                className="h-[40px] px-6 rounded-full bg-[#31b44b] hover:bg-[#289a3f] text-white text-[14px] font-bold flex items-center gap-2 transition-all active:scale-95 shadow-md uppercase"
               >
                 {loading ? "Loading..." : "SEARCH"}
-                <span className="text-base leading-none">{'>'}</span>
+                <span className="text-base leading-none font-bold">{'>'}</span>
               </button>
             </div>
           </div>
         </div>
+
+        {/* Dynamic UAT Portfolio Results */}
+        {clientData && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 px-5 py-5 mt-6">
+            <h3 className="text-xl font-bold mb-6 text-[#31b44b] border-b pb-2 uppercase tracking-tight">
+              Client Portfolio: {search.trim()}
+            </h3>
+
+            {/* General client metadata if returned */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-[14px] mb-6">
+              <div className="bg-[#f8fafc] p-4 rounded-xl border">
+                <div className="text-gray-500 font-semibold mb-1">CLIENT NAME</div>
+                <div className="font-bold text-gray-800 text-[16px]">
+                  {clientData.clientName || clientData.clientname || clientData.ClientName || clientData.name || "-"}
+                </div>
+              </div>
+              <div className="bg-[#f8fafc] p-4 rounded-xl border">
+                <div className="text-gray-500 font-semibold mb-1">CLIENT CODE</div>
+                <div className="font-bold text-gray-800 text-[16px]">
+                  {clientData.clientCode || clientData.clientcode || clientData.ClientCode || search.trim()}
+                </div>
+              </div>
+              <div className="bg-[#f8fafc] p-4 rounded-xl border">
+                <div className="text-gray-500 font-semibold mb-1">BRANCH CODE</div>
+                <div className="font-bold text-gray-800 text-[16px]">
+                  {clientData.branchCode || clientData.branchcode || clientData.branch || clientData.Branch || "-"}
+                </div>
+              </div>
+              <div className="bg-[#f8fafc] p-4 rounded-xl border">
+                <div className="text-gray-500 font-semibold mb-1">NET ASSET VALUE</div>
+                <div className="font-bold text-gray-800 text-[16px]">
+                  ₹ {clientData.netAssetValue || clientData.totalValue || clientData.netValue || "0.00"}
+                </div>
+              </div>
+            </div>
+
+            {/* Portfolio Holdings Table */}
+            <div className="overflow-x-auto w-full border rounded-xl">
+              <table className="w-full text-[12px] border-collapse min-w-[800px]">
+                <thead>
+                  <tr className="bg-[#2fb344] text-white text-left font-bold">
+                    <th className="px-4 py-3 border-r border-white/10">SCRIPT / SECURITY NAME</th>
+                    <th className="px-4 py-3 border-r border-white/10">ISIN</th>
+                    <th className="px-4 py-3 border-r border-white/10 text-right">QUANTITY</th>
+                    <th className="px-4 py-3 border-r border-white/10 text-right">AVERAGE COST</th>
+                    <th className="px-4 py-3 border-r border-white/10 text-right">MARKET PRICE</th>
+                    <th className="px-4 py-3 text-right">CURRENT VALUE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {portfolioItems.length > 0 ? (
+                    portfolioItems.map((item, index) => {
+                      const name = item.securityName || item.scriptName || item.schemeName || item.name || "-";
+                      const isin = item.isin || item.ISIN || "-";
+                      const qty = item.qty || item.quantity || item.holdingQty || 0;
+                      const avg = item.avgPrice || item.avgCost || item.buyRate || 0;
+                      const cmp = item.cmp || item.marketPrice || item.closeRate || 0;
+                      const value = item.marketValue || item.currentValue || (qty * cmp) || 0;
+
+                      return (
+                        <tr key={index} className={`border-b transition-colors hover:bg-gray-50 ${index % 2 === 0 ? "bg-white" : "bg-[#f8fafc]"}`}>
+                          <td className="px-4 py-3 border-r font-semibold text-gray-800">{name}</td>
+                          <td className="px-4 py-3 border-r text-gray-600">{isin}</td>
+                          <td className="px-4 py-3 border-r text-right font-medium text-gray-700">{qty}</td>
+                          <td className="px-4 py-3 border-r text-right text-gray-700">₹ {avg}</td>
+                          <td className="px-4 py-3 border-r text-right text-gray-700">₹ {cmp}</td>
+                          <td className="px-4 py-3 text-right font-bold text-gray-900">₹ {value}</td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="p-8 text-center text-gray-400 font-medium text-[14px]">
+                        No holdings found in this portfolio
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Meaning Text */}
         <div className="flex items-center justify-center gap-8 my-16">
@@ -120,17 +220,6 @@ export default function ProfileBeta() {
           </div>
         </div>
 
-      {/* API Result */}
-        {clientData && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 px-5 py-5 mt-6">
-            <h3 className="text-xl font-semibold mb-4">Client Details</h3>
-
-            <p><b>Name:</b> {clientData.clientName}</p>
-            <p><b>Code:</b> {clientData.clientCode}</p>
-            <p><b>Branch:</b> {clientData.branch}</p>
-            <p><b>Mobile:</b> {clientData.mobile}</p>
-          </div>
-        )}
       </div>
 
       {/* 🚨 CUSTOM ERROR TOAST */}

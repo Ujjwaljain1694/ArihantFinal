@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Search, ChevronRight } from "lucide-react";
 import ReKYCModification from "./Rekyc Modification.jsx";
 import { toast } from "react-toastify";
+import { getPhysicalModification } from "../api/korpApiService";
 
 export default function PhysicalModification() {
   const [activeSubTab, setActiveSubTab] = useState("Physical Modification");
@@ -15,6 +16,8 @@ export default function PhysicalModification() {
   const [showCustomError, setShowCustomError] = useState(false);
   const [customErrorMsg, setCustomErrorMsg] = useState("");
 
+  const [isLoading, setIsLoading] = useState(false);
+
   React.useEffect(() => {
     if (showCustomError) {
       const timer = setTimeout(() => setShowCustomError(false), 3000);
@@ -22,59 +25,62 @@ export default function PhysicalModification() {
     }
   }, [showCustomError]);
 
+  React.useEffect(() => {
+    handleApply();
+  }, []);
+
   // SEARCH / BACKEND READY
   const handleApply = async () => {
     setError(""); // Reset error
+    setIsLoading(true);
 
-    if (search.trim() === "") {
-      const msg = "Please enter client code to search";
-      setCustomErrorMsg(msg);
-      setShowCustomError(true);
-      return;
-    }
-    
-    // API Example:
-    // const res = await fetch("/api/physical-modification");
-    // const data = await res.json();
+    try {
+      const params = {
+        size: 50,
+        pageNumber: 0,
+      };
 
-    const data = [
-      {
-        clientCode: "CL001",
-        clientName: "Astha Gour",
-        pan: "ABCDE1234F",
-        requestDate: "24-04-2026",
-        branchCode: "BR001",
-        requestType: "Address Change",
-        status: "Approved",
-        remark: "-",
-      },
-      {
-        clientCode: "CL002",
-        clientName: "Riya Sharma",
-        pan: "PQRSX4567K",
-        requestDate: "25-04-2026",
-        branchCode: "BR002",
-        requestType: "Mobile Update",
-        status: "Pending",
-        remark: "Under Review",
-      },
-    ];
+      if (search.trim()) {
+        params.clientCode = search.trim();
+        params.Clientcode = search.trim();
+        params.clientcode = search.trim();
+      }
 
-    let filtered = data;
+      const response = await getPhysicalModification(params);
+      console.log("GetPhysicalModification API Response:", response.data);
+      const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
 
-    if (search.trim() !== "") {
-      filtered = data.filter((item) =>
-        item.clientCode.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    if (filtered.length === 0) {
-      const msg = "No data found for the selected criteria";
+      if (Array.isArray(items)) {
+        let filtered = items;
+        if (search.trim()) {
+          filtered = items.filter((item) => {
+            const code = item.clientCode || item.clientcode || item.ClientCode || "";
+            return code.toLowerCase().includes(search.trim().toLowerCase());
+          });
+        }
+        setResults(filtered);
+        if (filtered.length === 0 && search.trim()) {
+          const msg = "No data found for the selected criteria";
+          setError(msg);
+          toast.error(msg);
+        }
+      } else {
+        setResults([]);
+        if (search.trim()) {
+          const msg = "No data found for the selected criteria";
+          setError(msg);
+          toast.error(msg);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch physical modifications:", err);
+      const msg = "Failed to fetch physical modifications from UAT server";
       setError(msg);
       toast.error(msg);
+      setResults([]);
+    } finally {
+      setIsLoading(false);
     }
-    
-    setResults(filtered);
   };
 
   // SORT
@@ -230,7 +236,11 @@ export default function PhysicalModification() {
               </div>
 
             {/* Body */}
-            {results.length === 0 ? (
+            {isLoading ? (
+              <div className="bg-white h-[100px] flex items-center justify-center px-6 text-[15px] text-gray-500 border-b border-gray-200 font-semibold">
+                Loading physical modifications from UAT...
+              </div>
+            ) : results.length === 0 ? (
               <>
                 <div className="bg-white h-[45px] flex items-center px-6 text-[15px] text-gray-500 border-b border-gray-200">
                   No data to display
@@ -242,23 +252,34 @@ export default function PhysicalModification() {
               </>
             ) : (
               <>
-                {results.map((row, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-8 bg-[#f2f2f2] border-b border-gray-200 text-[14px] hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="px-4 py-2 border-r border-gray-300">{row.clientCode}</div>
-                    <div className="px-4 py-2 border-r border-gray-300">{row.clientName}</div>
-                    <div className="px-4 py-2 border-r border-gray-300">{row.pan}</div>
-                    <div className="px-4 py-2 border-r border-gray-300">{row.requestDate}</div>
-                    <div className="px-4 py-2 border-r border-gray-300">{row.branchCode}</div>
-                    <div className="px-4 py-2 border-r border-gray-300">{row.requestType}</div>
-                    <div className="px-4 py-2 border-r border-gray-300 text-green-600 font-bold">
-                      {row.status}
+                {results.map((row, index) => {
+                  const clientCode = row.clientCode || row.clientcode || row.ClientCode || "-";
+                  const clientName = row.clientName || row.clientname || row.ClientName || "-";
+                  const pan = row.pan || row.Pan || row.panCode || "-";
+                  const requestDate = row.requestDate || row.requestdate || row.RequestDate || row.date || row.Date || "-";
+                  const branchCode = row.branchCode || row.branchcode || row.BranchCode || "-";
+                  const requestType = row.requestType || row.requesttype || row.RequestType || row.type || row.Type || "-";
+                  const status = row.status || row.Status || "-";
+                  const remark = row.remark || row.Remark || "-";
+
+                  return (
+                    <div
+                      key={index}
+                      className="grid grid-cols-8 bg-[#f2f2f2] border-b border-gray-200 text-[14px] hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="px-4 py-2 border-r border-gray-300">{clientCode}</div>
+                      <div className="px-4 py-2 border-r border-gray-300">{clientName}</div>
+                      <div className="px-4 py-2 border-r border-gray-300">{pan}</div>
+                      <div className="px-4 py-2 border-r border-gray-300">{requestDate}</div>
+                      <div className="px-4 py-2 border-r border-gray-300">{branchCode}</div>
+                      <div className="px-4 py-2 border-r border-gray-300">{requestType}</div>
+                      <div className="px-4 py-2 border-r border-gray-300 text-green-600 font-bold">
+                        {status}
+                      </div>
+                      <div className="px-4 py-2">{remark}</div>
                     </div>
-                    <div className="px-4 py-2">{row.remark}</div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 <div className="bg-white px-6 py-2 text-black font-bold border-b border-gray-200 text-[14px]">
                   {results.length} total

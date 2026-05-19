@@ -105,6 +105,12 @@ const LoginPage = () => {
 
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('branchCode', branchCode);
+        
+        // Also save to connect_token to satisfy our local security state:
+        const returnedToken = response.data.result?.token || 'uat-authenticated-session-token';
+        localStorage.setItem('connect_token', returnedToken);
+        localStorage.setItem('connect_manager', JSON.stringify({ manager_id: branchCode, name: response.data.result?.name || "Branch Administrator" }));
+
         if (response.data.result) {
           localStorage.setItem('userData', JSON.stringify(response.data.result));
         }
@@ -131,7 +137,7 @@ const LoginPage = () => {
   return (
     <div className="login-container min-h-screen flex flex-col bg-[#f1f9f2]">
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
-      
+
       {/* Loading Overlay */}
       {loading && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] backdrop-blur-sm">

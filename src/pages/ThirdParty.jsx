@@ -7,15 +7,15 @@ import Header from "./Header";
 import ArihantProductsSection from "./ArihantProducts";
 
 const tabs = [
-  { name: "Algo Brokerage", path: "algo-brokerage" },
-  { name: "Mutual Fund", path: "mutual-fund" },
-  { name: "Rejection", path: "rejection" },
-  { name: "Mandate", path: "mandate" },
-  { name: "Product Deck", path: "product-deck" },
-  { name: "MF Structure & Brokerage", path: "mf-structure" },
-  { name: "Wealth Basket", path: "wealth-basket" },
-  { name: "SIP Revenue Calculator", path: "sip-calculator" },
-  { name: "Bonds", path: "bonds" }
+  { name: "Algo Brokerage", path: "/algo-brokerage" },
+  { name: "Mutual Fund", path: "/mutual-fund" },
+  { name: "Rejection", path: "/rejection" },
+  { name: "Mandate", path: "/mandate" },
+  { name: "Product Deck", path: "/product-deck" },
+  { name: "MF Structure & Brokerage", path: "/mf-structure" },
+  { name: "Wealth Basket", path: "/wealth-basket" },
+  { name: "SIP Revenue Calculator", path: "/sip-calculator" },
+  { name: "Bonds", path: "/bonds" }
 ];
 
 function CustomDateFilter() {

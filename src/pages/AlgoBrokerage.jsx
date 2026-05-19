@@ -1,185 +1,367 @@
-import React, { useRef, useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import React, { useRef, useState, useEffect } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Header from "./Header";
 import ArihantProductsSection from "./ArihantProducts";
-import { validateDates } from "./utils/dateValidation";
 import { toast } from "react-toastify";
+import { getAlgoBrokerage } from "../api/korpApiService";
 
 const tabs = [
-  { name: "Algo Brokerage", path: "algo-brokerage" },
-  { name: "Mutual Fund", path: "mutual-fund" },
-  { name: "Rejection", path: "rejection" },
-  { name: "Mandate", path: "mandate" },
-  { name: "Product Deck", path: "product-deck" },
-  { name: "MF Structure & Brokerage", path: "mf-structure" },
-  { name: "Wealth Basket", path: "wealth-basket" },
-  { name: "SIP Revenue Calculator", path: "sip-calculator" },
-  { name: "Bonds", path: "bonds" }
+  { name: "Algo Brokerage", path: "/algo-brokerage" },
+  { name: "Mutual Fund", path: "/mutual-fund" },
+  { name: "Rejection", path: "/rejection" },
+  { name: "Mandate", path: "/mandate" },
+  { name: "Product Deck", path: "/product-deck" },
+  { name: "MF Structure & Brokerage", path: "/mf-structure" },
+  { name: "Wealth Basket", path: "/wealth-basket" },
+  { name: "SIP Revenue Calculator", path: "/sip-calculator" },
+  { name: "Bonds", path: "/bonds" }
 ];
 
-function CustomDateFilter() {
-  const [fromDate, setFromDate] = useState(null);
-  const [toDate, setToDate] = useState(null);
+export default function AlgoBrokerage() {
+  const getFirstDayOfMonth = () => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  };
+
+  const [fromDate, setFromDate] = useState(getFirstDayOfMonth());
+  const [toDate, setToDate] = useState(new Date());
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
   const [error, setError] = useState("");
   const [customErrorMsg, setCustomErrorMsg] = useState("");
   const [showCustomError, setShowCustomError] = useState(false);
 
-  React.useEffect(() => {
+  const fromRef = useRef();
+  const toRef = useRef();
+  const navigate = useNavigate();
+
+  useEffect(() => {
     if (showCustomError) {
       const timer = setTimeout(() => setShowCustomError(false), 3000);
       return () => clearTimeout(timer);
     }
   }, [showCustomError]);
 
-  const fromRef = useRef();
-  const toRef = useRef();
+  useEffect(() => {
+    handleApply();
+  }, []);
 
-  const today = new Date();
-
-  const handleApply = () => {
-    const errorMsg = validateDates(fromDate, toDate);
-    if (errorMsg) {
-      setError(errorMsg);
-      setCustomErrorMsg(errorMsg);
-      setShowCustomError(true);
-      return;
-    }
-    setError("");
+  const formatDateForApi = (date) => {
+    if (!date) return "";
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
   };
 
+  const handleApply = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const params = {
+        size: 50,
+        pageNumber: 0,
+      };
+
+      if (fromDate) params.datefrom = formatDateForApi(fromDate);
+      if (toDate) params.dateto = formatDateForApi(toDate);
+
+      const response = await getAlgoBrokerage(params);
+      console.log("AlgoBrokerage API Response:", response.data);
+      const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
+
+      if (Array.isArray(items)) {
+        setData(items);
+      } else {
+        setData([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch algo brokerage:", err);
+      toast.error("Failed to fetch Algo Brokerage report from UAT");
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    } else if (sortConfig.key === key && sortConfig.direction === "desc") {
+      direction = "";
+    }
+    let sorted = [...data];
+    if (direction !== "") {
+      sorted.sort((a, b) => {
+        if (a[key] < b[key]) return direction === "asc" ? -1 : 1;
+        if (a[key] > b[key]) return direction === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+    setSortConfig({ key, direction });
+    setData(sorted);
+  };
+
+  const handleDownload = () => {
+    const headers = ["DATE", "CLIENT CODE", "CLIENT NAME", "ALGO NAME", "BROKERAGE AMOUNT"];
+    const csvContent = [
+      headers.join(","),
+      ...data.map(item => {
+        const dateStr = item.date || item.tradeDate || item.TradeDate || item.datetime || "-";
+        const code = item.clientCode || item.clientcode || item.ClientCode || item.ucc || "-";
+        const name = item.clientName || item.clientname || item.ClientName || "-";
+        const algo = item.algoName || item.strategy || item.algo || "-";
+        const amount = item.brokerage || item.Brokerage || item.amount || item.brokerageAmount || "-";
+        return [dateStr, code, name, algo, amount].join(",");
+      })
+    ].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `algo_brokerage_${new Date().toLocaleDateString().replace(/\//g, "_")}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const SortIcon = ({ column }) => {
+    const isActive = sortConfig.key === column;
+    const isAsc = isActive && sortConfig.direction === "asc";
+    const isDesc = isActive && sortConfig.direction === "desc";
+    return (
+      <span className="ml-1 flex flex-col">
+        <svg width="8" height="5" viewBox="0 0 10 6" className={isAsc ? "fill-black" : "fill-green-200"}>
+          <path d="M5 0 L10 6 H0 Z" />
+        </svg>
+        <svg width="8" height="5" viewBox="0 0 10 6" className={isDesc ? "fill-black" : "fill-green-200 mt-[1px]"}>
+          <path d="M0 0 L10 0 L5 6 Z" />
+        </svg>
+      </span>
+    );
+  };
+
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  const CustomHeader = ({
+    date,
+    changeYear,
+    changeMonth,
+    decreaseMonth,
+    increaseMonth,
+    prevMonthButtonDisabled,
+    nextMonthButtonDisabled,
+  }) => (
+    <div className="flex items-center justify-between px-3 py-2 bg-white border-b border-gray-100">
+      <button
+        onClick={(e) => { e.preventDefault(); decreaseMonth(); }}
+        disabled={prevMonthButtonDisabled}
+        className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors disabled:opacity-30"
+      >
+        <i className="fa fa-chevron-left text-[10px] text-gray-500"></i>
+      </button>
+      
+      <div className="flex gap-2">
+        <div className="relative">
+          <select
+            value={months[date.getMonth()]}
+            onChange={({ target: { value } }) => changeMonth(months.indexOf(value))}
+            className="text-[12px] font-bold bg-white border border-gray-200 rounded-lg px-2 py-1 outline-none cursor-pointer hover:border-[#34b350] transition-all appearance-none pr-6 shadow-sm"
+          >
+            {months.map((month) => (
+              <option key={month} value={month}>{month}</option>
+            ))}
+          </select>
+          <i className="fa fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[8px] text-gray-400 pointer-events-none"></i>
+        </div>
+
+        <div className="relative">
+          <select
+            value={date.getFullYear()}
+            onChange={({ target: { value } }) => changeYear(parseInt(value))}
+            className="text-[12px] font-bold bg-white border border-gray-200 rounded-lg px-2 py-1 outline-none cursor-pointer hover:border-[#34b350] transition-all appearance-none pr-6 shadow-sm"
+          >
+            {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - 50 + i).map((year) => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+          <i className="fa fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[8px] text-gray-400 pointer-events-none"></i>
+        </div>
+      </div>
+
+      <button
+        onClick={(e) => { e.preventDefault(); increaseMonth(); }}
+        disabled={nextMonthButtonDisabled}
+        className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors disabled:opacity-30"
+      >
+        <i className="fa fa-chevron-right text-[10px] text-gray-500"></i>
+      </button>
+    </div>
+  );
+
   return (
-    <div className="flex gap-6 items-end bg-[#f3f3f3] p-4 rounded-xl mt-4 flex-wrap">
+    <>
+      <Header />
+      <div className="p-4 pt-11">
+        <div className="bg-white rounded-lg shadow-sm p-4 w-full mt-10">
+          <div className="flex gap-10 border-b overflow-x-auto w-full">
+            {tabs.map((tab) => (
+              <NavLink
+                key={tab.name}
+                to={tab.path}
+                className={({ isActive }) =>
+                  `pb-3 text-base whitespace-nowrap leading-tight tracking-tight no-underline ${isActive
+                    ? "border-b-2 border-green-600 text-black font-medium"
+                    : "text-gray-600 font-medium"
+                  }`
+                }
+              >
+                {tab.name}
+              </NavLink>
+            ))}
+          </div>
 
-      {/* FROM DATE */}
-      <div>
-        <label className="text-sm text-gray-600">From Date</label>
-
-        <div className="relative w-[200px]">
-          <DatePicker
-            selected={fromDate}
-            onChange={(date) => setFromDate(date)}
-            maxDate={today}
-            dateFormat="dd/MM/yyyy"
-            placeholderText="DD/MM/YYYY"
-            className={`w-full border rounded-lg px-3 pr-10 py-2 text-sm ${error ? "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.5)]" : "border-gray-300"}`}
-            ref={fromRef}
-            onFocus={(e) => e.target.blur()}
-
-            /* CUSTOM HEADER */
-            renderCustomHeader={({
-              date,
-              decreaseMonth,
-              increaseMonth,
-            }) => (
-              <div className="flex items-center justify-between px-2 py-2 border-b">
-
-                {/* LEFT ARROW */}
-                <button onClick={decreaseMonth}>
-                  <i className="fa fa-chevron-left text-gray-600"></i>
-                </button>
-
-                {/* MONTH + YEAR BOX */}
-                <div className="flex gap-2">
-                  <div className="border px-3 py-1 rounded">
-                    {date.toLocaleString("default", { month: "short" })}
-                  </div>
-                  <div className="border px-3 py-1 rounded">
-                    {date.getFullYear()}
-                  </div>
-                </div>
-
-                {/* RIGHT ARROW */}
-                <button
-                  onClick={increaseMonth}
-                  disabled={date >= today}
-                  className="disabled:opacity-30"
-                >
-                  <i className="fa fa-chevron-right text-gray-600"></i>
-                </button>
-
+          <div className="bg-[#eaeaea] p-4 rounded-lg mt-4 flex items-center gap-4 flex-wrap">
+            <div>
+              <label className="text-xs text-gray-600">From Date</label>
+              <div className="relative group">
+                <DatePicker
+                  selected={fromDate}
+                  onChange={(d) => setFromDate(d)}
+                  dateFormat="dd/MM/yyyy"
+                  placeholderText="DD/MM/YYYY"
+                  renderCustomHeader={CustomHeader}
+                  className="w-[200px] bg-white border rounded-lg px-3 pr-10 py-2 text-sm border-gray-300 focus:border-[#34b350] outline-none transition-all"
+                  ref={fromRef}
+                  onFocus={(e) => e.target.blur()}
+                />
+                <i
+                  className="fa fa-calendar absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 group-hover:text-[#34b350] transition-colors"
+                  onClick={() => fromRef.current.setOpen(true)}
+                />
               </div>
-            )}
-          />
+            </div>
 
-          {/* ICON CLICK */}
-          <i
-            className="fa fa-calendar absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-600"
-            onClick={() => fromRef.current.setOpen(true)}
-          ></i>
-        </div>
-      </div>
-
-      {/* TO DATE */}
-      <div>
-        <label className="text-sm text-gray-600">To Date</label>
-
-        <div className="relative w-[200px]">
-          <DatePicker
-            selected={toDate}
-            onChange={(date) => setToDate(date)}
-            maxDate={today}
-            dateFormat="dd/MM/yyyy"
-            placeholderText="DD/MM/YYYY"
-            className={`w-full border rounded-lg px-3 pr-10 py-2 text-sm ${error ? "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.5)]" : "border-gray-300"}`}
-            ref={toRef}
-            onFocus={(e) => e.target.blur()}
-
-            /* CUSTOM HEADER */
-            renderCustomHeader={({
-              date,
-              decreaseMonth,
-              increaseMonth,
-            }) => (
-              <div className="flex items-center justify-between px-2 py-2 border-b">
-
-                {/* LEFT ARROW */}
-                <button onClick={decreaseMonth}>
-                  <i className="fa fa-chevron-left text-gray-600"></i>
-                </button>
-
-                {/* MONTH + YEAR BOX */}
-                <div className="flex gap-2">
-                  <div className="border px-3 py-1 rounded">
-                    {date.toLocaleString("default", { month: "short" })}
-                  </div>
-                  <div className="border px-3 py-1 rounded">
-                    {date.getFullYear()}
-                  </div>
-                </div>
-
-                {/* RIGHT ARROW */}
-                <button
-                  onClick={increaseMonth}
-                  disabled={date >= today}
-                  className="disabled:opacity-30"
-                >
-                  <i className="fa fa-chevron-right text-gray-600"></i>
-                </button>
-
+            <div>
+              <label className="text-xs text-gray-600">To Date</label>
+              <div className="relative group">
+                <DatePicker
+                  selected={toDate}
+                  onChange={(d) => setToDate(d)}
+                  dateFormat="dd/MM/yyyy"
+                  placeholderText="DD/MM/YYYY"
+                  renderCustomHeader={CustomHeader}
+                  className="w-[200px] bg-white border rounded-lg px-3 pr-10 py-2 text-sm border-gray-300 focus:border-[#34b350] outline-none transition-all"
+                  ref={toRef}
+                  onFocus={(e) => e.target.blur()}
+                />
+                <i
+                  className="fa fa-calendar absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 group-hover:text-[#34b350] transition-colors"
+                  onClick={() => toRef.current.setOpen(true)}
+                />
               </div>
-            )}
-          />
+            </div>
 
-          {/* ICON CLICK */}
-          <i
-            className="fa fa-calendar absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-600"
-            onClick={() => toRef.current.setOpen(true)}
-          ></i>
+            <div className="flex items-center gap-4 pt-4">
+              <button
+                onClick={handleApply}
+                className="bg-[#34b350] hover:bg-[#2e9e47] text-white px-8 py-2 rounded-full font-semibold flex items-center gap-2 transition-all shadow-md active:scale-95"
+              >
+                APPLY
+                <i className="fa fa-angle-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between">
+            <div className="text-sm text-gray-700 pb-3 font-semibold">
+              Search results({data.length})
+            </div>
+            <i className="fa fa-download text-green-600 text-lg cursor-pointer hover:scale-110 transition-transform" onClick={handleDownload}></i>
+          </div>
+
+          <div className="mt-2 bg-white rounded-lg overflow-hidden border">
+            <table className="w-full text-[12px] border border-gray-300 table-fixed">
+              <thead>
+                <tr className="bg-[#2fb344] text-white">
+                  <th className="px-3 py-2 border-r border-gray-200">
+                    <div onClick={() => handleSort("date")} className="flex items-center cursor-pointer">
+                      DATE
+                      <SortIcon column="date" />
+                    </div>
+                  </th>
+                  <th className="px-3 py-2 border-r border-gray-200">
+                    <div onClick={() => handleSort("clientCode")} className="flex items-center cursor-pointer">
+                      CLIENT CODE
+                      <SortIcon column="clientCode" />
+                    </div>
+                  </th>
+                  <th className="px-3 py-2 border-r border-gray-200">
+                    <div onClick={() => handleSort("clientName")} className="flex items-center cursor-pointer">
+                      CLIENT NAME
+                      <SortIcon column="clientName" />
+                    </div>
+                  </th>
+                  <th className="px-3 py-2 border-r border-gray-200">
+                    <div onClick={() => handleSort("algoName")} className="flex items-center cursor-pointer">
+                      ALGO NAME
+                      <SortIcon column="algoName" />
+                    </div>
+                  </th>
+                  <th className="px-3 py-2">
+                    <div onClick={() => handleSort("brokerage")} className="flex items-center cursor-pointer">
+                      BROKERAGE AMOUNT
+                      <SortIcon column="brokerage" />
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="5" className="p-4 text-center text-gray-500 font-medium">
+                      Loading Algo Brokerage report from UAT...
+                    </td>
+                  </tr>
+                ) : data.length > 0 ? (
+                  data.map((item, index) => {
+                    const dateStr = item.date || item.tradeDate || item.TradeDate || item.datetime || "-";
+                    const code = item.clientCode || item.clientcode || item.ClientCode || item.ucc || "-";
+                    const name = item.clientName || item.clientname || item.ClientName || "-";
+                    const algo = item.algoName || item.strategy || item.algo || "-";
+                    const amount = item.brokerage || item.Brokerage || item.amount || item.brokerageAmount || "-";
+
+                    return (
+                      <tr key={index} className="border-b border-gray-200 h-[28px] hover:bg-gray-50 transition-colors">
+                        <td className="px-3 py-[4px] border-r border-gray-200">{dateStr}</td>
+                        <td className="px-3 py-[4px] border-r border-gray-200">{code}</td>
+                        <td className="px-3 py-[4px] border-r border-gray-200">{name}</td>
+                        <td className="px-3 py-[4px] border-r border-gray-200 font-semibold">{algo}</td>
+                        <td className="px-3 py-[4px] font-bold">{amount}</td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="p-4 text-left text-gray-500 text-base font-medium">
+                      No data to display
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-4 p-4 text-left text-gray-500 text-base font-bold">
+            Total: {data.length}
+          </div>
         </div>
-      </div>
-
-      {/* APPLY BUTTON */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={handleApply}
-          className="bg-[#34b350] hover:bg-[#2e9e47] text-white px-8 py-2 rounded-full font-semibold flex items-center gap-2 transition-all shadow-md active:scale-95"
-        >
-          APPLY
-          <i className="fa fa-angle-right"></i>
-        </button>
+        <ArihantProductsSection />
       </div>
 
       {/* 🚨 CUSTOM ERROR TOAST */}
@@ -197,60 +379,6 @@ function CustomDateFilter() {
             <span className="absolute top-1/2 left-1/2 w-4 h-[2.5px] bg-white -translate-x-1/2 -translate-y-1/2 rotate-[-45deg] rounded"></span>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-export default function AlgoBrokerage() {
-  const navigate = useNavigate();
-
-  return (
-    <>
-      <Header />
-
-      <div className="p-4 pt-11">
-
-        {/* -------- TABS -------- */}
-        <div className="bg-white rounded-lg shadow-sm p-4 w-full mt-10">
-          <div className="flex gap-10 border-b overflow-x-auto w-full">
-            {tabs.map((tab) => (
-              tab.name === "Mutual Fund" ? (
-                <span
-                  onClick={() => navigate("/mutual-fund")}
-                  className="pb-3 text-base whitespace-nowrap leading-tight tracking-tight no-underline text-gray-600 font-medium cursor-pointer hover:text-black"
-                >
-                  {tab.name}
-                </span>
-              ) : (
-                <NavLink
-                  key={tab.name}
-                  to={tab.path}
-                  className={({ isActive }) =>
-                    `pb-3 text-base whitespace-nowrap leading-tight tracking-tight no-underline ${isActive
-                      ? "border-b-2 border-green-600 text-black font-medium"
-                      : "text-gray-600 font-medium"
-                    }`
-                  }
-                >
-                  {tab.name}
-                </NavLink>
-              )
-            ))}
-          </div>
-
-          {/* -------- FILTER -------- */}
-          <div>
-            <CustomDateFilter />
-          </div>
-        </div>
-
-        {/* -------- CONTENT AREA -------- */}
-        <div className="mt-6">
-          <Outlet />
-        </div>
-
-        <ArihantProductsSection />
       </div>
     </>
   );

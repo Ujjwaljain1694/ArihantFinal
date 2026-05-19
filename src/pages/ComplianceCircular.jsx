@@ -3,9 +3,12 @@ import Header from "./Header";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import CalendarHeader from "../components/common/CalendarHeader";
+import { getComplianceFiles } from "../api/korpApiService";
 
 export default function ComplianceCircular() {
   const [data, setData] = useState([]);
+  const [originalData, setOriginalData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [type, setType] = useState("");
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
@@ -23,13 +26,28 @@ export default function ComplianceCircular() {
   }, []);
 
   const fetchData = async () => {
+    setIsLoading(true);
     try {
-      // 👉 replace with your API
-      const res = await fetch("http://localhost:5000/api/circulars");
-      const result = await res.json();
-      setData(result);
+      const params = {
+        pageNumber: 0,
+        size: 100,
+      };
+      const response = await getComplianceFiles(params);
+      console.log("Compliance Files API Response:", response.data);
+      const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
+      if (Array.isArray(items)) {
+        setData(items);
+        setOriginalData(items);
+      } else {
+        setData([]);
+        setOriginalData([]);
+      }
     } catch (err) {
-      console.log(err);
+      console.error("Failed to fetch compliance circulars:", err);
+      setData([]);
+      setOriginalData([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -43,22 +61,27 @@ export default function ComplianceCircular() {
       return;
     }
 
-    let filtered = [...data];
+    let filtered = [...originalData];
 
     if (type) {
-      filtered = filtered.filter((item) => item.type === type);
+      filtered = filtered.filter((item) => {
+        const itemType = item.type || item.Type || item.fileType || item.FileType || "";
+        return itemType.toLowerCase() === type.toLowerCase();
+      });
     }
 
     if (fromDate) {
-      filtered = filtered.filter(
-        (item) => new Date(item.date) >= new Date(fromDate)
-      );
+      filtered = filtered.filter((item) => {
+        const itemDate = item.date || item.Date || item.uploadDate || item.CreatedDate || "";
+        return new Date(itemDate) >= new Date(fromDate);
+      });
     }
 
     if (toDate) {
-      filtered = filtered.filter(
-        (item) => new Date(item.date) <= new Date(toDate)
-      );
+      filtered = filtered.filter((item) => {
+        const itemDate = item.date || item.Date || item.uploadDate || item.CreatedDate || "";
+        return new Date(itemDate) <= new Date(toDate);
+      });
     }
 
     setData(filtered);
@@ -232,22 +255,44 @@ export default function ComplianceCircular() {
 
           {/* BODY WITH SCROLL */}
           <div className="max-h-[350px] overflow-y-auto">
-
-            {data.map((item, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-3 text-sm border-t"
-              >
-                <div className="p-3 border-r">{item.type}</div>
-
-                <div className="p-3 border-r text-blue-600 cursor-pointer hover:underline">
-                  {item.file}
-                </div>
-
-                <div className="p-3">{item.date}</div>
+            {isLoading ? (
+              <div className="p-16 text-center text-gray-500 font-semibold text-[15px]">
+                Loading compliance circulars from UAT...
               </div>
-            ))}
+            ) : data.length === 0 ? (
+              <div className="p-16 text-center text-gray-400 font-medium">
+                No circulars available
+              </div>
+            ) : (
+              data.map((item, index) => {
+                const complianceType = item.complianceType || item.ComplianceType || item.circularType || item.CircularType || item.type || item.Type || item.fileType || item.FileType || "Circular";
+                const fileName = item.circularName || item.CircularName || item.file || item.File || item.fileName || item.FileName || item.name || item.Name || "Download File";
+                const circularDate = item.date || item.Date || item.uploadDate || item.CreatedDate || item.uploadedDate || item.UploadedDate || "-";
+                const fileUrl = item.fileUrl || item.url || item.Url || `https://korpapuatapi.arihantcapital.com/api/V1/reports/downloadComplianceFile?fileName=${fileName}`;
 
+                return (
+                  <div
+                    key={index}
+                    className="grid grid-cols-3 text-sm border-t hover:bg-gray-50/50 transition-colors"
+                  >
+                    <div className="p-3 border-r font-medium text-gray-800">{complianceType}</div>
+
+                    <div className="p-3 border-r text-blue-600 font-bold">
+                      <a
+                        href={fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="no-underline text-blue-600 hover:underline cursor-pointer"
+                      >
+                        {fileName}
+                      </a>
+                    </div>
+
+                    <div className="p-3 text-gray-600 font-medium">{circularDate}</div>
+                  </div>
+                );
+              })
+            )}
           </div>
 
           {/* FOOTER */}

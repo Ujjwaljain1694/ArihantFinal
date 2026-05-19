@@ -11,6 +11,8 @@ import ContactDetailsPage from "./ContactDetailsPage.jsx";
 import EKYCTAT from "./EKYCTAT.jsx";
 import ArihantProducts from "./ArihantProducts";
 import { Eye, ChevronDown, ChevronUp, ChevronsUpDown, Search, ChevronRight } from "lucide-react";
+import { getKRADataNew } from "../api/korpApiService";
+import { toast } from "react-toastify";
 
 export default function KRAStatusPage() {
   const [activeTab, setActiveTab] = useState("KRA & UCC Status");
@@ -47,17 +49,63 @@ export default function KRAStatusPage() {
     "EKYC TAT",
   ];
 
-  const handleSearch = () => {
-    const newData = {
-      id: Date.now(),
-      clientcode: clientCode || "undefined",
-      name: "",
-      pan: "N/A",
-      kra: "",
-      ucc: [],
-    };
+  const [loading, setLoading] = useState(false);
 
-    setResults([newData]);
+  const handleSearch = async () => {
+    if (!clientCode.trim()) {
+      toast.error("Please enter a Client Code");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const params = {
+        Clientcode: clientCode.trim(),
+        clientcode: clientCode.trim(),
+        clientCode: clientCode.trim(),
+        ClientCode: clientCode.trim(),
+      };
+      
+      const response = await getKRADataNew(params);
+      console.log("KRA & UCC API Response:", response.data);
+
+      const items = response?.data?.data || response?.data?.Data || response?.data || [];
+      const rawItems = Array.isArray(items) ? items : [items];
+      
+      const formatted = rawItems
+        .filter(item => item && (item.clientcode || item.Clientcode || item.clientCode || item.ClientCode))
+        .map(item => {
+          const uccRaw = item.ucc || item.UCC || item.uccList || [];
+          const formattedUcc = Array.isArray(uccRaw) ? uccRaw.map(u => ({
+            exchange: u.exchange || u.Exchange || "-",
+            segment: u.segment || u.Segment || "-",
+            status: u.status || u.Status || "-",
+            trade: u.trade || u.Trade || u.tradeStatus || u.TradeStatus || "-"
+          })) : [];
+
+          return {
+            id: item.id || Date.now() + Math.random(),
+            clientcode: item.clientcode || item.Clientcode || item.clientCode || item.ClientCode || "-",
+            name: item.clientName || item.ClientName || item.name || item.Name || "-",
+            pan: item.pan || item.Pan || "N/A",
+            kra: item.kraStatus || item.KraStatus || item.kra || item.Kra || "-",
+            ucc: formattedUcc
+          };
+        });
+
+      setResults(formatted);
+      if (formatted.length > 0) {
+        toast.success(`Data found for client: ${clientCode.trim()}`);
+      } else {
+        toast.info("No records found for the entered Client Code");
+      }
+    } catch (error) {
+      console.error("KRA & UCC API Error:", error);
+      toast.error("Failed to load KRA & UCC status from server");
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // SORT FUNCTION (Same as ComplianceCircular)
@@ -138,11 +186,15 @@ export default function KRAStatusPage() {
                   placeholder="Enter your Client Code"
                   value={clientCode}
                   onChange={(e) => setClientCode(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSearch();
+                  }}
                   className="w-[400px] h-[54px] rounded-xl border border-gray-300 px-5 text-[18px] outline-none bg-transparent"
                 />
-
+ 
                 <button
                   onClick={handleSearch}
+                  disabled={loading}
                   className="w-[200px] h-[54px] rounded-full 
                   bg-gradient-to-r from-[#34c759] to-[#28a745]
                   hover:from-[#2eb84f] hover:to-[#23963d]
@@ -151,14 +203,18 @@ export default function KRAStatusPage() {
                   transition-all duration-300
                   hover:scale-[1.02]
                   active:scale-[0.98]
-                  tracking-wide"
+                  tracking-wide disabled:opacity-50"
                 >
-                  Search
+                  {loading ? "Searching..." : "Search"}
                 </button>
               </div>
-
+ 
               {/* Table */}
-              {results.length > 0 && (
+              {loading ? (
+                <div className="p-16 text-center text-gray-500 font-semibold text-[16px]">
+                  Loading live KRA & UCC status details from UAT...
+                </div>
+              ) : results.length > 0 && (
                 <div className="w-full">
                   {/* Header */}
                   <div className="grid grid-cols-[120px_200px_250px_220px_1fr] bg-[#35b34a] text-white text-[15px] font-semibold border border-gray-300">

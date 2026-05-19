@@ -112,13 +112,13 @@ function Dashboard() {
         setLoading(true);
 
         // Define our robust fallback fetchers
-        const safeFetch = async (type) => {
+        const safeFetch = async (type, code) => {
           try {
             const res = await korpInstance.get("/dashboard/korpgetclientDetail", {
-              params: { pageNumber: 0, size: 50, Type: type }
+              params: { pageNumber: 0, size: 50, Type: type, clientCode: code }
             });
             console.log(`[Dashboard Debug] safeFetch(${type}) success:`, res.data);
-            return res.data?.result?.all_Count;
+            return res.data?.result?.all_Count !== undefined ? res.data.result.all_Count : (res.data?.result?.AClist?.length || 0);
           } catch (e) {
             console.error(`[Dashboard Debug] safeFetch(${type}) error:`, e.response?.data || e.message || e);
             return undefined;
@@ -129,7 +129,7 @@ function Dashboard() {
           try {
             const res = await korpInstance.get("/reports/getMobileAppLogin");
             console.log("[Dashboard Debug] safeAppLoginFetch success:", res.data);
-            return res.data?.count;
+            return res.data?.result?.length !== undefined ? res.data.result.length : (res.data?.count || 0);
           } catch (e) {
             console.error("[Dashboard Debug] safeAppLoginFetch error:", e.response?.data || e.message || e);
             return undefined;
@@ -141,11 +141,11 @@ function Dashboard() {
         // Fire both main dashboard API and the detailed metric APIs in parallel
         const [dashRes, nc, tc, ac, al, ic] = await Promise.allSettled([
           getDashboardData(branchCode),
-          safeFetch("NC"),
-          safeFetch("TC"),
-          safeFetch("AC"),
+          safeFetch("NC", branchCode),
+          safeFetch("TC", branchCode),
+          safeFetch("AC", branchCode),
           safeAppLoginFetch(),
-          safeFetch("IC")
+          safeFetch("IC", branchCode)
         ]);
 
         // 1. Process Main Dashboard Data (for Revenue, etc.)

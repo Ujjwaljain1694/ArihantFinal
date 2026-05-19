@@ -5,8 +5,9 @@ import "react-datepicker/dist/react-datepicker.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import Header from "./Header";
 import ArihantProductsSection from "./ArihantProducts";
-import { validateDates } from "./utils/dateValidation";
+import { validateDates } from "../utils/dateValidation";
 import { toast } from "react-toastify";
+import { getMfMandates } from "../api/korpApiService";
 
 const tabs = [
   { name: "Algo Brokerage", path: "/algo-brokerage" },
@@ -24,11 +25,11 @@ export default function Mandate() {
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
   const [error, setError] = useState("");
 
-  const [clientCode, setClientCode] = useState("");
+  const [clientCode, setClientCode] = useState("BRAP09");
   const [customErrorMsg, setCustomErrorMsg] = useState("");
   const [showCustomError, setShowCustomError] = useState(false);
 
@@ -45,19 +46,62 @@ export default function Mandate() {
 
   const today = new Date();
 
-  // API CALL
+  // API CALL ON MOUNT
   useEffect(() => {
-    fetch("YOUR_API_URL_HERE")
-      .then((res) => res.json())
-      .then((resData) => {
-        setData(resData); 
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
+    fetchMandateData(true);
   }, []);
+
+  const fetchMandateData = async (isInitial = false) => {
+    if (!clientCode.trim()) {
+      setCustomErrorMsg("Please Enter Client Code");
+      setShowCustomError(true);
+      return;
+    }
+
+    if (!isInitial && (fromDate || toDate)) {
+      const errorMsg = validateDates(fromDate, toDate);
+      if (errorMsg) {
+        setCustomErrorMsg(errorMsg);
+        setShowCustomError(true);
+        return;
+      }
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      const queryParams = {
+        size: 50,
+        pageNumber: 0,
+      };
+
+      const body = {
+        apcode: clientCode.trim(),
+      };
+      if (fromDate) body.fromDate = fromDate.toLocaleDateString('en-GB'); // dd/MM/yyyy
+      if (toDate) body.toDate = toDate.toLocaleDateString('en-GB');
+
+      const response = await getMfMandates(queryParams, body);
+      console.log("MfMandates API Response:", response.data);
+      const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
+
+      if (Array.isArray(items)) {
+        setData(items);
+      } else {
+        setData([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch MF mandates:", err);
+      toast.error("Failed to fetch Mandate report from UAT");
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApply = () => {
+    fetchMandateData(false);
+  };
 
   const handleSort = (key) => {
     let direction = "asc";
@@ -82,12 +126,13 @@ export default function Mandate() {
     const headers = ["COMMISSION ACCOUNT", "SUBBROKER NAME", "BROKERAGE AMOUNT", "PASS ON %"];
     const csvContent = [
       headers.join(","),
-      ...data.map(item => [
-        item.account || "",
-        item.name || "",
-        item.amount || "",
-        item.pass || ""
-      ].join(","))
+      ...data.map(item => {
+        const account = item.account || item.commissionAccount || item.CommissionAccount || item.Apcode || item.apcode || "-";
+        const name = item.name || item.subbrokerName || item.SubbrokerName || item.Clientname || item.clientName || "-";
+        const amount = item.amount || item.brokerageAmount || item.BrokerageAmount || "-";
+        const pass = item.pass || item.passOn || item.PassOn || "-";
+        return [account, name, amount, pass].join(",");
+      })
     ].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
@@ -98,23 +143,6 @@ export default function Mandate() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  const handleApply = () => {
-    if (!clientCode.trim()) {
-      setCustomErrorMsg("Please Enter Client Code");
-      setShowCustomError(true);
-      return;
-    }
-
-    const errorMsg = validateDates(fromDate, toDate);
-    if (errorMsg) {
-      setCustomErrorMsg(errorMsg);
-      setShowCustomError(true);
-      return;
-    }
-    setLoading(true);
-    setError("");
   };
 
   const SortIcon = ({ column }) => {
@@ -197,8 +225,6 @@ export default function Mandate() {
       </button>
     </div>
   );
-
-
 
   return (
     <>
@@ -328,18 +354,25 @@ export default function Mandate() {
                 {loading ? (
                   <tr>
                     <td colSpan="4" className="p-4 text-center text-gray-500 font-medium">
-                      Loading...
+                      Loading Mandate report from UAT...
                     </td>
                   </tr>
                 ) : data.length > 0 ? (
-                  data.map((item, index) => (
-                    <tr key={index} className="border-b border-gray-200 h-[28px] hover:bg-gray-50 transition-colors">
-                      <td className="px-3 py-[4px] border-r border-gray-200">{item.account}</td>
-                      <td className="px-3 py-[4px] border-r border-gray-200">{item.name}</td>
-                      <td className="px-3 py-[4px] border-r border-gray-200 font-bold">{item.amount}</td>
-                      <td className="px-3 py-[4px]">{item.pass}%</td>
-                    </tr>
-                  ))
+                  data.map((item, index) => {
+                    const account = item.account || item.commissionAccount || item.CommissionAccount || item.Apcode || item.apcode || "-";
+                    const name = item.name || item.subbrokerName || item.SubbrokerName || item.Clientname || item.clientName || "-";
+                    const amount = item.amount || item.brokerageAmount || item.BrokerageAmount || "-";
+                    const pass = item.pass || item.passOn || item.PassOn || "-";
+
+                    return (
+                      <tr key={index} className="border-b border-gray-200 h-[28px] hover:bg-gray-50 transition-colors">
+                        <td className="px-3 py-[4px] border-r border-gray-200">{account}</td>
+                        <td className="px-3 py-[4px] border-r border-gray-200">{name}</td>
+                        <td className="px-3 py-[4px] border-r border-gray-200 font-bold">{amount}</td>
+                        <td className="px-3 py-[4px]">{pass}%</td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
                     <td colSpan="4" className="p-4 text-left text-gray-500 text-base font-medium">

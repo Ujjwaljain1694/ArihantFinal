@@ -1,13 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import Layout from "../components/layout/Layout";
 import SubNavigation from "../components/layout/SubNavigation";
 import FilterBar, { FilterItem, ApplyButton, SearchInput } from "../components/common/FilterBar";
 import ResultsHeader from "../components/common/ResultsHeader";
 import ClientTable from "../components/common/ClientTable";
+import { getClientMIS } from "../api/korpApiService";
 
 const ClientMIS = () => {
     const [clientCode, setClientCode] = useState("");
+    const [tableData, setTableData] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [showCustomError, setShowCustomError] = useState(false);
     const [customErrorMsg, setCustomErrorMsg] = useState("");
 
@@ -18,65 +21,79 @@ const ClientMIS = () => {
         }
     }, [showCustomError]);
 
+    const fetchTableData = async (code = "") => {
+        setLoading(true);
+        try {
+            const params = {
+                pageNumber: 0,
+                size: 50,
+            };
+            if (code) {
+                params.clientCode = code;
+            }
+
+            const response = await getClientMIS(params);
+            console.log("Client MIS API Response:", response.data);
+
+            const rows = response?.data?.data || response?.data?.Data || response?.data?.result?.userList || response?.data || [];
+            
+            if (Array.isArray(rows) && rows.length > 0) {
+                setTableData(rows);
+            } else {
+                setTableData([]);
+                if (code) {
+                    toast.error("Data not found", {
+                        position: "top-right",
+                        autoClose: 3000,
+                        theme: "colored"
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("API Error:", error);
+            setTableData([]);
+            if (code) toast.error("Failed to fetch data from the server");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTableData();
+    }, []);
+
     const handleApply = () => {
         if (!clientCode.trim()) {
             setCustomErrorMsg("Please enter Client Code");
             setShowCustomError(true);
             return;
         }
-        toast.error("Data not found", {
-            position: "top-right",
-            autoClose: 3000,
-            theme: "colored"
-        });
+        fetchTableData(clientCode.trim());
     };
 
     const handleDownload = () => {
         toast.info("Downloading report...");
     };
-    const dummyData = [
-        { 
-            name: "SURAJ SUNIL RAJOLE", 
-            code: "AP2100001", 
-            pan: "ABCDE1234F", 
-            mobile: "9876543210", 
-            email: "suraj@gmail.com", 
-            bank: "KOTAK Ac: 4146029056", 
-            city: "AHMEDABAD GJ", 
-            date: "30 Dec 2023", 
-            dp: "20164299" 
-        },
-        { 
-            name: "RINAZ MUSHTAQUE SHAIKH", 
-            code: "295900016", 
-            pan: "FGHIJ5678K", 
-            mobile: "9123456789", 
-            email: "rinaz@outlook.com", 
-            bank: "HDFC Ac: 50100204124010", 
-            city: "PUNE MH", 
-            date: "22 Sep 2023", 
-            dp: "00175048" 
-        }
-    ];
+    // Dummy data removed; using state instead.
 
     return (
         <div className="px-6 py-4 max-w-[1600px] mx-auto">
             <FilterBar>
                 <FilterItem label="Search By Client">
-                    <SearchInput 
-                        placeholder="Search By Client" 
-                        width="300px" 
+                    <SearchInput
+                        placeholder="Search By Client"
+                        width="300px"
                         value={clientCode}
                         onChange={(e) => setClientCode(e.target.value)}
                         error={showCustomError && !clientCode.trim()}
                     />
                 </FilterItem>
-                <ApplyButton label="Apply" onClick={handleApply} />
+                <ApplyButton label={loading ? "Searching..." : "Apply"} onClick={handleApply} />
             </FilterBar>
 
-            <ResultsHeader count={dummyData.length} onDownload={handleDownload} />
+            <ResultsHeader count={tableData.length} onDownload={handleDownload} />
 
-            <ClientTable data={dummyData} />
+            <ClientTable data={tableData} />
 
             {/* 🚨 CUSTOM ERROR TOAST */}
             <div

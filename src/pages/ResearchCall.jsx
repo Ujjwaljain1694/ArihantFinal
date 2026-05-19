@@ -1,14 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import '@fortawesome/fontawesome-free/css/all.css';
 import logo from "../logo-arihant-capital.png";
 import Header from "./Header";
 import ArihantProductsSection from "./ArihantProducts";
+import { getResearchCalls } from "../api/korpApiService";
 
 function ResearchCall() {
   const [activeTopTab, setActiveTopTab] = useState("research");
   const [activeSubTab, setActiveSubTab] = useState("short-term");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [calls, setCalls] = useState([]);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const subTabs = [
@@ -16,6 +18,43 @@ function ResearchCall() {
     { id: "fundamental", label: "Fundamental Call" },
     { id: "short-term", label: "Short Term Call" }
   ];
+
+  const getSearchType = (tabId) => {
+    switch (tabId) {
+      case "intra-day":
+        return "Intraday";
+      case "fundamental":
+        return "FundaMental";
+      case "short-term":
+        return "Shortterm";
+      default:
+        return "Shortterm";
+    }
+  };
+
+  const fetchCalls = async (tabId) => {
+    setLoading(true);
+    try {
+      const type = getSearchType(tabId);
+      const response = await getResearchCalls(type);
+      console.log(`Research Call Response for ${type}:`, response.data);
+      const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
+      if (Array.isArray(items)) {
+        setCalls(items);
+      } else {
+        setCalls([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch research calls:", err);
+      setCalls([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCalls(activeSubTab);
+  }, [activeSubTab]);
 
   return (
     <div className="bg-white min-h-screen">
@@ -75,7 +114,7 @@ function ResearchCall() {
           <span className="text-green-600 cursor-pointer">LINK</span>
         </p>
 
-        {/* Sample Data Table */}
+        {/* Research Calls Table */}
         <div className="mt-6 bg-white border border-gray-200 rounded-md overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-green-600 text-white">
@@ -86,26 +125,33 @@ function ResearchCall() {
               </tr>
             </thead>
             <tbody>
-              <tr className="border-t hover:bg-gray-50">
-                <td className="p-3">2024-04-16 09:30 AM</td>
-                <td className="p-3">Equity</td>
-                <td className="p-3">Buy RELIANCE INDUSTRIES LTD at ₹2500, Target ₹2600, Stop Loss ₹2450</td>
-              </tr>
-              <tr className="border-t hover:bg-gray-50">
-                <td className="p-3">2024-04-16 10:15 AM</td>
-                <td className="p-3">Derivatives</td>
-                <td className="p-3">Sell NIFTY APR 2024 18500 CALL, Premium ₹120, Target ₹150</td>
-              </tr>
-              <tr className="border-t hover:bg-gray-50">
-                <td className="p-3">2024-04-16 11:00 AM</td>
-                <td className="p-3">Commodity</td>
-                <td className="p-3">Buy GOLD JUNE 2024 at ₹72000, Target ₹73500, Stop Loss ₹71000</td>
-              </tr>
-              <tr className="border-t hover:bg-gray-50">
-                <td className="p-3">2024-04-16 02:30 PM</td>
-                <td className="p-3">Equity</td>
-                <td className="p-3">Book Profit - TCS at ₹3500, Bought at ₹3400 (Profit: ₹100 per share)</td>
-              </tr>
+              {loading ? (
+                <tr>
+                  <td colSpan="3" className="p-8 text-center text-gray-500 font-semibold">
+                    Loading research calls from UAT...
+                  </td>
+                </tr>
+              ) : calls.length === 0 ? (
+                <tr>
+                  <td colSpan="3" className="p-8 text-center text-gray-500 font-medium">
+                    No active research calls for this category
+                  </td>
+                </tr>
+              ) : (
+                calls.map((row, index) => {
+                  const dateTime = row.dateTime || row.datetime || row.Date || row.date || row.DateTime || row.updatedDate || "-";
+                  const segment = row.segment || row.Segment || row.type || row.Type || "-";
+                  const message = row.message || row.Message || row.callMessage || row.description || row.Description || "-";
+
+                  return (
+                    <tr key={index} className="border-t hover:bg-gray-50">
+                      <td className="p-3 whitespace-nowrap">{dateTime}</td>
+                      <td className="p-3">{segment}</td>
+                      <td className="p-3">{message}</td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

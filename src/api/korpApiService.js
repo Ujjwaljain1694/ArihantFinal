@@ -59,6 +59,10 @@ export const korpCheckUsername = (data) => ssoInstance.post("/checkUsername", da
 
 export const getClientLedger = (searchTerm) => korpInstance.get(`/reports/korpgetclientledger?Search=${searchTerm}`);
 export const getHoldingReport = (params) => korpInstance.get("/reports/KorpHoldingReport", { params });
+export const getFreeHoldingsData = (params) =>
+  korpInstance.get("/reports/korpholdingreport", { params });
+export const getOpenPositionData = (params) =>
+  korpInstance.get("/reports/getKorpFOholding", { params });
 export const getGlobalPositionReport = (clientCode) => korpInstance.get("/reports/KorpglobalPositionReport", { params: { clientCode } });
 export const getFOGlobalPositionReport = (clientCode) => korpInstance.get("/reports/KorpFoGlobalPosition", { params: { clientCode } });
 export const getClientMIS = (params) => korpInstance.get("/reports/korpgetclientmis", { params });
@@ -67,22 +71,41 @@ export const getContractNote = (params) => korpInstance.get("/reports/KorpContra
 export const getBrokerageClientWise = (params) => korpInstance.get("/reports/korpgetbrokerageclientwise", { params });
 export const getBrokerageDateWise = (params) => korpInstance.get("/reports/korpgetbrokeragedatewise", { params });
 export const getDPSlip = (params) => korpInstance.post("/reports/KorpdpSlip", params);
-export const getClientPortfolio = (data) => korpInstance.post("/reports/GetClientPortpolio", data);
+export const getClientPortfolio = (params = {}, body = {}) => korpInstance.post("/reports/GetClientPortpolio", body, { params });
 export const getResearchCalls = (type) => korpInstance.get("/reports/getResearchCallDisplay", { params: { SearchType: type } });
 export const getOneClickEarlyPaying = (clientCode) => korpInstance.get("/reports/OneClickEarlypaying", { params: { clientCode } });
 export const getMfPerformanceReport = (clientCode) => korpInstance.get("/reports/korpgetMfPerformanceReport", { params: { clientCode } });
+export const getMobileLoginData = (params) => {
+  const { pageNumber, size, ...body } = params;
+  return korpInstance.post("/reports/GetmobLoginTradedDate", body, {
+    params: { pageNumber, size }
+  });
+};
+export const getGeneralLedgerList = (params) => {
+  const { pageNumber, size, ...body } = params;
+  return korpInstance.post("/reports/genralLedgerList", body, {
+    params: { pageNumber, size }
+  });
+};
+export const getCertificate = (params) => {
+  const { pageNumber, size, ...body } = params;
+  return korpInstance.post("/reports/GetCertificate", body, {
+    params: { pageNumber, size }
+  });
+};
+export const getMarkrtingMaterialFiles = (params) => {
+  const { pageNumber, size, ...body } = params;
+  return korpInstance.post("/reports/GetMarkrtingMaterialFiles", body, {
+    params: { pageNumber, size }
+  });
+};
 
 // ── 🏢 DASHBOARD & ADMIN APIs ───────────────────────────────────────────────
 
-export const getDashboardData = async (clientCode = "AP2100001") => {
+export const getDashboardData = async () => {
   try {
     const response = await korpInstance.get(
-      "/dashboard/getdashboarddata",
-      {
-        params: {
-          Search: clientCode
-        }
-      }
+      "/dashboard/korpgetdashboarddata"
     );
 
     console.log("Dashboard API Success:", response.data);
@@ -107,8 +130,8 @@ export const getClickEventReport = (eventType) => korpInstance.get("/AdminDashbo
 
 export const getClientBalance = (clientCode) => korpInstance.get("/payout/korpgetclientBalance", { params: { clientCode } });
 export const payoutRequest = (data) => korpInstance.post("/payout/payoutrequest", data);
-export const getPayoutRequestReport = (clientCode) => korpInstance.get("/payout/korpgetpayoutrequestreport", { params: { clientCode } });
-export const cancelPayoutRequest = (data) => korpInstance.post("/payout/getPayOutCancelData", data);
+export const getPayoutRequestReport = (params = {}) => korpInstance.get("/payout/korpgetpayoutrequestreport", { params });
+export const cancelPayoutRequest = (params = {}, body = {}) => korpInstance.post("/payout/getPayOutCancelData", body, { params });
 export const bulkUploadPayout = (data) => korpInstance.post("/payout/payoutrequestbulk", data);
 export const mtfRequest = (data) => korpInstance.post("/payout/mtfrequest", data);
 
@@ -129,19 +152,20 @@ export const getRORevenueReport = (roCode) => ssoInstance.get("/ROReport/getRORe
 
 export const getIPOList = (type) => korpInstance.get("/AdminDashboard/korpGetBranchZoneRoSymbol", { params: { ipoType: type } });
 export const getIPOBiddingData = (params) => korpInstance.get("/AdminDashboard/korpIpoDataBidding", { params });
-export const getMfReport = (data) => korpInstance.post("/ThirdpartyAdmin/reports/MfAp", data);
+export const getMfReport = (params = {}, body = {}) => korpInstance.post("/ThirdpartyAdmin/reports/MfAp", body, { params });
 export const getSgbReport = (data) => korpInstance.post("/ThirdpartyAdmin/reports/SgbAp", data);
 export const getBondsReport = (data) => korpInstance.post("/ThirdpartyAdmin/reports/BondsAp", data);
 export const getMfAdminReport = (data) => korpInstance.post("/ThirdpartyAdmin/reports/MfAdmin", data);
 export const getSgbAdminReport = (data) => korpInstance.post("/ThirdpartyAdmin/reports/SgbAdmin", data);
 export const getBondsAdminReport = (data) => korpInstance.post("/ThirdpartyAdmin/reports/BondsAdmin", data);
-export const getSipRejections = (data) => korpInstance.post("/MF/reports/SipRejection", data);
-export const getMfMandates = (data) => korpInstance.post("/MF/reports/MfMandate", data);
+export const getSipRejections = (params = {}, body = {}) => korpInstance.post("/MF/reports/SipRejection", body, { params });
+export const getMfMandates = (params = {}, body = {}) => korpInstance.post("/MF/reports/MfMandate", body, { params });
 
 // ── 📞 COMMUNICATION & CALLING APIs ──────────────────────────────────────────
 
 export const sendMailCzone = (data) => korpInstance.post("/reports/sendmailForCzone", data);
-export const getInactiveClickToCall = (data) => korpInstance.post("/reports/GetInActiveClicktoCall", data);
+export const getInactiveClickToCall = (params = {}, body = {}) => korpInstance.post("/reports/GetInActiveClicktoCall", body, { params });
+export const getInactiveFollowupData = (params = {}, body = {}) => korpInstance.post("/reports/GetInActiveFollowupData", body, { params });
 export const saveFollowupData = (data) => korpInstance.post("/reports/SaveInActiveClientDate", data);
 export const sendWhatsApp = (data) => korpInstance.post("/reports/SendWhatsAppInActiveClient", data);
 export const getSamparkClientLog = (data) => korpInstance.post("/sampark/samparkclientlog", data);
@@ -150,12 +174,18 @@ export const updateCallingRemark = (data) => korpInstance.post("/DailyCalling/Ca
 // ── 🛠️ MISC & COMPLIANCE APIs ────────────────────────────────────────────────
 
 export const getKRAClientData = () => korpInstance.get("/reports/getKRAClientData");
-export const getNomineeNotDone = () => korpInstance.get("/reports/getNomineenotdoneDetails");
+export const getNomineeNotDone = (params = {}) => korpInstance.get("/reports/getNomineenotdoneDetails", { params });
 export const getKRAHold = () => korpInstance.get("/reports/GetKRAHOLD");
-export const getPhysicalModification = (status) => korpInstance.get("/reports/GetPhysicalModification", { params: { status } });
-export const getPhysicalAccountOpening = (status) => korpInstance.get("/reports/GetPhysicalAccountOpening", { params: { status } });
-export const getRekycModification = (status) => korpInstance.get("/reports/Rekycmodificationlist", { params: { status } });
-export const getComplianceFiles = () => korpInstance.get("/reports/getCompliancefiles");
+export const getPhysicalModification = (params = {}) => korpInstance.get("/reports/GetPhysicalModification", { params });
+export const getPhysicalAccountOpening = (params = {}) => korpInstance.get("/reports/GetPhysicalAccountOpening", { params });
+export const getRekycModification = (params = {}) => korpInstance.get("/reports/Rekycmodificationlist", { params });
+export const getComplianceFiles = (params = {}) => {
+  const { pageNumber, size, ...body } = params;
+  return korpInstance.post("/ComplianceCircular/CircularList", body, {
+    params: { pageNumber, size }
+  });
+};
+export const getAriTradeFileUpload = () => korpInstance.get("/reports/GetAriTradeFileUpload");
 export const getMarketDataFiles = (type) => korpInstance.get("/reports/getMarketDatafiles", { params: { fileType: type } });
 export const getPnlFileDownload = (date) => korpInstance.get("/reports/GetPnlFileDownload", { params: { date } });
 export const getAsperoBond = (data) => korpInstance.post("/reports/GetAsperoBond", data);
@@ -167,7 +197,12 @@ export const getOverAllCashReport = (data) => korpInstance.post("/reports/OverAl
 export const getOverAllFNOReport = (data) => korpInstance.post("/reports/OverAllFNOReport", data);
 export const getClientPositionCash = (data) => korpInstance.post("/reports/ClientPositionCash", data);
 export const getClientPositionFNO = (data) => korpInstance.post("/reports/ClientPositionFNO", data);
-export const getCombinePeakMargin = (data) => korpInstance.post("/reports/CombinePeakMargin", data);
+export const getCombinePeakMargin = (params) => {
+  const { pageNumber, size, ...body } = params;
+  return korpInstance.post("/reports/CombinePeakMargin", body, {
+    params: { pageNumber, size }
+  });
+};
 export const getRealtimeMargin = (data) => korpInstance.post("/reports/RealtimrMargin", data);
 export const getMTFBalance = (clientCode) => korpInstance.get("/mtf/korpgetclientmtfBalance", { params: { clientCode } });
 
@@ -179,5 +214,10 @@ export const getComplianceFolder = () => korpInstance.get("/reports/getComplianc
 export const getFTPDirectory = (params) => korpInstance.get("/FTP/FTPDirectory", { params });
 export const getFTPDirectoryFiles = (params) => korpInstance.get("/FTP/FTPDirectoryFiles", { params });
 export const getFTPFile1 = (params) => korpInstance.get("/FTP/getftpFile1", { params });
+export const getAlgoBrokerage = (params = {}) => korpInstance.get("/AdminDashboard/korpIAlgoBrokerage", { params });
+export const getMfStructure = (params = {}, body = {}) => korpInstance.post("/reports/GetMfStructure", body, { params });
+export const getTipsOnBondOfferData = (data = {}) => korpInstance.post("/reports/TipsonBondOfferData", data);
+export const getClientContactDetails = (params = {}) => korpInstance.get("/AdminDashboard/korpClientContactDetails", { params });
+export const getClientPayoutBalance = (params = {}) => korpInstance.get("/payout/korpgetclientBalance", { params });
 
 export default korpInstance;

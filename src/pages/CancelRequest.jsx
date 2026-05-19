@@ -3,9 +3,7 @@ import PayoutLayout from "./PayoutLayout.jsx";
 import { Search, Download, Trash2, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 
 const CancelRequest = () => {
-    const data = [
-        { date: "22/04/2026", clientCode: "ARI3394", clientName: "Demo Arihant User", amount: "25,000.00", status: "In Process" }
-    ];
+    const data = [];
 
     const handleDownload = () => {
         if (data.length === 0) return;
