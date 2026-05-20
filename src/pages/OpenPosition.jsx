@@ -40,11 +40,25 @@ export default function OpenPosition() {
       const rows =
         response?.data?.data ||
         response?.data?.Data ||
+        response?.data?.result ||
         response?.data ||
         [];
 
-      setTableData(Array.isArray(rows) ? rows : []);
-      setFilteredData(Array.isArray(rows) ? rows : []);
+      const rawRows = Array.isArray(rows) ? rows : [];
+      const normalized = rawRows.map(item => ({
+        clientName: item.clientName || item.ClientName || item.name || item.Name || "-",
+        clientCode: item.clientCode || item.ClientCode || item.code || item.Code || "-",
+        scriptName: item.scriptName || item.ScriptName || item.scriptCode || item.ScriptCode || item.symbol || item.Symbol || item.description || item.Description || "-",
+        optionType: item.optionType || item.OptionType || item.optType || item.OptType || "-",
+        mtm: item.mtm !== undefined ? item.mtm : (item.MTM !== undefined ? item.MTM : (item.mtmValue || item.MtmValue || "-")),
+        strikePrice: item.strikePrice !== undefined ? item.strikePrice : (item.StrikePrice !== undefined ? item.StrikePrice : (item.strike || item.Strike || "-")),
+        expDate: item.expDate || item.ExpDate || item.expiryDate || item.ExpiryDate || item.expiry || item.Expiry || "-",
+        openBuy: item.openBuy !== undefined ? item.openBuy : (item.OpenBuy !== undefined ? item.OpenBuy : (item.buyQty || item.BuyQty || "-")),
+        openSell: item.openSell !== undefined ? item.openSell : (item.OpenSell !== undefined ? item.OpenSell : (item.sellQty || item.SellQty || "-"))
+      }));
+
+      setTableData(normalized);
+      setFilteredData(normalized);
     } catch (error) {
       console.error("API Error:", error);
     }
@@ -103,12 +117,12 @@ export default function OpenPosition() {
   const renderSortIcon = (column) => {
     if (sortConfig.key === column) {
       return sortConfig.direction === 'asc' ? (
-        <ChevronUp size={14} className="text-white ml-2" />
+        <ChevronUp size={11} className="text-white ml-1" />
       ) : (
-        <ChevronDown size={14} className="text-white ml-2" />
+        <ChevronDown size={11} className="text-white ml-1" />
       );
     }
-    return <ChevronsUpDown size={14} className="text-white/60 ml-2" />;
+    return <ChevronsUpDown size={11} className="text-white/60 ml-1" />;
   };
 
   const sortedData = [...filteredData].sort((a, b) => {
@@ -227,7 +241,7 @@ export default function OpenPosition() {
         </div>
 
         {/* Table Section */}
-        <div className="overflow-x-auto max-w-[1600px] mx-auto">
+        <div className="overflow-x-auto no-scrollbar max-w-[1600px] mx-auto">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-gray-800 font-semibold text-sm">
               Search results({sortedData.length})
@@ -240,6 +254,13 @@ export default function OpenPosition() {
           </div>
 
           <style>{`
+            .no-scrollbar::-webkit-scrollbar {
+              display: none;
+            }
+            .no-scrollbar {
+              -ms-overflow-style: none;
+              scrollbar-width: none;
+            }
             .open-position-table th, .open-position-table td {
               border: 1px solid #e5e7eb;
             }
@@ -250,56 +271,56 @@ export default function OpenPosition() {
           <table className="w-full open-position-table border-collapse" style={{ fontFamily: 'futura, sans-serif' }}>
             <thead>
               <tr style={{ backgroundColor: '#1EB04C' }} className="text-white">
-                <th className="px-4 py-3 border-r border-white/10 text-left text-[12px] font-bold tracking-wider whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('clientName')}>
-                  <div className="flex items-center justify-between gap-1">
+                <th className="px-2 py-3.5 border-r border-white/10 text-left text-[11px] font-bold whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('clientName')}>
+                  <div className="flex items-center justify-between gap-0.5">
                     <span>CLIENT NAME</span>
                     {renderSortIcon('clientName')}
                   </div>
                 </th>
-                <th className="px-4 py-3 border-r border-white/10 text-left text-[12px] font-bold tracking-wider whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('clientCode')}>
-                  <div className="flex items-center justify-between gap-1">
+                <th className="px-2 py-3.5 border-r border-white/10 text-left text-[11px] font-bold whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('clientCode')}>
+                  <div className="flex items-center justify-between gap-0.5">
                     <span>CLIENT CODE</span>
                     {renderSortIcon('clientCode')}
                   </div>
                 </th>
-                <th className="px-4 py-3 border-r border-white/10 text-left text-[12px] font-bold tracking-wider whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('scriptName')}>
-                  <div className="flex items-center justify-between gap-1">
+                <th className="px-2 py-3.5 border-r border-white/10 text-left text-[11px] font-bold whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('scriptName')}>
+                  <div className="flex items-center justify-between gap-0.5">
                     <span>SCRIPT NAME</span>
                     {renderSortIcon('scriptName')}
                   </div>
                 </th>
-                <th className="px-4 py-3 border-r border-white/10 text-center text-[12px] font-bold tracking-wider whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('optionType')}>
-                  <div className="flex items-center justify-between gap-1">
+                <th className="px-2 py-3.5 border-r border-white/10 text-center text-[11px] font-bold whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('optionType')}>
+                  <div className="flex items-center justify-between gap-0.5">
                     <span>OPTION TYPE</span>
                     {renderSortIcon('optionType')}
                   </div>
                 </th>
-                <th className="px-4 py-3 border-r border-white/10 text-center text-[12px] font-bold tracking-wider whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('mtm')}>
-                  <div className="flex items-center justify-between gap-1">
+                <th className="px-2 py-3.5 border-r border-white/10 text-center text-[11px] font-bold whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('mtm')}>
+                  <div className="flex items-center justify-between gap-0.5">
                     <span>MTM</span>
                     {renderSortIcon('mtm')}
                   </div>
                 </th>
-                <th className="px-4 py-3 border-r border-white/10 text-center text-[12px] font-bold tracking-wider whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('strikePrice')}>
-                  <div className="flex items-center justify-between gap-1">
+                <th className="px-2 py-3.5 border-r border-white/10 text-center text-[11px] font-bold whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('strikePrice')}>
+                  <div className="flex items-center justify-between gap-0.5">
                     <span>STRIKE PRICE</span>
                     {renderSortIcon('strikePrice')}
                   </div>
                 </th>
-                <th className="px-4 py-3 border-r border-white/10 text-center text-[12px] font-bold tracking-wider whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('expDate')}>
-                  <div className="flex items-center justify-between gap-1">
+                <th className="px-2 py-3.5 border-r border-white/10 text-center text-[11px] font-bold whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('expDate')}>
+                  <div className="flex items-center justify-between gap-0.5">
                     <span>EXP. DATE</span>
                     {renderSortIcon('expDate')}
                   </div>
                 </th>
-                <th className="px-4 py-3 border-r border-white/10 text-center text-[12px] font-bold tracking-wider whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('openBuy')}>
-                  <div className="flex items-center justify-between gap-1">
+                <th className="px-2 py-3.5 border-r border-white/10 text-center text-[11px] font-bold whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('openBuy')}>
+                  <div className="flex items-center justify-between gap-0.5">
                     <span>OPEN BUY</span>
                     {renderSortIcon('openBuy')}
                   </div>
                 </th>
-                <th className="px-4 py-3 border-r border-white/10 text-center text-[12px] font-bold tracking-wider whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('openSell')}>
-                  <div className="flex items-center justify-between gap-1">
+                <th className="px-2 py-3.5 border-r border-white/10 text-center text-[11px] font-bold whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('openSell')}>
+                  <div className="flex items-center justify-between gap-0.5">
                     <span>OPEN SELL</span>
                     {renderSortIcon('openSell')}
                   </div>

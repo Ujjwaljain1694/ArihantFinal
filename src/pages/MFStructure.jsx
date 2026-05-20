@@ -256,158 +256,17 @@ export default function MFStructure() {
             ))}
           </div>
 
-          {/* DATE FILTER & SEARCH BLOCK */}
-          <div className="bg-[#eaeaea] p-4 rounded-lg mt-4 flex items-center gap-4 flex-wrap">
-            <div>
-              <label className="text-xs text-gray-600">From Date</label>
-              <div className="relative group">
-                <DatePicker
-                  selected={fromDate}
-                  onChange={(d) => setFromDate(d)}
-                  maxDate={today}
-                  dateFormat="dd/MM/yyyy"
-                  placeholderText="DD/MM/YYYY"
-                  renderCustomHeader={CustomHeader}
-                  className={`w-[200px] bg-white border rounded-lg px-3 pr-10 py-2 text-sm ${error ? "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.5)]" : "border-gray-300"} focus:border-[#34b350] outline-none transition-all font-bold`}
-                  ref={fromRef}
-                  onFocus={(e) => e.target.blur()}
-                />
-                <i
-                  className="fa fa-calendar absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 group-hover:text-[#34b350] transition-colors"
-                  onClick={() => fromRef.current.setOpen(true)}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs text-gray-600">To Date</label>
-              <div className="relative group">
-                <DatePicker
-                  selected={toDate}
-                  onChange={(d) => setToDate(d)}
-                  maxDate={today}
-                  dateFormat="dd/MM/yyyy"
-                  placeholderText="DD/MM/YYYY"
-                  renderCustomHeader={CustomHeader}
-                  className={`w-[200px] bg-white border rounded-lg px-3 pr-10 py-2 text-sm ${error ? "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.5)]" : "border-gray-300"} focus:border-[#34b350] outline-none transition-all font-bold`}
-                  ref={toRef}
-                  onFocus={(e) => e.target.blur()}
-                />
-                <i
-                  className="fa fa-calendar absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 group-hover:text-[#34b350] transition-colors"
-                  onClick={() => toRef.current.setOpen(true)}
-                />
-              </div>
-            </div>
-
-            <div className="relative pt-4">
-              <input
-                type="text"
-                value={clientCode}
-                onChange={(e) => setClientCode(e.target.value)}
-                placeholder="Search by Commision Account"
-                className="w-[320px] bg-white border rounded-full px-10 py-2 text-sm outline-none focus:border-green-500 shadow-sm"
-              />
-              <i className="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 pt-4 text-gray-500" />
-            </div>
-
-            <div className="flex items-center gap-4 mt-4">
-              <button
-                onClick={handleApply}
-                className="bg-[#34b350] hover:bg-[#2e9e47] text-white px-8 py-2 rounded-full font-semibold flex items-center gap-2 transition-all shadow-md active:scale-95 uppercase text-xs tracking-wider"
-              >
-                APPLY
-                <i className="fa fa-angle-right"></i>
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-gray-700 pb-3 font-semibold">
-              Search results({data.length})
-            </div>
-            <i className="fa fa-download text-green-600 text-lg cursor-pointer hover:scale-110 transition-transform" onClick={handleDownload}></i>
-          </div>
-
-          {/* TABLE OF STRUCTURES */}
-          <div className="mt-2 bg-white rounded-lg overflow-hidden border">
-            <table className="w-full text-[12px] border border-gray-300 table-fixed">
-              <thead>
-                <tr className="bg-[#2fb344] text-white">
-                  <th className="px-3 py-2 border-r border-gray-200">
-                    <div onClick={() => handleSort("structureName")} className="flex items-center cursor-pointer">
-                      STRUCTURE FILE / SCHEME
-                      <SortIcon column="structureName" />
-                    </div>
-                  </th>
-                  <th className="px-3 py-2 border-r border-gray-200">
-                    <div onClick={() => handleSort("apcode")} className="flex items-center cursor-pointer">
-                      AP CODE
-                      <SortIcon column="apcode" />
-                    </div>
-                  </th>
-                  <th className="px-3 py-2 border-r border-gray-200">
-                    <div onClick={() => handleSort("effectiveDate")} className="flex items-center cursor-pointer">
-                      EFFECTIVE DATE
-                      <SortIcon column="effectiveDate" />
-                    </div>
-                  </th>
-                  <th className="px-3 py-2">
-                    <div onClick={() => handleSort("commission")} className="flex items-center cursor-pointer">
-                      COMMISSION / RATE
-                      <SortIcon column="commission" />
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan="4" className="p-4 text-center text-gray-500 font-medium">
-                      Loading MF Structures from UAT...
-                    </td>
-                  </tr>
-                ) : data.length > 0 ? (
-                  data.map((item, index) => {
-                    const scheme = item.structureName || item.schemeName || item.fileName || item.structure || "-";
-                    const code = item.account || item.apcode || item.clientCode || "-";
-                    const dateStr = item.effectiveDate || item.date || item.uploadDate || "-";
-                    const commission = item.commission || item.rate || item.amount || "-";
-
-                    return (
-                      <tr key={index} className="border-b border-gray-200 h-[28px] hover:bg-gray-50 transition-colors">
-                        <td className="px-3 py-[4px] border-r border-gray-200 text-blue-600 underline cursor-pointer truncate">
-                          {scheme}
-                        </td>
-                        <td className="px-3 py-[4px] border-r border-gray-200">{code}</td>
-                        <td className="px-3 py-[4px] border-r border-gray-200">{dateStr}</td>
-                        <td className="px-3 py-[4px] font-bold">{commission}%</td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan="4" className="p-4 text-left text-gray-500 text-base font-medium">
-                      No data to display
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div className="mt-4 p-4 text-left text-gray-500 text-base font-bold">
-            Total: {data.length}
-          </div>
+          {/* SEARCH & TABLE SECTION REMOVED */}
 
           {/* SUB LINKS (PRE-EXISTING STATICS) */}
-          <div className="flex gap-10 mt-6 text-blue-600 text-sm font-medium border-t pt-4">
+          <div className="flex gap-4 mt-6 text-blue-600 text-[14px] font-medium pt-4 whitespace-nowrap overflow-hidden">
             <span className="cursor-pointer hover:underline pl-3">
               MF Brokerage Structure(April'25-June'25)
             </span>
-            <span className="cursor-pointer hover:underline pl-3">
+            <span className="cursor-pointer hover:underline">
               MF Brokerage Structure(July'25-Sept'25)
             </span>
-            <span className="cursor-pointer hover:underline pl-3">
+            <span className="cursor-pointer hover:underline">
               MF Brokerage Structure(Oct'25-Dec'25)
             </span>
             <span className="cursor-pointer hover:underline">
@@ -415,16 +274,7 @@ export default function MFStructure() {
             </span>
           </div>
 
-          {/* INFO */}
-          <div className="flex items-center gap-4 my-10 justify-center">
-            <div className="w-32 border-t"></div>
-            <p className="text-base text-gray-600 text-center flex-1">
-              What we mean when we say -{" "}
-              <b>(Z)</b>: Zone, <b>(R)</b>: Region, <b>(Br)</b>: Branch,{" "}
-              <b>(AP)</b>: Authorized Person/Sub Broker
-            </p>
-            <div className="w-32 border-t"></div>
-          </div>
+
 
           <ArihantProductsSection />
         </div>

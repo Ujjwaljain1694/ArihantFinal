@@ -7,18 +7,11 @@ import { toast } from "react-toastify";
 import { Calendar, Search, Download } from "lucide-react";
 import CalendarHeader from "../components/common/CalendarHeader";
 import Table from "../components/common/Table";
+import { getReactivationReport } from "../api/apiService";
 
 // ============================================================
 // Reactivation Report - Logic & Data
 // ============================================================
-
-const dummyData = [
-    ["295900016", "Ujjwal Jain", "30/03/2026", "Completed", "NSE/BSE"],
-    ["295900017", "Rahul Sharma", "31/03/2026", "Pending", "MCX"],
-    ["295900018", "Amit Verma", "01/04/2026", "In Progress", "BSE"],
-    ["295900019", "Priya Singh", "02/04/2026", "Completed", "NSE"],
-    ["295900020", "Deepak Kumar", "03/04/2026", "Rejected", "NSE/BSE"],
-];
 
 const downloadAsExcel = (data) => {
     if (!data || data.length === 0) return;
@@ -53,6 +46,7 @@ const ReactivationReport = () => {
     const [customErrorMsg, setCustomErrorMsg] = useState("");
     const [hasSearched, setHasSearched] = useState(false);
     const [filteredData, setFilteredData] = useState([]);
+    const [loading, setLoading] = useState(false);
     
     const fromRef = useRef();
     const toRef = useRef();
@@ -64,7 +58,15 @@ const ReactivationReport = () => {
         }
     }, [showCustomError]);
 
-    const handleApply = () => {
+    const formatDate = (date) => {
+        if (!date) return "";
+        const dd = String(date.getDate()).padStart(2, "0");
+        const mm = String(date.getMonth() + 1).padStart(2, "0");
+        const yyyy = date.getFullYear();
+        return `${dd}/${mm}/${yyyy}`;
+    };
+
+    const handleApply = async () => {
         if (!search.trim()) {
             setCustomErrorMsg("Please enter Client Code");
             setShowCustomError(true);
@@ -78,21 +80,56 @@ const ReactivationReport = () => {
             return;
         }
 
-        // Mocking API call - Filter by client code
-        const searchTerm = search.toLowerCase();
-        let results = dummyData.filter(row =>
-            row[0].toLowerCase().includes(searchTerm) || 
-            row[1].toLowerCase().includes(searchTerm)
-        );
-
-        // Fallback: if no exact match, show all data (for demo)
-        if (results.length === 0) {
-            results = [...dummyData];
-        }
-
-        setFilteredData(results);
+        setLoading(true);
         setHasSearched(true);
-        toast.success(`Reactivation data loaded for ${search}`);
+        setFilteredData([]);
+
+        try {
+            const formattedFrom = fromDate ? formatDate(fromDate) : "";
+            const formattedTo = toDate ? formatDate(toDate) : "";
+            const isoTo = toDate ? toDate.toISOString().split('T')[0] : "";
+
+            const params = {
+                pageNumber: 0,
+                size: 500,
+                search: search.trim(),
+                clientCode: search.trim(),
+                datefrom: formattedFrom,
+                dateto: formattedTo,
+                fromDate: formattedFrom,
+                toDate: formattedTo,
+                fromdate: formattedFrom,
+                todate: formattedTo,
+                asOnDate: isoTo,
+                date: isoTo,
+            };
+
+            const response = await getReactivationReport(params);
+            const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
+            const list = Array.isArray(items) ? items : (items ? [items] : []);
+
+            if (list.length > 0) {
+                const formatted = list.map(item => [
+                    item.clientCode || item.ClientCode || item.code || "-",
+                    item.clientName || item.ClientName || item.name || item.Name || "-",
+                    item.date || item.Date || item.createdDate || item.CreatedDate || item.dateTime || item.DateTime || "-",
+                    item.status || item.Status || "-",
+                    item.segment || item.Segment || "-"
+                ]);
+                setFilteredData(formatted);
+                toast.success(`Reactivation data loaded for ${search}`);
+            } else {
+                setFilteredData([]);
+                toast.info("No records found.");
+            }
+        } catch (error) {
+            console.error("Reactivation API Error:", error);
+            setFilteredData([]);
+            setCustomErrorMsg("Failed to load Reactivation data. Please try again.");
+            setShowCustomError(true);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleDownload = () => {
@@ -206,10 +243,16 @@ const ReactivationReport = () => {
                     </div>
 
                     {/* Standard Table Component */}
-                    <Table
-                        headers={headers}
-                        rows={filteredData}
-                    />
+                    {loading ? (
+                        <div className="p-10 text-center text-gray-500 font-medium bg-white border border-gray-200">
+                            Loading report...
+                        </div>
+                    ) : (
+                        <Table
+                            headers={headers}
+                            rows={filteredData}
+                        />
+                    )}
                 </div>
             )}
 

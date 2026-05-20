@@ -20,14 +20,14 @@ const LedgerTable = ({ data = [] }) => {
   const SortIcon = ({ column }) => {
     if (sortConfig.key === column) {
       return sortConfig.direction === "asc" ? (
-        <ChevronUp size={14} className="text-white ml-2" />
+        <ChevronUp size={11} className="text-white ml-1" />
       ) : (
-        <ChevronDown size={14} className="text-white ml-2" />
+        <ChevronDown size={11} className="text-white ml-1" />
       );
     }
 
     return (
-      <ChevronsUpDown size={14} className="text-white/70 ml-2" />
+      <ChevronsUpDown size={11} className="text-white/70 ml-1" />
     );
   };
 
@@ -61,10 +61,19 @@ const LedgerTable = ({ data = [] }) => {
   const sortedData = getSortedData();
 
   return (
-    <div className="w-full overflow-x-auto border border-gray-200 shadow-sm bg-white mt-4 rounded-lg">
-      <div className="min-w-[1400px]">
+    <div className="w-full overflow-x-auto no-scrollbar border border-gray-200 shadow-sm bg-white mt-4 rounded-lg">
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+      <div className="min-w-[1100px]">
         {/* Table Header */}
-        <div className="grid gap-0 bg-[#1EB04C] text-white text-[11px] font-bold uppercase tracking-wider"
+        <div className="grid gap-0 bg-[#1EB04C] text-white text-[11px] font-bold uppercase"
           style={{
             gridTemplateColumns: "repeat(9, 1fr)"
           }}>
@@ -72,7 +81,7 @@ const LedgerTable = ({ data = [] }) => {
             <div
               key={index}
               onClick={() => handleSort(header.key)}
-              className="px-4 py-4 border-r border-white/10 flex items-center justify-between cursor-pointer select-none hover:bg-[#18a045] transition-colors last:border-0"
+              className="px-2 py-3.5 border-r border-white/10 flex items-center justify-between cursor-pointer select-none hover:bg-[#18a045] transition-colors last:border-0"
             >
               <span className="truncate">{header.label}</span>
               <SortIcon column={header.key} />
@@ -90,20 +99,20 @@ const LedgerTable = ({ data = [] }) => {
             {sortedData.map((row, index) => (
               <div
                 key={index}
-                className="grid gap-0 border-b border-gray-100 text-[12px] hover:bg-gray-50 transition-colors group"
+                className="grid gap-0 border-b border-gray-100 text-[11px] hover:bg-gray-50 transition-colors group"
                 style={{
                   gridTemplateColumns: "repeat(9, 1fr)"
                 }}
               >
-                <div className="px-4 py-3 border-r border-gray-100 text-gray-600 truncate">{row.voucher || "-"}</div>
-                <div className="px-4 py-3 border-r border-gray-100 text-gray-600 truncate">{row.voucherDate || "-"}</div>
-                <div className="px-4 py-3 border-r border-gray-100 text-gray-800 font-medium">{row.narration || "-"}</div>
-                <div className="px-4 py-3 border-r border-gray-100 text-gray-600 text-center">{row.exchange || "-"}</div>
-                <div className="px-4 py-3 border-r border-gray-100 text-gray-600 text-center">{row.bookType || "-"}</div>
-                <div className="px-4 py-3 border-r border-gray-100 text-gray-600 truncate">{row.transactionDate || "-"}</div>
-                <div className="px-4 py-3 border-r border-gray-100 text-right text-red-600 font-bold">{row.debit || "0.00"}</div>
-                <div className="px-4 py-3 border-r border-gray-100 text-right text-green-600 font-bold">{row.credit || "0.00"}</div>
-                <div className="px-4 py-3 text-right font-black text-gray-900">{row.balance || "0.00"}</div>
+                <div className="px-2 py-2.5 border-r border-gray-100 text-gray-600 truncate">{row.voucher || "-"}</div>
+                <div className="px-2 py-2.5 border-r border-gray-100 text-gray-600 truncate">{row.voucherDate || "-"}</div>
+                <div className="px-2 py-2.5 border-r border-gray-100 text-gray-800 font-medium truncate">{row.narration || "-"}</div>
+                <div className="px-2 py-2.5 border-r border-gray-100 text-gray-600 text-center">{row.exchange || "-"}</div>
+                <div className="px-2 py-2.5 border-r border-gray-100 text-gray-600 text-center">{row.bookType || "-"}</div>
+                <div className="px-2 py-2.5 border-r border-gray-100 text-gray-600 truncate">{row.transactionDate || "-"}</div>
+                <div className="px-2 py-2.5 border-r border-gray-100 text-right text-red-600 font-bold">{row.debit || "0.00"}</div>
+                <div className="px-2 py-2.5 border-r border-gray-100 text-right text-green-600 font-bold">{row.credit || "0.00"}</div>
+                <div className="px-2 py-2.5 text-right font-black text-gray-900">{row.balance || "0.00"}</div>
               </div>
             ))}
             <div className="bg-[#fcfcfc] px-4 py-3 text-[11px] text-gray-500 font-bold border-b border-gray-200 tracking-wider">

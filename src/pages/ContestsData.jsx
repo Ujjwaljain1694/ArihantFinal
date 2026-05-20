@@ -17,14 +17,6 @@ export default function ContestsData() {
     fetchContactDetails();
   }, []);
 
-  const getMockContests = () => [
-    { branchCode: "M01", clientCode: "AP210001", clientName: "Amit Sharma", email: "amit.sharma@gmail.com", mobile: "9876543210" },
-    { branchCode: "B02", clientCode: "AP210002", clientName: "Priya Patel", email: "priya.patel@yahoo.com", mobile: "9812345678" },
-    { branchCode: "C03", clientCode: "AP210003", clientName: "Rajesh Kumar", email: "rajesh.kumar@outlook.com", mobile: "9765432109" },
-    { branchCode: "M04", clientCode: "AP210004", clientName: "Sunita Verma", email: "sunita.verma@gmail.com", mobile: "9822334455" },
-    { branchCode: "D05", clientCode: "AP210005", clientName: "Vikram Singh", email: "vikram.singh@gmail.com", mobile: "9911223344" }
-  ];
-
   const fetchContactDetails = async () => {
     setLoading(true);
     try {
@@ -39,12 +31,11 @@ export default function ContestsData() {
       if (Array.isArray(items) && items.length > 0) {
         setData(items);
       } else {
-        setData(getMockContests());
+        setData([]);
       }
     } catch (err) {
       console.error("Failed to fetch client contact details:", err);
-      // Fallback beautifully to high-quality sample data in bypass mode:
-      setData(getMockContests());
+      setData([]);
     } finally {
       setLoading(false);
     }

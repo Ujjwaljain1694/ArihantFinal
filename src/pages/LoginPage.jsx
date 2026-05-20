@@ -74,6 +74,7 @@ const LoginPage = () => {
       } else {
         toast.error(response.data?.message || 'Failed to send OTP');
       }
+
     } catch (error) {
       console.error('Send OTP full error:', error?.response);
       const message = error?.response?.data?.message || error?.message || 'Failed to send OTP. Please try again.';
@@ -119,6 +120,7 @@ const LoginPage = () => {
       } else {
         toast.error(response.data?.message || 'Invalid OTP');
       }
+
     } catch (error) {
       console.error('Verify OTP full error:', error?.response);
       const message = error?.response?.data?.message || error?.message || 'Failed to verify OTP. Please try again.';

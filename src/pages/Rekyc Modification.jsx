@@ -63,10 +63,19 @@ export default function ReKYCModification({ search = "" }) {
   return (
     <div className="bg-white px-2">
       {/* Table */}
-      <div className="w-full border-t border-gray-200 mt-6">
-        <div className="w-full">
+      <div className="w-full overflow-x-auto no-scrollbar border-t border-gray-200 mt-6">
+        <style>{`
+          .no-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+          .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `}</style>
+        <div className="min-w-[1100px]">
           {/* Header */}
-          <div className="grid grid-cols-7 bg-[#35b34a] text-white text-[12px] font-semibold">
+          <div className="grid grid-cols-7 bg-[#35b34a] text-white text-[13px] font-semibold">
             {[
               "Clientcode",
               "PAN",
@@ -78,10 +87,10 @@ export default function ReKYCModification({ search = "" }) {
             ].map((item, index) => (
               <div
                 key={index}
-                className="px-4 py-2 border-r border-white/30 flex items-center justify-center gap-1 cursor-pointer"
+                className="px-2 py-2 border-r border-white/30 flex items-center justify-between cursor-pointer select-none whitespace-nowrap"
               >
-                {item}
-                <div className="flex flex-col leading-none opacity-60">
+                <span>{item}</span>
+                <div className="flex flex-col leading-none opacity-60 ml-2">
                   <ChevronUp size={10} />
                   <ChevronDown size={10} className="-mt-1" />
                 </div>
@@ -114,36 +123,36 @@ export default function ReKYCModification({ search = "" }) {
                   key={index}
                   className="grid grid-cols-7 text-[13px] bg-[#f2f2f2] border-b border-gray-200 hover:bg-gray-100 transition-colors"
                 >
-                  <div className="px-4 py-2 border-r border-gray-300">{clientCode}</div>
+                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={clientCode}>{clientCode}</div>
 
-                  <div className="px-4 py-2 border-r border-gray-300 flex items-center justify-center gap-2 font-semibold">
-                    {visiblePans[clientCode] ? pan : maskedPan}
+                  <div className="px-2 py-3 border-r border-gray-300 flex items-center justify-start gap-2 font-semibold">
+                    <span className="truncate" title={visiblePans[clientCode] ? pan : maskedPan}>{visiblePans[clientCode] ? pan : maskedPan}</span>
                     <EyeOff 
                       size={12} 
-                      className="cursor-pointer text-gray-400 hover:text-[#34b44a]" 
+                      className="cursor-pointer text-gray-400 hover:text-[#34b44a] flex-shrink-0" 
                       onClick={() => togglePanVisibility(clientCode)}
                     />
                   </div>
 
-                  <div className="px-4 py-2 border-r border-gray-300 truncate">{clientName}</div>
+                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={clientName}>{clientName}</div>
 
-                  <div className="px-4 py-2 border-r border-gray-300 text-center">
-                    <div className="font-semibold">{requestType}</div>
-                    <span className="inline-flex items-center gap-1 bg-[#35b34a] text-white text-[10px] px-2 py-[1px] rounded-md mt-1">
+                  <div className="px-2 py-3 border-r border-gray-300 flex flex-col justify-center truncate">
+                    <div className="font-semibold truncate" title={requestType}>{requestType}</div>
+                    <span className="inline-flex items-center gap-1 bg-[#35b34a] text-white text-[10px] px-1.5 py-[1px] rounded-md mt-1 w-max">
                       <Check size={10} />
                       Accepted
                     </span>
                   </div>
 
-                  <div className="px-4 py-2 border-r border-gray-300 text-center">{requestDate}</div>
+                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={requestDate}>{requestDate}</div>
 
-                  <div className="px-4 py-2 border-r border-gray-300 text-center">
-                    <span className="bg-[#35b34a] text-white px-3 py-[2px] rounded-md text-[11px] font-bold">
+                  <div className="px-2 py-3 border-r border-gray-300 flex items-center">
+                    <span className="bg-[#35b34a] text-white px-3 py-[2px] rounded-md text-[11px] font-bold truncate" title={requestStatus}>
                       {requestStatus}
                     </span>
                   </div>
 
-                  <div className="px-4 py-2 text-center">{adminUpdatedDate}</div>
+                  <div className="px-2 py-3 truncate" title={adminUpdatedDate}>{adminUpdatedDate}</div>
                 </div>
               );
             })

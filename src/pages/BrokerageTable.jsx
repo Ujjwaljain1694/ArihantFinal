@@ -12,7 +12,7 @@ const API_MAP = {
 
 const HEADERS = {
   capital: ["COMMISSION ACCOUNT", "SUBBROKER NAME", "BROKERAGE AMOUNT", "PASS ON %"],
-  thirdParty: ["ACCOUNT", "NAME", "BROKERAGE", "PASS ON %"],
+  thirdParty: ["BranchCode", "MF Brokerage", "Unlisted Brokerage", "Insurance Brokerage", "Bonds Brokerage", "Wealth Basket Brokerage", "Value Stock", "PMS Brokerage"],
   research: ["ACCOUNT", "NAME", "BROKERAGE", "PASS ON %"],
   ledger: ["DATE", "PARTICULARS", "DEBIT", "CREDIT", "BALANCE"],
   summary: ["MONTH", "BROKERAGE", "SHARING", "NET"]
@@ -34,6 +34,17 @@ export default function BrokerageTable({ type = "capital", filters = {} }) {
     </div>
   );
 
+  const THIRDPARTY_KEYS = [
+    ["branchCode", "BranchCode", "branch", "Branch", "branch_code", "branchcode"],
+    ["mfBrokerage", "MfBrokerage", "mf", "MF", "mf_brokerage", "mfbrokerage", "mfBrokerageAmt"],
+    ["unlistedBrokerage", "UnlistedBrokerage", "unlisted", "Unlisted", "unlisted_brokerage", "unlistedbrokerage"],
+    ["insuranceBrokerage", "InsuranceBrokerage", "insurance", "Insurance", "insurance_brokerage", "insurancebrokerage"],
+    ["bondsBrokerage", "BondsBrokerage", "bonds", "Bonds", "bonds_brokerage", "bondsbrokerage"],
+    ["wealthBasketBrokerage", "WealthBasketBrokerage", "wealthBasket", "WealthBasket", "wealth_basket_brokerage", "wealthbasketbrokerage"],
+    ["valueStock", "ValueStock", "valuestock", "value_stock"],
+    ["pmsBrokerage", "PmsBrokerage", "pms", "PMS", "pms_brokerage", "pmsbrokerage"]
+  ];
+
   return (
     <div className="mt-4 bg-white rounded-lg overflow-hidden border">
       <table className="w-full text-[12px] border-collapse">
@@ -47,16 +58,33 @@ export default function BrokerageTable({ type = "capital", filters = {} }) {
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
-          {data.map((item, idx) => (
-            <tr key={idx} className="hover:bg-gray-50 transition-colors">
-              {/* This is a generic mapping, we might need specific field names if they vary */}
-              {Object.values(item).map((val, i) => (
-                <td key={i} className="px-3 py-3 border-r border-gray-100 last:border-r-0">
-                  {val}
-                </td>
-              ))}
-            </tr>
-          ))}
+          {data.map((item, idx) => {
+            if (type === "thirdParty") {
+              return (
+                <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                  {THIRDPARTY_KEYS.map((keys, i) => {
+                    const foundKey = keys.find(k => k in item);
+                    const val = foundKey !== undefined ? item[foundKey] : "-";
+                    return (
+                      <td key={i} className="px-3 py-3 border-r border-gray-100 last:border-r-0">
+                        {val !== null && val !== undefined ? val : "-"}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            }
+            return (
+              <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                {/* This is a generic mapping, we might need specific field names if they vary */}
+                {Object.values(item).map((val, i) => (
+                  <td key={i} className="px-3 py-3 border-r border-gray-100 last:border-r-0">
+                    {val}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
       <div className="p-3 bg-gray-50 border-t text-xs text-gray-500">

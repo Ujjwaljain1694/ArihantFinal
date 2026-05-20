@@ -20,27 +20,27 @@ const TrialBalanceTable = ({ data = [] }) => {
   const SortIcon = ({ column }) => {
     if (sortConfig.key === column) {
       return sortConfig.direction === "asc" ? (
-        <ChevronUp size={15} className="text-white ml-2" />
+        <ChevronUp size={13} className="text-white" />
       ) : (
-        <ChevronDown size={15} className="text-white ml-2" />
+        <ChevronDown size={13} className="text-white" />
       );
     }
 
     return (
-      <ChevronsUpDown size={15} className="text-white/90 ml-2" />
+      <ChevronsUpDown size={13} className="text-white/90" />
     );
   };
 
   const headers = [
-    { label: "Name", key: "name" },
-    { label: "Client Code", key: "code" },
-    { label: "Branch", key: "branch" },
-    { label: "Region", key: "region" },
-    { label: "Zone", key: "zone" },
-    { label: "Open Debit", key: "openDebit" },
-    { label: "Open Credit", key: "openCredit" },
-    { label: "Net Debit", key: "netDebit" },
-    { label: "Net Credit", key: "netCredit" },
+    { label: "Name", key: "name", align: "left" },
+    { label: "Client Code", key: "code", align: "left" },
+    { label: "Branch", key: "branch", align: "left" },
+    { label: "Region", key: "region", align: "left" },
+    { label: "Zone", key: "zone", align: "left" },
+    { label: "Open Debit", key: "openDebit", align: "right" },
+    { label: "Open Credit", key: "openCredit", align: "right" },
+    { label: "Net Debit", key: "netDebit", align: "right" },
+    { label: "Net Credit", key: "netCredit", align: "right" },
   ];
 
   const getSortedData = () => {
@@ -61,8 +61,17 @@ const TrialBalanceTable = ({ data = [] }) => {
   const sortedData = getSortedData();
 
   return (
-    <div className="w-full overflow-x-auto border border-gray-200 rounded-lg">
-      <div className="grid gap-0 bg-[#1EB04C] text-white text-[13px] font-semibold" 
+    <div className="w-full overflow-x-auto no-scrollbar border border-gray-200 rounded-lg">
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+      <div className="grid gap-0 bg-[#1EB04C] text-white text-[13px] font-bold" 
            style={{
              gridTemplateColumns: "repeat(9, minmax(120px, 1fr))"
            }}>
@@ -70,7 +79,9 @@ const TrialBalanceTable = ({ data = [] }) => {
           <div
             key={index}
             onClick={() => handleSort(header.key)}
-            className="px-4 py-3 border-r border-white/20 flex items-center justify-between cursor-pointer select-none hover:bg-[#18a045] transition-colors"
+            className={`px-3 py-3.5 border-r border-white/20 flex items-center gap-1.5 cursor-pointer select-none hover:bg-[#18a045] transition-colors ${
+              header.align === "right" ? "justify-end" : "justify-start"
+            }`}
           >
             <span>{header.label}</span>
             <SortIcon column={header.key} />

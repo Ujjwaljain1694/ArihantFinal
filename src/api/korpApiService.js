@@ -27,17 +27,19 @@ const attachInterceptors = (instance) => {
     (response) => {
       const data = response.data;
       if (data && data.success === false && (data.message === "invalid token" || data.message?.toLowerCase().includes("token"))) {
-        localStorage.removeItem("connect_token");
-        localStorage.removeItem("connect_manager");
-        window.location.href = "/login";
+        // TEMPORARILY COMMENTED OUT REDIRECT:
+        // localStorage.removeItem("connect_token");
+        // localStorage.removeItem("connect_manager");
+        // window.location.href = "/login";
       }
       return response;
     },
     (error) => {
       if (error.response?.status === 401) {
-        localStorage.removeItem("connect_token");
-        localStorage.removeItem("connect_manager");
-        window.location.href = "/login";
+        // TEMPORARILY COMMENTED OUT REDIRECT:
+        // localStorage.removeItem("connect_token");
+        // localStorage.removeItem("connect_manager");
+        // window.location.href = "/login";
       }
       return Promise.reject(error);
     }

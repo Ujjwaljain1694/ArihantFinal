@@ -70,16 +70,16 @@ export default function HoldKRAStatus() {
   const SortIcon = ({ column }) => {
     if (sortConfig.key === column) {
       return sortConfig.direction === "asc" ? (
-        <ChevronUp size={15} className="text-white ml-2" />
+        <ChevronUp size={12} className="text-white ml-1.5" />
       ) : (
-        <ChevronDown size={15} className="text-white ml-2" />
+        <ChevronDown size={12} className="text-white ml-1.5" />
       );
     }
 
     return (
       <ChevronsUpDown
-        size={15}
-        className="text-white/90 ml-2"
+        size={12}
+        className="text-white/90 ml-1.5"
       />
     );
   };
@@ -155,57 +155,66 @@ export default function HoldKRAStatus() {
       </div>
 
       {/* Table */}
-      <div className="w-full overflow-x-auto border-t border-gray-200 mt-6">
-        <div className="min-w-[1200px]">
+      <div className="w-full overflow-x-auto no-scrollbar border-t border-gray-200 mt-6">
+        <style>{`
+          .no-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+          .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `}</style>
+        <div className="min-w-[1100px]">
           {/* Header */}
-          <div className="grid grid-cols-[150px_150px_250px_150px_180px_180px_1fr] bg-[#34b44a] text-white text-[13px] font-semibold">
-          {headers.map((item, index) => (
-            <div
-              key={index}
-              onClick={() => handleSort(item.key)}
-              className="px-4 py-2 border-r border-white/20 flex items-center justify-between cursor-pointer select-none"
-            >
-              <span>{item.label}</span>
-              <SortIcon column={item.key} />
-            </div>
-          ))}
-        </div>
-
-        {/* Body */}
-        {results.length === 0 ? (
-          <>
-            <div className="bg-white h-[45px] flex items-center px-6 text-[15px] text-gray-500 border-x border-b border-gray-200">
-              No data to display
-            </div>
-
-            <div className="bg-white px-6 py-2 text-gray-400 border-x border-b border-gray-200 text-[13px]">
-              0 total
-            </div>
-          </>
-        ) : (
-          <>
-            {results.map((row, index) => (
+          <div className="grid grid-cols-7 bg-[#34b44a] text-white text-[13px] font-semibold">
+            {headers.map((item, index) => (
               <div
                 key={index}
-                className="grid grid-cols-[150px_150px_250px_150px_180px_180px_1fr] bg-[#f2f2f2] border-b border-gray-200 text-[14px] hover:bg-gray-100 transition-colors"
+                onClick={() => handleSort(item.key)}
+                className="px-2 py-2 border-r border-white/20 flex items-center justify-between cursor-pointer select-none whitespace-nowrap"
               >
-                <div className="px-4 py-4 border-r border-gray-300">{row.clientCode}</div>
-                <div className="px-4 py-4 border-r border-gray-300">{row.pan}</div>
-                <div className="px-4 py-4 border-r border-gray-300">{row.clientName}</div>
-                <div className="px-4 py-4 border-r border-gray-300">{row.branchCode}</div>
-                <div className="px-4 py-4 border-r border-gray-300">{row.kraName}</div>
-                <div className="px-4 py-4 border-r border-gray-300 text-green-600 font-bold">
-                  {row.kraStatus}
-                </div>
-                <div className="px-4 py-4">{row.reason}</div>
+                <span>{item.label}</span>
+                <SortIcon column={item.key} />
               </div>
             ))}
+          </div>
 
-            <div className="bg-white px-6 py-2 text-black font-bold border-b border-gray-200 text-[14px]">
-              {results.length} total
-            </div>
-          </>
-        )}
+          {/* Body */}
+          {results.length === 0 ? (
+            <>
+              <div className="bg-white h-[45px] flex items-center px-6 text-[15px] text-gray-500 border-x border-b border-gray-200">
+                No data to display
+              </div>
+
+              <div className="bg-white px-6 py-2 text-gray-400 border-x border-b border-gray-200 text-[13px]">
+                0 total
+              </div>
+            </>
+          ) : (
+            <>
+              {results.map((row, index) => (
+                <div
+                  key={index}
+                  className="grid grid-cols-7 bg-[#f2f2f2] border-b border-gray-200 text-[14px] hover:bg-gray-100 transition-colors"
+                >
+                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={row.clientCode}>{row.clientCode}</div>
+                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={row.pan}>{row.pan}</div>
+                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={row.clientName}>{row.clientName}</div>
+                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={row.branchCode}>{row.branchCode}</div>
+                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={row.kraName}>{row.kraName}</div>
+                  <div className="px-2 py-3 border-r border-gray-300 text-green-600 font-bold truncate" title={row.kraStatus}>
+                    {row.kraStatus}
+                  </div>
+                  <div className="px-2 py-3 truncate" title={row.reason}>{row.reason}</div>
+                </div>
+              ))}
+
+              <div className="bg-white px-6 py-2 text-black font-bold border-b border-gray-200 text-[14px]">
+                {results.length} total
+              </div>
+            </>
+          )}
         </div>
       </div>
 

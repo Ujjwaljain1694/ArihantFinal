@@ -215,155 +215,165 @@ export default function KRAStatusPage() {
                   Loading live KRA & UCC status details from UAT...
                 </div>
               ) : results.length > 0 && (
-                <div className="w-full">
-                  {/* Header */}
-                  <div className="grid grid-cols-[120px_200px_250px_220px_1fr] bg-[#35b34a] text-white text-[15px] font-semibold border border-gray-300">
+                <div className="w-full overflow-x-auto no-scrollbar border border-gray-300 rounded-lg">
+                  <style>{`
+                    .no-scrollbar::-webkit-scrollbar {
+                      display: none;
+                    }
+                    .no-scrollbar {
+                      -ms-overflow-style: none;
+                      scrollbar-width: none;
+                    }
+                  `}</style>
+                  <div className="min-w-[1100px]">
+                    {/* Header */}
+                    <div className="grid grid-cols-[130px_220px_120px_150px_1fr] bg-[#35b34a] text-white text-[13px] font-bold">
 
-                    {/* Clientcode */}
-                    <div
-                      onClick={() => handleSort("clientcode")}
-                      className="px-3 py-2 border-r flex items-center justify-between cursor-pointer select-none"
-                    >
-                      <span>Clientcode</span>
-                      <span className="ml-2">
-                        {sortConfig.key === "clientcode" ? (
-                          sortConfig.direction === "asc" ? (
-                            <ChevronUp size={15} className="text-white" />
+                      {/* Clientcode */}
+                      <div
+                        onClick={() => handleSort("clientcode")}
+                        className="px-2 py-3 border-r flex items-center justify-start gap-1.5 cursor-pointer select-none"
+                      >
+                        <span>Clientcode</span>
+                        <span className="ml-1">
+                          {sortConfig.key === "clientcode" ? (
+                            sortConfig.direction === "asc" ? (
+                              <ChevronUp size={13} className="text-white" />
+                            ) : (
+                              <ChevronDown size={13} className="text-white" />
+                            )
                           ) : (
-                            <ChevronDown size={15} className="text-white" />
-                          )
-                        ) : (
-                          <ChevronsUpDown size={15} className="text-white/90" />
-                        )}
-                      </span>
-                    </div>
-
-                    {/* ClientName */}
-                    <div
-                      onClick={() => handleSort("name")}
-                      className="px-3 py-2 border-r flex items-center justify-between cursor-pointer select-none"
-                    >
-                      <span>ClientName</span>
-                      <span className="ml-2">
-                        {sortConfig.key === "name" ? (
-                          sortConfig.direction === "asc" ? (
-                            <ChevronUp size={15} className="text-white" />
-                          ) : (
-                            <ChevronDown size={15} className="text-white" />
-                          )
-                        ) : (
-                          <ChevronsUpDown size={15} className="text-white/90" />
-                        )}
-                      </span>
-                    </div>
-
-                    {/* PAN */}
-                    <div
-                      onClick={() => handleSort("pan")}
-                      className="px-3 py-2 border-r flex items-center justify-between cursor-pointer select-none"
-                    >
-                      <span>PAN</span>
-                      <span className="ml-2">
-                        {sortConfig.key === "pan" ? (
-                          sortConfig.direction === "asc" ? (
-                            <ChevronUp size={15} className="text-white" />
-                          ) : (
-                            <ChevronDown size={15} className="text-white" />
-                          )
-                        ) : (
-                          <ChevronsUpDown size={15} className="text-white/90" />
-                        )}
-                      </span>
-                    </div>
-
-                    {/* Kra Response */}
-                    <div
-                      onClick={() => handleSort("kra")}
-                      className="px-3 py-2 border-r flex items-center justify-between cursor-pointer select-none"
-                    >
-                      <span>Kra Response</span>
-                      <span className="ml-2">
-                        {sortConfig.key === "kra" ? (
-                          sortConfig.direction === "asc" ? (
-                            <ChevronUp size={15} className="text-white" />
-                          ) : (
-                            <ChevronDown size={15} className="text-white" />
-                          )
-                        ) : (
-                          <ChevronsUpDown size={15} className="text-white/90" />
-                        )}
-                      </span>
-                    </div>
-
-                    {/* Ucc Response */}
-                    <div
-                      onClick={() => handleSort("ucc")}
-                      className="px-3 py-2 flex items-center justify-between cursor-pointer select-none"
-                    >
-                      <span>Ucc Response</span>
-                      <span className="ml-2">
-                        {sortConfig.key === "ucc" ? (
-                          sortConfig.direction === "asc" ? (
-                            <ChevronUp size={15} className="text-white" />
-                          ) : (
-                            <ChevronDown size={15} className="text-white" />
-                          )
-                        ) : (
-                          <ChevronsUpDown size={15} className="text-white/90" />
-                        )}
-                      </span>
-                    </div>
-
-                  </div>
-
-                  {/* Row */}
-                  {results.map((item) => (
-                    <div
-                      key={item.id}
-                      className="grid grid-cols-[120px_200px_250px_220px_1fr] border-l border-r border-b border-gray-300 bg-white min-h-[86px]"
-                    >
-                      <div className="px-3 py-3 border-r">{item.clientcode}</div>
-
-                      <div className="px-3 py-3 border-r">{item.name}</div>
-
-                      {/* PAN with eye */}
-                      <div className="px-3 py-3 border-r flex items-start gap-2">
-                        <span>{item.pan}</span>
-
-                        <button className="mt-[2px] text-gray-500 hover:text-green-600">
-                          <Eye size={15} />
-                        </button>
+                            <ChevronsUpDown size={13} className="text-white/90" />
+                          )}
+                        </span>
                       </div>
 
-                      <div className="px-3 py-3 border-r">{item.kra}</div>
+                      {/* ClientName */}
+                      <div
+                        onClick={() => handleSort("name")}
+                        className="px-2 py-3 border-r flex items-center justify-start gap-1.5 cursor-pointer select-none"
+                      >
+                        <span>ClientName</span>
+                        <span className="ml-1">
+                          {sortConfig.key === "name" ? (
+                            sortConfig.direction === "asc" ? (
+                              <ChevronUp size={13} className="text-white" />
+                            ) : (
+                              <ChevronDown size={13} className="text-white" />
+                            )
+                          ) : (
+                            <ChevronsUpDown size={13} className="text-white/90" />
+                          )}
+                        </span>
+                      </div>
 
-                      {/* UCC Response */}
-                      <div className="px-3 py-3">
-                        <div className="grid grid-cols-4 text-[14px] font-semibold border-b pb-3">
-                          <span>Exchange</span>
-                          <span>Segment</span>
-                          <span>Status</span>
-                          <span>Trade</span>
+                      {/* PAN */}
+                      <div
+                        onClick={() => handleSort("pan")}
+                        className="px-2 py-3 border-r flex items-center justify-start gap-1.5 cursor-pointer select-none"
+                      >
+                        <span>PAN</span>
+                        <span className="ml-1">
+                          {sortConfig.key === "pan" ? (
+                            sortConfig.direction === "asc" ? (
+                              <ChevronUp size={13} className="text-white" />
+                            ) : (
+                              <ChevronDown size={13} className="text-white" />
+                            )
+                          ) : (
+                            <ChevronsUpDown size={13} className="text-white/90" />
+                          )}
+                        </span>
+                      </div>
+
+                      {/* Kra Response */}
+                      <div
+                        onClick={() => handleSort("kra")}
+                        className="px-2 py-3 border-r flex items-center justify-start gap-1.5 cursor-pointer select-none"
+                      >
+                        <span>Kra Response</span>
+                        <span className="ml-1">
+                          {sortConfig.key === "kra" ? (
+                            sortConfig.direction === "asc" ? (
+                              <ChevronUp size={13} className="text-white" />
+                            ) : (
+                              <ChevronDown size={13} className="text-white" />
+                            )
+                          ) : (
+                            <ChevronsUpDown size={13} className="text-white/90" />
+                          )}
+                        </span>
+                      </div>
+
+                      {/* Ucc Response */}
+                      <div
+                        onClick={() => handleSort("ucc")}
+                        className="px-2 py-3 flex items-center justify-start gap-1.5 cursor-pointer select-none"
+                      >
+                        <span>Ucc Response</span>
+                        <span className="ml-1">
+                          {sortConfig.key === "ucc" ? (
+                            sortConfig.direction === "asc" ? (
+                              <ChevronUp size={13} className="text-white" />
+                            ) : (
+                              <ChevronDown size={13} className="text-white" />
+                            )
+                          ) : (
+                            <ChevronsUpDown size={13} className="text-white/90" />
+                          )}
+                        </span>
+                      </div>
+
+                    </div>
+
+                    {/* Row */}
+                    {results.map((item) => (
+                      <div
+                        key={item.id}
+                        className="grid grid-cols-[130px_220px_120px_150px_1fr] border-l border-r border-b border-gray-200 bg-white text-[12px] min-h-[70px]"
+                      >
+                        <div className="px-2 py-2.5 border-r truncate" title={item.clientcode}>{item.clientcode}</div>
+
+                        <div className="px-2 py-2.5 border-r truncate" title={item.name}>{item.name}</div>
+
+                        {/* PAN with eye */}
+                        <div className="px-2 py-2.5 border-r flex items-start gap-1">
+                          <span className="truncate" title={item.pan}>{item.pan}</span>
+                          <button className="mt-[2px] text-gray-500 hover:text-green-600 flex-shrink-0">
+                            <Eye size={13} />
+                          </button>
                         </div>
-                        {item.ucc && item.ucc.length > 0 && item.ucc.map((row, index) => (
-                          <div
-                            key={index}
-                            className="grid grid-cols-4 text-[14px] py-3 border-b last:border-0"
-                          >
-                            <span>{row.exchange}</span>
-                            <span>{row.segment}</span>
-                            <span>{row.status}</span>
-                            <span>{row.trade}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
 
-                  {/* Footer */}
-                  <p className="text-[16px] text-gray-500 mt-8 ml-6">
-                    {results.length} total
-                  </p>
+                        <div className="px-2 py-2.5 border-r truncate" title={item.kra}>{item.kra}</div>
+
+                        {/* UCC Response */}
+                        <div className="px-2 py-2.5">
+                          <div className="grid grid-cols-4 text-[11px] font-bold border-b pb-1.5">
+                            <span>Exchange</span>
+                            <span>Segment</span>
+                            <span>Status</span>
+                            <span>Trade</span>
+                          </div>
+                          {item.ucc && item.ucc.length > 0 && item.ucc.map((row, index) => (
+                            <div
+                              key={index}
+                              className="grid grid-cols-4 text-[11px] py-1.5 border-b last:border-0"
+                            >
+                              <span>{row.exchange}</span>
+                              <span>{row.segment}</span>
+                              <span>{row.status}</span>
+                              <span>{row.trade}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Footer */}
+                    <p className="text-[14px] text-gray-500 mt-4 ml-4">
+                      {results.length} total
+                    </p>
+                  </div>
                 </div>
               )}
             </div>

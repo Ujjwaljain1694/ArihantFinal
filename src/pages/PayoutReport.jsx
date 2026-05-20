@@ -9,7 +9,11 @@ const PayoutReport = () => {
   const [showError, setShowError] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
 
-  const staticData = [];
+  const staticData = [
+    { date: "2026-04-29", clientCode: "C12345", clientName: "John Doe", bankAccount: "XXXX1234", amount: "5,000", status: "Pending" },
+    { date: "2026-04-28", clientCode: "C67890", clientName: "Jane Smith", bankAccount: "XXXX5678", amount: "12,000", status: "Processed" },
+    { date: "2026-04-27", clientCode: "C11223", clientName: "Alice Walker", bankAccount: "XXXX9988", amount: "8,500", status: "Cancelled" },
+  ];
 
   const { data: apiData, loading, fetchData } = useFetch(getPayoutReport, { datefrom: date, dateto: date }, false);
 

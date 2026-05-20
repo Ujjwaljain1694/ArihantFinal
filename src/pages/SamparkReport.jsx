@@ -7,19 +7,11 @@ import { toast } from "react-toastify";
 import { Calendar, Search, Download } from "lucide-react";
 import CalendarHeader from "../components/common/CalendarHeader";
 import Table from "../components/common/Table";
+import { getSamparkReport } from "../api/apiService";
 
 // ============================================================
 // Sampark Report - Logic & Data
 // ============================================================
-
-const dummyData = [
-    ["295900016", "ARIH0001", "30/03/2026", "Uploaded", "Main Branch"],
-    ["295900017", "ARIH0002", "31/03/2026", "Pending", "Sub Branch"],
-    ["295900018", "ARIH0003", "01/04/2026", "Uploaded", "Main Branch"],
-    ["295900019", "ARIH0004", "02/04/2026", "Missing", "AP Office"],
-    ["295900020", "ARIH0005", "03/04/2026", "Uploaded", "Sub Branch"],
-    ["AP2100001", "ARIH0006", "04/04/2026", "Pending", "Main Branch"],
-];
 
 const downloadAsExcel = (data) => {
     if (!data || data.length === 0) return;
@@ -54,6 +46,7 @@ const SamparkReport = () => {
     const [customErrorMsg, setCustomErrorMsg] = useState("");
     const [hasSearched, setHasSearched] = useState(false);
     const [filteredData, setFilteredData] = useState([]);
+    const [loading, setLoading] = useState(false);
     
     const fromRef = useRef();
     const toRef = useRef();
@@ -65,7 +58,15 @@ const SamparkReport = () => {
         }
     }, [showCustomError]);
 
-    const handleApply = () => {
+    const formatDate = (date) => {
+        if (!date) return "";
+        const dd = String(date.getDate()).padStart(2, "0");
+        const mm = String(date.getMonth() + 1).padStart(2, "0");
+        const yyyy = date.getFullYear();
+        return `${dd}/${mm}/${yyyy}`;
+    };
+
+    const handleApply = async () => {
         if (!search.trim()) {
             setCustomErrorMsg("Please enter Client Code");
             setShowCustomError(true);
@@ -79,20 +80,56 @@ const SamparkReport = () => {
             return;
         }
 
-        // Filter by client code
-        const searchTerm = search.toLowerCase();
-        let results = dummyData.filter(row =>
-            row[0].toLowerCase().includes(searchTerm)
-        );
-
-        // Fallback: if no exact match, show all data (for demo purposes)
-        if (results.length === 0) {
-            results = [...dummyData];
-        }
-
-        setFilteredData(results);
+        setLoading(true);
         setHasSearched(true);
-        toast.success(`Sampark data loaded for ${search}`);
+        setFilteredData([]);
+
+        try {
+            const formattedFrom = fromDate ? formatDate(fromDate) : "";
+            const formattedTo = toDate ? formatDate(toDate) : "";
+            const isoTo = toDate ? toDate.toISOString().split('T')[0] : "";
+
+            const params = {
+                pageNumber: 0,
+                size: 500,
+                search: search.trim(),
+                clientCode: search.trim(),
+                datefrom: formattedFrom,
+                dateto: formattedTo,
+                fromDate: formattedFrom,
+                toDate: formattedTo,
+                fromdate: formattedFrom,
+                todate: formattedTo,
+                asOnDate: isoTo,
+                date: isoTo,
+            };
+
+            const response = await getSamparkReport(params);
+            const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
+            const list = Array.isArray(items) ? items : (items ? [items] : []);
+
+            if (list.length > 0) {
+                const formatted = list.map(item => [
+                    item.clientCode || item.ClientCode || item.code || "-",
+                    item.cctclTerminalId || item.CctclTerminalId || item.terminalId || item.TerminalId || item.cctcl || item.CCTCL || "-",
+                    item.dateOfTrade || item.DateOfTrade || item.tradeDate || item.TradeDate || item.date || item.Date || item.dateOftrade || item.DateOftrade || "-",
+                    item.recordingStatus || item.RecordingStatus || item.status || item.Status || "-",
+                    item.typeOfBranch || item.TypeOfBranch || item.branchType || item.BranchType || item.typeOfFBranch || item.TypeOfFBranch || item.fBranch || item.FBranch || "-"
+                ]);
+                setFilteredData(formatted);
+                toast.success(`Sampark data loaded for ${search}`);
+            } else {
+                setFilteredData([]);
+                toast.info("No records found.");
+            }
+        } catch (error) {
+            console.error("Sampark API Error:", error);
+            setFilteredData([]);
+            setCustomErrorMsg("Failed to load Sampark data. Please try again.");
+            setShowCustomError(true);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleDownload = () => {
@@ -206,10 +243,16 @@ const SamparkReport = () => {
                     </div>
 
                     {/* Standard Table Component */}
-                    <Table
-                        headers={headers}
-                        rows={filteredData}
-                    />
+                    {loading ? (
+                        <div className="p-10 text-center text-gray-500 font-medium bg-white border border-gray-200">
+                            Loading report...
+                        </div>
+                    ) : (
+                        <Table
+                            headers={headers}
+                            rows={filteredData}
+                        />
+                    )}
                 </div>
             )}
 

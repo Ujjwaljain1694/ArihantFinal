@@ -2,19 +2,9 @@ import React from "react";
 
 export default function ArihantProductsSection() {
   return (
-    <div className="py-6 mt-8 border-t border-gray-100">
+    <div className="py-6 mt-8">
       <div className="max-w-[1700px] mx-auto px-4">
-        
-        {/* INFO SECTION */}
-        <div className="flex items-center gap-4 mb-12 justify-center">
-          <div className="w-32 border-t border-gray-300"></div>
-          <p className="text-base text-gray-600 text-center flex-1">
-            What we mean when we say -{" "}
-            <b>(Z)</b>: Zone, <b>(R)</b>: Region, <b>(Br)</b>: Branch,{" "}
-            <b>(AP)</b>: Authorized Person/Sub Broker
-          </p>
-          <div className="w-32 border-t border-gray-300"></div>
-        </div>
+
 
         {/* PRODUCT CARD */}
         <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
