@@ -52,19 +52,17 @@ export default function KRAStatusPage() {
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async () => {
-    if (!clientCode.trim()) {
-      toast.error("Please enter a Client Code");
-      return;
-    }
-    
     setLoading(true);
     try {
-      const params = {
-        Clientcode: clientCode.trim(),
-        clientcode: clientCode.trim(),
-        clientCode: clientCode.trim(),
-        ClientCode: clientCode.trim(),
-      };
+      const trimmedCode = clientCode.trim();
+      const params = trimmedCode
+        ? {
+            Clientcode: trimmedCode,
+            clientcode: trimmedCode,
+            clientCode: trimmedCode,
+            ClientCode: trimmedCode,
+          }
+        : {};
       
       const response = await getKRADataNew(params);
       console.log("KRA & UCC API Response:", response.data);
@@ -183,7 +181,7 @@ export default function KRAStatusPage() {
               <div className="flex gap-8 items-center mb-4">
                 <input
                   type="text"
-                  placeholder="Enter your Client Code"
+                  placeholder="Enter Client Code or leave blank"
                   value={clientCode}
                   onChange={(e) => setClientCode(e.target.value)}
                   onKeyDown={(e) => {

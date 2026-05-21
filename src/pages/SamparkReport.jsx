@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import { Calendar, Search, Download } from "lucide-react";
 import CalendarHeader from "../components/common/CalendarHeader";
 import Table from "../components/common/Table";
-import { getSamparkReport } from "../api/apiService";
+import { getSamparkClientLog } from "../api/korpApiService";
 
 // ============================================================
 // Sampark Report - Logic & Data
@@ -67,17 +67,13 @@ const SamparkReport = () => {
     };
 
     const handleApply = async () => {
-        if (!search.trim()) {
-            setCustomErrorMsg("Please enter Client Code");
-            setShowCustomError(true);
-            return;
-        }
-
-        const dateError = validateDates(fromDate, toDate);
-        if (dateError) {
-            setCustomErrorMsg(dateError);
-            setShowCustomError(true);
-            return;
+        if (fromDate && toDate) {
+            const dateError = validateDates(fromDate, toDate);
+            if (dateError) {
+                setCustomErrorMsg(dateError);
+                setShowCustomError(true);
+                return;
+            }
         }
 
         setLoading(true);
@@ -85,26 +81,18 @@ const SamparkReport = () => {
         setFilteredData([]);
 
         try {
-            const formattedFrom = fromDate ? formatDate(fromDate) : "";
-            const formattedTo = toDate ? formatDate(toDate) : "";
-            const isoTo = toDate ? toDate.toISOString().split('T')[0] : "";
+            const formattedFrom = fromDate ? formatDate(fromDate).replace(/\//g, "-") : "";
+            const formattedTo = toDate ? formatDate(toDate).replace(/\//g, "-") : "";
 
             const params = {
                 pageNumber: 0,
-                size: 500,
-                search: search.trim(),
-                clientCode: search.trim(),
-                datefrom: formattedFrom,
-                dateto: formattedTo,
-                fromDate: formattedFrom,
-                toDate: formattedTo,
-                fromdate: formattedFrom,
-                todate: formattedTo,
-                asOnDate: isoTo,
-                date: isoTo,
+                size: 50,
+                ...(search.trim() ? { search: search.trim(), clientCode: search.trim() } : {}),
+                ...(formattedFrom ? { datefrom: formattedFrom } : {}),
+                ...(formattedTo ? { dateto: formattedTo } : {}),
             };
 
-            const response = await getSamparkReport(params);
+            const response = await getSamparkClientLog(params);
             const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
             const list = Array.isArray(items) ? items : (items ? [items] : []);
 

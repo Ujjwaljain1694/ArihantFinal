@@ -1,17 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ChevronUp,
   ChevronDown,
   ChevronsUpDown,
 } from "lucide-react";
+import { getKRAHold } from "../api/korpApiService";
 
 export default function HoldKRAStatus() {
   const [filter, setFilter] = useState("");
   const [results, setResults] = useState([]);
+  const [allResults, setAllResults] = useState([]);
   const [sortConfig, setSortConfig] = useState({
     key: "",
     direction: "asc",
   });
+  const [loading, setLoading] = useState(false);
   const [showCustomError, setShowCustomError] = useState(false);
   const [customErrorMsg, setCustomErrorMsg] = useState("");
 
@@ -22,31 +25,43 @@ export default function HoldKRAStatus() {
     }
   }, [showCustomError]);
 
+  useEffect(() => {
+    const fetchHoldKRAStatus = async () => {
+      setLoading(true);
+      try {
+        const response = await getKRAHold();
+        const items = response?.data?.data || response?.data?.Data || response?.data || [];
+        const list = Array.isArray(items) ? items : [items];
+        setAllResults(list);
+        setResults(list);
+      } catch (error) {
+        console.error("Hold KRA API Error:", error);
+        setResults([]);
+        setAllResults([]);
+        setCustomErrorMsg("Failed to load Hold KRA data.");
+        setShowCustomError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHoldKRAStatus();
+  }, []);
+
   const handleSearch = async () => {
-    if (filter.trim() === "") {
-      setCustomErrorMsg("Please enter client code to search");
-      setShowCustomError(true);
+    const trimmed = filter.trim().toLowerCase();
+
+    if (!trimmed) {
+      setResults(allResults);
       return;
     }
 
-    try {
-      // API call example - replace with your actual API endpoint
-      const response = await fetch(`/api/hold-kra-status?clientCode=${filter}`);
-      const data = await response.json();
-      
-      // If API is not ready, fallback to mock data
-      if (!response.ok || data.length === 0) {
-        const mockData = [];
-        setResults(mockData);
-      } else {
-        setResults(data);
-      }
-    } catch (error) {
-      console.error("API Error:", error);
-      // Fallback to mock data on error
-      const mockData = [];
-      setResults(mockData);
-    }
+    const filtered = allResults.filter((row) => {
+      const code = (row.clientCode || row.clientcode || row.ClientCode || "").toString().toLowerCase();
+      return code.includes(trimmed);
+    });
+
+    setResults(filtered);
   };
 
   const handleSort = (key) => {
@@ -133,7 +148,10 @@ export default function HoldKRAStatus() {
           {/* Clear Button */}
           {filter && (
             <button
-              onClick={() => setFilter("")}
+              onClick={() => {
+                setFilter("");
+                setResults(allResults);
+              }}
               className="absolute right-12 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 transition-colors"
             >
               <svg 
@@ -181,7 +199,13 @@ export default function HoldKRAStatus() {
           </div>
 
           {/* Body */}
-          {results.length === 0 ? (
+          {loading ? (
+            <>
+              <div className="bg-white h-[45px] flex items-center px-6 text-[15px] text-gray-500 border-x border-b border-gray-200">
+                Loading Hold KRA data...
+              </div>
+            </>
+          ) : results.length === 0 ? (
             <>
               <div className="bg-white h-[45px] flex items-center px-6 text-[15px] text-gray-500 border-x border-b border-gray-200">
                 No data to display

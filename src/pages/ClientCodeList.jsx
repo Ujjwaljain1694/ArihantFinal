@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Header from "./Header";
 import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
-import korpInstance from "../api/korpApiService";
+import korpInstance, { getMobileLoginData } from "../api/korpApiService";
 
 export default function ClientCodeList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -14,12 +14,26 @@ export default function ClientCodeList() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Using the same API that provides Total App Login count
-        const res = await korpInstance.get("/reports/getMobileAppLogin");
-        if (res.data && res.data.success && Array.isArray(res.data.result)) {
-          // Extract ClientCode from the array of objects
-          const codes = res.data.result.map(item => item.ClientCode || item.clientCode);
-          setClientCodesList(codes);
+        const params = {
+          pageNumber: 0,
+          size: 1000,
+          datefrom: "",
+          dateto: "",
+          fromDate: "",
+          toDate: "",
+          fromdate: "",
+          todate: ""
+        };
+        const res = await getMobileLoginData(params);
+        if (res.data && res.data.success) {
+          const result = res.data.result || {};
+          const items = result.clientlist || result.userList || res.data.data || [];
+          if (Array.isArray(items)) {
+            const codes = items.map(item => item.clientCode || item.ClientCode || item.code || "").filter(Boolean);
+            setClientCodesList(codes);
+          } else {
+            setClientCodesList([]);
+          }
         } else {
           setClientCodesList([]);
         }

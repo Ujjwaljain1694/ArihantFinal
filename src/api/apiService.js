@@ -107,8 +107,12 @@ export const getBrokerageSummary = (params = {}) =>
 
 // ── 📉 REPORTS APIs ───────────────────────────────────────────────────────────
 // All accept params: { datefrom, dateto, search, pageNumber, size }
-export const getMobileLoginReport = (params = {}) =>
-  axiosInstance.get("/reports/getMobileAppLogin", { params });
+export const getMobileLoginReport = (params = {}) => {
+  const { pageNumber = 0, size = 50, ...body } = params;
+  return axiosInstance.post("/reports/GetmobLoginTradedDate", body, {
+    params: { pageNumber, size }
+  });
+};
 
 export const getBranchPerformance = (params = {}) =>
   axiosInstance.get("/AdminDashboard/korpBranchPerformanceReportAdmin", { params });

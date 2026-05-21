@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { Calendar, Search, ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import ProductBox from "../components/common/ProductBox";
 import ResultsHeader from "../components/common/ResultsHeader";
+import { getBranchZoneRoSymbolBranch } from "../api/korpApiService";
 
 // ============================================================
 // IPO Report - Pure Logic (No UI/Components)
@@ -73,6 +74,8 @@ const IPOReport = () => {
     const [hasSearched, setHasSearched] = useState(false);
     const [isDateSubmitted, setIsDateSubmitted] = useState(false);
     const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
+    const [branchHeaders, setBranchHeaders] = useState([]);
+    const [branchRows, setBranchRows] = useState([]);
 
     useEffect(() => {
         if (showCustomError) {
@@ -81,14 +84,57 @@ const IPOReport = () => {
         }
     }, [showCustomError]);
 
-    const handleNext = () => {
+    const formatDashDate = (date) => {
+        if (!date) return "";
+        const dd = date.getDate();
+        const mm = date.getMonth() + 1;
+        const yyyy = date.getFullYear();
+        return `${dd}-${mm}-${yyyy}`;
+    };
+
+    const handleNext = async () => {
         const dateVal = validateDateRange(fromDate, toDate);
         if (!dateVal.isValid) {
             setCustomErrorMsg(dateVal.error);
             setShowCustomError(true);
             return;
         }
-        setIsDateSubmitted(true);
+
+        setLoading(true);
+        setHasSearched(true);
+        setBranchHeaders([]);
+        setBranchRows([]);
+
+        try {
+            const params = {
+                datefrom: formatDashDate(fromDate),
+                dateto: formatDashDate(toDate),
+            };
+            console.log("IPOReport: branch zone request params", params);
+            const response = await getBranchZoneRoSymbolBranch(params);
+            console.log("IPOReport: branch zone response", response);
+            const payload = response?.data?.data ?? response?.data;
+            const list = Array.isArray(payload) ? payload : payload ? [payload] : [];
+
+            if (list.length === 0) {
+                setBranchHeaders([]);
+                setBranchRows([]);
+                toast.info("No records found for the selected dates.");
+            } else {
+                const keys = Object.keys(list[0]);
+                setBranchHeaders(keys);
+                setBranchRows(list.map((item) => keys.map((key) => item[key] ?? "")));
+                toast.success("Branch Zone RO data loaded.");
+            }
+
+            setIsDateSubmitted(true);
+        } catch (error) {
+            console.error("Branch Zone RO API error:", error);
+            setCustomErrorMsg("Failed to load branch zone RO data. Please try again.");
+            setShowCustomError(true);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleApply = () => {
@@ -189,6 +235,7 @@ const IPOReport = () => {
 
                         {!isDateSubmitted && (
                             <button
+                                type="button"
                                 onClick={handleNext}
                                 className="bg-[#34b350] hover:bg-[#2e9e47] text-white px-10 h-[44px] rounded-full font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 mt-auto"
                             >
@@ -197,6 +244,41 @@ const IPOReport = () => {
                             </button>
                         )}
                     </div>
+
+                    {branchRows.length > 0 && (
+                        <div className="mt-6 bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse min-w-[800px]">
+                                    <thead className="bg-[#1EB04C] text-white uppercase text-[11px] font-bold">
+                                        <tr className="h-12">
+                                            {branchHeaders.map((head) => (
+                                                <th key={head} className="px-4 py-2 border border-white/10 text-left">
+                                                    {head}
+                                                </th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-[12px]">
+                                        {branchRows.map((row, rowIndex) => (
+                                            <tr key={rowIndex} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                                                {row.map((cell, cellIndex) => (
+                                                    <td key={cellIndex} className="px-4 py-2 border border-gray-100 text-gray-700">
+                                                        {cell}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {hasSearched && !loading && branchRows.length === 0 && (
+                        <div className="mt-6 p-6 bg-white border border-gray-200 rounded-lg shadow-sm text-gray-700 text-sm">
+                            No branch zone RO rows were returned for the selected dates.
+                        </div>
+                    )}
 
                     {isDateSubmitted && (
                         <div className="flex gap-6 items-end animate-in fade-in slide-in-from-top-4 duration-500 pt-4 border-t border-gray-100">
@@ -218,6 +300,7 @@ const IPOReport = () => {
                             </div>
 
                             <button
+                                type="button"
                                 onClick={handleApply}
                                 className="bg-[#1EB04C] hover:bg-[#19923f] text-white px-10 h-[44px] rounded-full font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 mt-auto"
                             >
@@ -264,13 +347,14 @@ const IPOReport = () => {
                                 />
                             </div>
                             <button
+                                type="button"
                                 onClick={handleClientSearch}
                                 className="bg-[#1EB04C] hover:bg-[#19923f] text-white px-10 h-[48px] rounded-full font-bold text-sm transition-all shadow-md active:scale-95"
                             >
                                 APPLY
                             </button>
                             <div className="ml-auto">
-                                <button onClick={() => downloadAsCSV(sortedData, selectedIPO)} className="p-3 bg-gray-50 hover:bg-gray-100 rounded-full text-[#34b350] transition-all border border-gray-100 shadow-sm" title="Download CSV">
+                                <button type="button" onClick={() => downloadAsCSV(sortedData, selectedIPO)} className="p-3 bg-gray-50 hover:bg-gray-100 rounded-full text-[#34b350] transition-all border border-gray-100 shadow-sm" title="Download CSV">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                                 </button>
                             </div>

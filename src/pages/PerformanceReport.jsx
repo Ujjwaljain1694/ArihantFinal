@@ -5,6 +5,7 @@ import { validateDates } from "../utils/dateValidation";
 import { toast } from "react-toastify";
 import { Calendar, Download } from "lucide-react";
 import axios from "axios";
+import { getBranchPerformance } from "../api/korpApiService";
 import Table from "../components/common/Table";
 import ResultsHeader from "../components/common/ResultsHeader";
 
@@ -93,24 +94,34 @@ const PerformanceReport = () => {
         const fromStr = fromDate ? fromDate.toISOString().split('T')[0] : "";
         const toStr = toDate ? toDate.toISOString().split('T')[0] : "";
         
-        const validation = validateDateRange(fromStr, toStr);
-
-        if (!validation.isValid) {
-            setCustomErrorMsg(validation.error);
-            setShowCustomError(true);
-            return;
+        // If both dates are provided, validate the range
+        if (fromStr && toStr) {
+            const validation = validateDateRange(fromStr, toStr);
+            if (!validation.isValid) {
+                setCustomErrorMsg(validation.error);
+                setShowCustomError(true);
+                return;
+            }
         }
 
         setLoading(true);
         setHasSearched(true);
-        
-        setTimeout(() => {
-            // Load all available data for the selected date range
-            const filtered = filterByDateRange(fromStr, toStr);
-            setReportData(filtered.length > 0 ? filtered : dummyData);
-            setLoading(false);
-            toast.success("Performance data loaded successfully");
-        }, 600);
+
+        // Call live korp API for branch performance. If dates are provided, pass them; otherwise fetch all.
+        const params = (fromStr && toStr) ? { datefrom: fromStr, dateto: toStr } : {};
+        getBranchPerformance(params)
+            .then((res) => {
+                const payload = res.data?.data || res.data || [];
+                // If API returns empty, fall back to dummy data
+                setReportData(Array.isArray(payload) && payload.length ? payload : dummyData);
+                toast.success("Performance data loaded successfully");
+            })
+            .catch((err) => {
+                console.error("Branch performance error:", err?.response?.data || err.message || err);
+                setCustomErrorMsg("Failed to load performance data. Try again.");
+                setShowCustomError(true);
+            })
+            .finally(() => setLoading(false));
     };
 
     const handleDownload = () => {
@@ -155,8 +166,7 @@ const PerformanceReport = () => {
                     <div className="flex gap-4">
                         <button
                             onClick={handleApply}
-                            disabled={loading}
-                            className="bg-[#34b350] hover:bg-[#2e9e47] text-white px-8 h-[44px] rounded-full font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 mt-auto disabled:bg-gray-400"
+                            className="bg-[#34b350] hover:bg-[#2e9e47] text-white px-8 h-[44px] rounded-full font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 mt-auto"
                         >
                             <span>{loading ? "APPLYING..." : "APPLY"}</span>
                             {!loading && <span className="text-lg">›</span>}

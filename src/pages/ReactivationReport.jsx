@@ -8,6 +8,7 @@ import { Calendar, Search, Download } from "lucide-react";
 import CalendarHeader from "../components/common/CalendarHeader";
 import Table from "../components/common/Table";
 import { getReactivationReport } from "../api/apiService";
+import { getReActivationClient } from "../api/korpApiService";
 
 // ============================================================
 // Reactivation Report - Logic & Data
@@ -66,18 +67,16 @@ const ReactivationReport = () => {
         return `${dd}/${mm}/${yyyy}`;
     };
 
-    const handleApply = async () => {
-        if (!search.trim()) {
-            setCustomErrorMsg("Please enter Client Code");
-            setShowCustomError(true);
-            return;
-        }
 
-        const dateError = validateDates(fromDate, toDate);
-        if (dateError) {
-            setCustomErrorMsg(dateError);
-            setShowCustomError(true);
-            return;
+    const handleApply = async () => {
+        // Validate dates only if both provided
+        if (fromDate && toDate) {
+            const dateError = validateDates(fromDate, toDate);
+            if (dateError) {
+                setCustomErrorMsg(dateError);
+                setShowCustomError(true);
+                return;
+            }
         }
 
         setLoading(true);
@@ -89,22 +88,27 @@ const ReactivationReport = () => {
             const formattedTo = toDate ? formatDate(toDate) : "";
             const isoTo = toDate ? toDate.toISOString().split('T')[0] : "";
 
+            // API expects date strings like 11-05-2026 (dashes). Build both slash and dash variants.
+            const dash = (d) => d ? d.replace(/\//g, "-") : "";
+
             const params = {
                 pageNumber: 0,
-                size: 500,
-                search: search.trim(),
-                clientCode: search.trim(),
-                datefrom: formattedFrom,
-                dateto: formattedTo,
-                fromDate: formattedFrom,
-                toDate: formattedTo,
-                fromdate: formattedFrom,
-                todate: formattedTo,
-                asOnDate: isoTo,
-                date: isoTo,
+                size: 50,
+                search: search.trim() || undefined,
+                clientCode: search.trim() || undefined,
+                datefrom: dash(formattedFrom),
+                dateto: dash(formattedTo),
+                // keep other variants for safety
+                fromDate: formattedFrom || undefined,
+                toDate: formattedTo || undefined,
+                fromdate: formattedFrom || undefined,
+                todate: formattedTo || undefined,
+                asOnDate: isoTo || undefined,
+                date: isoTo || undefined,
             };
 
-            const response = await getReactivationReport(params);
+            // Prefer korp API endpoint if available
+            const response = await getReActivationClient(params);
             const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
             const list = Array.isArray(items) ? items : (items ? [items] : []);
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Calendar, Wifi, User, Folder, Loader2 } from "lucide-react";
 import Header from "./Header";
-import korpInstance, { getDashboardData, korpSendOtp, getClientDetailByType } from "../api/korpApiService";
+import korpInstance, { getDashboardData, korpSendOtp, getClientDetailByType, getMobileLoginData } from "../api/korpApiService";
 import { verifyOtp } from "../api/authApi";
 import "@fortawesome/fontawesome-free/css/all.css";
 import { toast as toastify } from "react-toastify";
@@ -115,7 +115,7 @@ function Dashboard() {
         const safeFetch = async (type, code) => {
           try {
             const res = await korpInstance.get("/dashboard/korpgetclientDetail", {
-              params: { pageNumber: 0, size: 50, Type: type, clientCode: code }
+              params: { pageNumber: 0, size: 50, Type: type }
             });
             console.log(`[Dashboard Debug] safeFetch(${type}) success:`, res.data);
             return res.data?.result?.all_Count !== undefined ? res.data.result.all_Count : (res.data?.result?.AClist?.length || 0);
@@ -127,9 +127,27 @@ function Dashboard() {
 
         const safeAppLoginFetch = async () => {
           try {
-            const res = await korpInstance.get("/reports/getMobileAppLogin");
+            const params = {
+              pageNumber: 0,
+              size: 10,
+              datefrom: "",
+              dateto: "",
+              fromDate: "",
+              toDate: "",
+              fromdate: "",
+              todate: ""
+            };
+            const res = await getMobileLoginData(params);
             console.log("[Dashboard Debug] safeAppLoginFetch success:", res.data);
-            return res.data?.result?.length !== undefined ? res.data.result.length : (res.data?.count || 0);
+            if (res.data?.success) {
+              const result = res.data.result || {};
+              if (result.TotalLoginClients !== undefined) {
+                return result.TotalLoginClients;
+              }
+              const clientList = result.clientlist || result.userList || res.data.data || [];
+              return Array.isArray(clientList) ? clientList.length : 0;
+            }
+            return 0;
           } catch (e) {
             console.error("[Dashboard Debug] safeAppLoginFetch error:", e.response?.data || e.message || e);
             return undefined;

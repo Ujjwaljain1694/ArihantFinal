@@ -2,9 +2,21 @@ import React from "react";
 import Layout from "../components/layout/Layout";
 import SubNavigation from "../components/layout/SubNavigation";
 import { L, LField, LSelectInput, LApplyBtn } from "../styles/legacyStyles";
+import { getAuditorProfile } from "../api/korpApiService";
 
 const AuditorPortal = () => {
     const [year, setYear] = React.useState("2024-2025");
+    const [profile, setProfile] = React.useState(null);
+
+    React.useEffect(() => {
+        let mounted = true;
+        getAuditorProfile()
+            .then(res => {
+                if (mounted) setProfile(res.data);
+            })
+            .catch(err => console.error("Auditor profile error:", err));
+        return () => { mounted = false; };
+    }, []);
 
     return (
         <div className="px-6 py-6 max-w-[1600px] mx-auto">
@@ -29,6 +41,12 @@ const AuditorPortal = () => {
                         Submit
                     </button>
                 </div>
+                {profile && (
+                    <div className="mt-6 bg-white border border-gray-100 p-4 rounded">
+                        <h3 className="font-bold mb-2">Auditor Profile</h3>
+                        <pre className="text-xs text-gray-700">{JSON.stringify(profile, null, 2)}</pre>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -60,9 +60,30 @@ export const korpCheckUsername = (data) => ssoInstance.post("/checkUsername", da
 // ── 📊 REPORTS APIs ──────────────────────────────────────────────────────────
 
 export const getClientLedger = (searchTerm) => korpInstance.get(`/reports/korpgetclientledger?Search=${searchTerm}`);
-export const getHoldingReport = (params) => korpInstance.get("/reports/KorpHoldingReport", { params });
-export const getFreeHoldingsData = (params) =>
-  korpInstance.get("/reports/korpholdingreport", { params });
+export const getHoldingReport = (params) => korpInstance.get("/reports/KorpHoldingReport", {
+  params,
+  paramsSerializer: {
+    serialize: (params) => {
+      return Object.entries(params)
+        .filter(([_, val]) => val !== null && val !== undefined)
+        .map(([key, val]) => `${key}=${encodeURIComponent(val).replace(/%2F/g, '/')}`)
+        .join('&');
+    }
+  }
+});
+export const getFreeHoldingsData = (params) => {
+  return korpInstance.get("/reports/KorpHoldingReport", {
+    params,
+    paramsSerializer: {
+      serialize: (params) => {
+        return Object.entries(params)
+          .filter(([_, val]) => val !== null && val !== undefined)
+          .map(([key, val]) => `${key}=${encodeURIComponent(val).replace(/%2F/g, '/')}`)
+          .join('&');
+      }
+    }
+  });
+};
 export const getOpenPositionData = (params) =>
   korpInstance.get("/reports/getKorpFOholding", { params });
 export const getGlobalPositionReport = (clientCode) => korpInstance.get("/reports/KorpglobalPositionReport", { params: { clientCode } });
@@ -120,10 +141,15 @@ export const getDashboardData = async () => {
 };
 export const getClientDetailByType = (clientCode, type) => korpInstance.get("/dashboard/korpgetclientDetail", { params: { clientCode, Type: type } });
 export const getUserProfile = () => korpInstance.get("/dashboard/getprofile");
+// Auditor profile endpoints
+export const getAuditorProfile = () => korpInstance.get("/dashboard/getprofile");
+export const getAuditorMe = () => korpInstance.get("/auditor/me");
 export const getAdminSubbrokerCount = () => korpInstance.get("/AdminDashboard/getAdminsubbrokerclientcount");
 export const getTopPerformedBrokers = (type) => ssoInstance.get("/AdminDashboard/getTopPerformedBrk", { params: { SearchType: type } });
 export const getAdminDashboardDetails = (code) => ssoInstance.get("/AdminDashboard/getrespadmindashboardsubrokerDetails", { params: { subbrokerCode: code } });
 export const getBranchPerformanceAdmin = (params) => korpInstance.get("/AdminDashboard/korpBranchPerformanceReportAdmin", { params });
+// Branch performance (public reports endpoint)
+export const getBranchPerformance = (params) => korpInstance.get("/reports/korpBranchPerformanceReport", { params });
 export const getMISReportAdmin = (clientCode) => korpInstance.get("/AdminDashboard/korpClientMisReport1", { params: { clientCode } });
 export const getUserLoginCount = (userType) => korpInstance.get("/AdminDashboard/getUserLoginCount", { params: { userType } });
 export const getClickEventReport = (eventType) => korpInstance.get("/AdminDashboard/korpClickEventReport", { params: { eventType } });
@@ -153,6 +179,7 @@ export const getRORevenueReport = (roCode) => ssoInstance.get("/ROReport/getRORe
 // ── 📦 THIRD PARTY & IPO APIs ────────────────────────────────────────────────
 
 export const getIPOList = (type) => korpInstance.get("/AdminDashboard/korpGetBranchZoneRoSymbol", { params: { ipoType: type } });
+export const getBranchZoneRoSymbolBranch = (params = {}) => korpInstance.get("/AdminDashboard/korpGetBranchZoneRoSymbolBranch", { params });
 export const getIPOBiddingData = (params) => korpInstance.get("/AdminDashboard/korpIpoDataBidding", { params });
 export const getMfReport = (params = {}, body = {}) => korpInstance.post("/ThirdpartyAdmin/reports/MfAp", body, { params });
 export const getSgbReport = (data) => korpInstance.post("/ThirdpartyAdmin/reports/SgbAp", data);
@@ -170,7 +197,7 @@ export const getInactiveClickToCall = (params = {}, body = {}) => korpInstance.p
 export const getInactiveFollowupData = (params = {}, body = {}) => korpInstance.post("/reports/GetInActiveFollowupData", body, { params });
 export const saveFollowupData = (data) => korpInstance.post("/reports/SaveInActiveClientDate", data);
 export const sendWhatsApp = (data) => korpInstance.post("/reports/SendWhatsAppInActiveClient", data);
-export const getSamparkClientLog = (data) => korpInstance.post("/sampark/samparkclientlog", data);
+export const getSamparkClientLog = (params = {}) => korpInstance.post("/sampark/samparkclientlog", null, { params });
 export const updateCallingRemark = (data) => korpInstance.post("/DailyCalling/CallingList", data);
 
 // ── 🛠️ MISC & COMPLIANCE APIs ────────────────────────────────────────────────
@@ -221,5 +248,9 @@ export const getMfStructure = (params = {}, body = {}) => korpInstance.post("/re
 export const getTipsOnBondOfferData = (data = {}) => korpInstance.post("/reports/TipsonBondOfferData", data);
 export const getClientContactDetails = (params = {}) => korpInstance.get("/AdminDashboard/korpClientContactDetails", { params });
 export const getClientPayoutBalance = (params = {}) => korpInstance.get("/payout/korpgetclientBalance", { params });
+
+// Re-activation clients (supports optional datefrom/dateto, pageNumber, size)
+// Some backends expect POST with querystring rather than JSON body.
+export const getReActivationClient = (params = {}) => korpInstance.post("/reports/GetReActivationClient", null, { params });
 
 export default korpInstance;

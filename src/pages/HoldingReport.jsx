@@ -3,17 +3,34 @@ import { Loader2 } from 'lucide-react';
 import { ChevronDown, Search, Download, Calendar, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { getHoldingReport, getFreeHoldingsData } from '../api/korpApiService';
+import { getFreeHoldingsData } from '../api/korpApiService';
 
 export default function HoldingReport() {
+  const getDefaultDate = () => {
+    const now = new Date();
+    const day = now.getDay(); // 0 is Sun, 1 is Mon
+    let defaultDate = new Date();
+    if (day === 1) { // Mon
+      defaultDate.setDate(now.getDate() - 3);
+    } else if (day === 0) { // Sun
+      defaultDate.setDate(now.getDate() - 2);
+    } else {
+      defaultDate.setDate(now.getDate() - 1);
+    }
+    return defaultDate;
+  };
+
   const [selectedOption, setSelectedOption] = useState('Select Option');
   const [searchInput, setSearchInput] = useState('');
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(getDefaultDate());
   const dateRef = React.useRef();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showCustomError, setShowCustomError] = useState(false);
   const [customErrorMsg, setCustomErrorMsg] = useState("");
   const [tableData, setTableData] = useState([]);
+
+  const hasMountedRef = React.useRef(false);
+  const isFetchingRef = React.useRef(false);
 
   // ── Auto-fetch free holdings on mount ────────────────────────────────────
   const formatDate = (date) => {
@@ -24,32 +41,55 @@ export default function HoldingReport() {
   };
 
   const fetchTableData = async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     console.log("API function called");
+
     try {
-      const response = await getFreeHoldingsData({
-        datefrom: formatDate(new Date()),
+      const params = {
+        datefrom: formatDate(getDefaultDate()), // 19/05/2026
         size: 50,
         pageNumber: 0,
-      });
-      
-      console.log("API Response:", response.data);
-      
-      const rows =
-        response?.data?.data ||
-        response?.data?.Data ||
-        response?.data ||
-        [];
-      
+      };
+
+      console.log("Request Params:", params);
+
+      // IMPORTANT:
+      // Same API use karo jo live site me chal rahi hai:
+      // /reports/KorpHoldingReport
+      const response = await getFreeHoldingsData(params);
+
+      console.log("Full Response:", response);
+      console.log("Response Data:", response.data);
+
+      // Backend success check
+      if (!response?.data?.success) {
+        console.log("API returned success:false");
+        setTableData([]);
+        return;
+      }
+
+      // Data extraction
+      const rows = response?.data?.result?.result1 || [];
+
+      console.log("Rows Count:", rows.length);
+      console.log("First Row:", rows[0]);
+
+      // State update
       setTableData(Array.isArray(rows) ? rows : []);
     } catch (error) {
       console.error("API Error:", error);
       console.error("Status:", error.response?.status);
-      console.error("Full URL:", error.config?.baseURL + error.config?.url);
       console.error("Response:", error.response?.data);
+      setTableData([]);
+    } finally {
+      isFetchingRef.current = false;
     }
   };
 
   React.useEffect(() => {
+    if (hasMountedRef.current) return;
+    hasMountedRef.current = true;
     fetchTableData();
   }, []);
 
@@ -66,50 +106,136 @@ export default function HoldingReport() {
   });
 
   const dropdownOptions = [
-    'Client Name',
-    'Script Code',
+    'Client Code',
+    'Script Name',
   ];
 
   const [filteredData, setFilteredData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const handleApply = async () => {
-    // VALIDATE INPUT
-    if (searchInput.trim() === "") {
-      setCustomErrorMsg("Please Enter Client Code or Script Name");
-      setShowCustomError(true);
-      return;
-    }
+  const handleApply = async (
+    pageNumber = 0,
+    size = 50
+  ) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+
+    const actualPageNumber = typeof pageNumber === 'number' ? pageNumber : 0;
+    const actualSize = typeof size === 'number' ? size : 50;
 
     setIsLoading(true);
     setHasSearched(true);
-    setFilteredData([]);
 
     try {
-      const params = {
-        clientCode: selectedOption === 'Client Name' ? searchInput.trim() : '',
-        scriptCode: selectedOption === 'Script Code' ? searchInput.trim() : '',
-        asOnDate: selectedDate
-          ? selectedDate.toISOString().split('T')[0]
-          : new Date().toISOString().split('T')[0],
-      };
-      const res = await getHoldingReport(params);
-      const data = res?.data?.data || res?.data || [];
-      const rows = Array.isArray(data) ? data : [];
+      let params = {};
 
-      if (rows.length === 0) {
-        setCustomErrorMsg("No records found for the given input.");
-        setShowCustomError(true);
+      // ==========================================
+      // 1. DATE LOGIC (same as Angular)
+      // Mon -> -3 days
+      // Sun -> -2 days
+      // Else -> -1 day
+      // ==========================================
+      let reportDate = selectedDate;
+
+      if (!reportDate) {
+        const now = new Date();
+        const day = now.getDay(); // 0=Sun, 1=Mon
+
+        reportDate = new Date(now);
+
+        if (day === 1) {
+          // Monday
+          reportDate.setDate(now.getDate() - 3);
+        } else if (day === 0) {
+          // Sunday
+          reportDate.setDate(now.getDate() - 2);
+        } else {
+          // Other days
+          reportDate.setDate(now.getDate() - 1);
+        }
       }
-      setFilteredData(rows);
-    } catch (err) {
-      console.error('HoldingReport API error:', err);
-      setCustomErrorMsg("Failed to fetch data. Please try again.");
+
+      // ==========================================
+      // 2. BASIC PARAMETERS
+      // ==========================================
+      params = {
+        datefrom: formatDate(reportDate), // dd/MM/yyyy
+        size: actualSize,
+        pageNumber: actualPageNumber,
+      };
+
+      // ==========================================
+      // 3. SEARCH PARAMETERS (same as Angular)
+      // Client Code -> Client_Code
+      // Script Name -> SCRIPT_NAME
+      // ==========================================
+      if (searchInput.trim()) {
+        if (!selectedOption || selectedOption === "Select Option") {
+          setCustomErrorMsg(
+            "Please Enter Client Code or Script Name"
+          );
+          setShowCustomError(true);
+          setIsLoading(false);
+          return;
+        }
+
+        params.SearchType =
+          selectedOption === "Script Name"
+            ? "SCRIPT_NAME"
+            : "Client_Code";
+
+        params.Search =
+          searchInput.trim().toUpperCase();
+      }
+
+      // ==========================================
+      // 4. DEBUG
+      // ==========================================
+      console.log("Request Params:", params);
+
+      // ==========================================
+      // 5. API CALL
+      // ==========================================
+      const res = await getFreeHoldingsData(params);
+
+      console.log("FULL API RESPONSE:", res);
+      console.log("SUCCESS VALUE:", res?.success);
+      console.log("RESULT1:", res?.result?.result1);
+      console.log("AXIOS RESPONSE DATA:", res?.data);
+      console.log("AXIOS SUCCESS VALUE:", res?.data?.success);
+      console.log("AXIOS RESULT1:", res?.data?.result?.result1);
+
+      // ==========================================
+      // 6. SUCCESS CHECK
+      // ==========================================
+      const payload = res?.data || res;
+      if (payload?.success === true && payload?.result?.result1) {
+        const rows = payload.result.result1;
+        setFilteredData(Array.isArray(rows) ? rows : []);
+
+        if (rows.length === 0) {
+          setCustomErrorMsg(
+            payload.message || "Data not found"
+          );
+          setShowCustomError(true);
+        }
+      } else {
+        setCustomErrorMsg("Data not found");
+        setShowCustomError(true);
+        setFilteredData([]);
+      }
+    } catch (error) {
+      console.error("API Error:", error);
+      console.error("Status:", error.response?.status);
+      console.error("Response:", error.response?.data);
+
+      setCustomErrorMsg("Error fetching data");
       setShowCustomError(true);
       setFilteredData([]);
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   };
 
@@ -132,12 +258,46 @@ export default function HoldingReport() {
     return <ChevronsUpDown size={14} className="text-white/60 ml-2" />;
   };
 
-  const sortedData = [...filteredData].sort((a, b) => {
+  const getCellValue = (item, key) => {
+    if (!item) return "";
+    switch (key) {
+      case "clientName":
+        return item.CLIENT_NAME || item.clientName || "";
+      case "clientCode":
+        return item.Client_Code || item.CLIENT_CODE || item.clientCode || "";
+      case "scriptCode":
+        return item.SCRIPT_CODE || item.scriptCode || "";
+      case "scriptName":
+        return item.SCRIPT_NAME || item.scriptName || "";
+      case "isin":
+        return item['ISIN '] || item.ISIN || item.isin || "";
+      case "pledgePOA":
+        return item.PLEDGE_POA || item.pledgePOA || "";
+      case "freePOA":
+        return item.FREE_POA || item.freePOA || "";
+      case "mtfQty":
+        return item.MTF_QTY || item.mtfQty || "";
+      case "netQty":
+        return item.NETQTY || item.netQty || "";
+      case "stockValue":
+        return item.STOCK_VALUE || item.stockValue || "";
+      case "closeRate":
+        return item.MARKET1 || item.closeRate || "";
+      default:
+        return item[key] || "";
+    }
+  };
+
+  const displayData = filteredData.length > 0 || hasSearched ? filteredData : tableData;
+
+  const sortedData = [...displayData].sort((a, b) => {
     if (!sortConfig.key) return 0;
-    if (a[sortConfig.key] < b[sortConfig.key]) {
+    const aVal = getCellValue(a, sortConfig.key);
+    const bVal = getCellValue(b, sortConfig.key);
+    if (aVal < bVal) {
       return sortConfig.direction === "asc" ? -1 : 1;
     }
-    if (a[sortConfig.key] > b[sortConfig.key]) {
+    if (aVal > bVal) {
       return sortConfig.direction === "asc" ? 1 : -1;
     }
     return 0;
@@ -159,17 +319,17 @@ export default function HoldingReport() {
         "CLOSE RATE"
       ],
       ...sortedData.map((item) => [
-        item.clientName,
-        item.clientCode,
-        item.scriptCode,
-        item.scriptName,
-        item.isin,
-        item.pledgePOA,
-        item.freePOA,
-        item.mtfQty,
-        item.netQty,
-        item.stockValue,
-        item.closeRate,
+        item.CLIENT_NAME || item.clientName || "",
+        item.Client_Code || item.CLIENT_CODE || item.clientCode || "",
+        item.SCRIPT_CODE || item.scriptCode || "",
+        item.SCRIPT_NAME || item.scriptName || "",
+        item['ISIN '] || item.ISIN || item.isin || "",
+        item.PLEDGE_POA || item.pledgePOA || "",
+        item.FREE_POA || item.freePOA || "",
+        item.MTF_QTY || item.mtfQty || "",
+        item.NETQTY || item.netQty || "",
+        item.STOCK_VALUE || item.stockValue || "",
+        item.MARKET1 || item.closeRate || "",
       ]),
     ]
       .map((row) => row.join(","))
@@ -308,7 +468,8 @@ export default function HoldingReport() {
 
             {/* Apply Button */}
             <button
-              onClick={handleApply}
+              type="button"
+              onClick={() => handleApply()}
               className="bg-[#27ae60] hover:bg-[#219150] text-white px-8 h-[48px] rounded-full font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2"
             >
               <span>APPLY</span>
@@ -445,37 +606,45 @@ export default function HoldingReport() {
                     </div>
                   </td>
                 </tr>
-              ) : hasSearched && sortedData.length === 0 ? (
+              ) : sortedData.length === 0 ? (
                 <tr>
                   <td colSpan={11} className="py-16 text-center text-gray-400 text-sm font-medium">
-                    No records found.
-                  </td>
-                </tr>
-              ) : !hasSearched ? (
-                <tr>
-                  <td colSpan={11} className="py-16 text-center text-gray-400 text-sm font-medium">
-                    Enter a search term and click Apply to view holding data.
+                    {hasSearched ? "No records found." : "Enter a search term and click Apply to view holding data."}
                   </td>
                 </tr>
               ) : (
-                sortedData.map((row, idx) => (
-                  <tr
-                    key={idx}
-                    className={`transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#f8fafc]'}`}
-                  >
-                    <td className="px-3 py-2 text-xs text-gray-700 font-medium">{row.clientName}</td>
-                    <td className="px-3 py-2 text-xs text-gray-700 font-medium">{row.clientCode}</td>
-                    <td className="px-3 py-2 text-xs text-gray-700">{row.scriptCode}</td>
-                    <td className="px-3 py-2 text-xs text-gray-700">{row.scriptName}</td>
-                    <td className="px-3 py-2 text-xs text-gray-700">{row.isin}</td>
-                    <td className="px-3 py-2 text-xs text-gray-700 text-center">{row.pledgePOA}</td>
-                    <td className="px-3 py-2 text-xs text-gray-700 text-center font-bold">{row.freePOA}</td>
-                    <td className="px-3 py-2 text-xs text-gray-700 text-center">{row.mtfQty}</td>
-                    <td className="px-3 py-2 text-xs text-gray-700 text-center font-bold">{row.netQty}</td>
-                    <td className="px-3 py-2 text-xs text-gray-700 text-center">{row.stockValue}</td>
-                    <td className="px-3 py-2 text-xs text-gray-700 text-center">{row.closeRate}</td>
-                  </tr>
-                ))
+                sortedData.map((row, idx) => {
+                  const clientName = row.CLIENT_NAME || row.clientName || "-";
+                  const clientCode = row.Client_Code || row.CLIENT_CODE || row.clientCode || "-";
+                  const scriptCode = row.SCRIPT_CODE || row.scriptCode || "-";
+                  const scriptName = row.SCRIPT_NAME || row.scriptName || "-";
+                  const isin = row['ISIN '] || row.ISIN || row.isin || "-";
+                  const pledgePoa = row.PLEDGE_POA || row.pledgePOA || "-";
+                  const freePoa = row.FREE_POA || row.freePOA || "-";
+                  const mtfQty = row.MTF_QTY || row.mtfQty || "-";
+                  const netQty = row.NETQTY || row.netQty || "-";
+                  const stockValue = row.STOCK_VALUE || row.stockValue || "-";
+                  const closeRate = row.MARKET1 || row.closeRate || "-";
+
+                  return (
+                    <tr
+                      key={idx}
+                      className={`transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#f8fafc]'}`}
+                    >
+                      <td className="px-3 py-2 text-xs text-gray-700 font-medium">{clientName}</td>
+                      <td className="px-3 py-2 text-xs text-gray-700 font-medium">{clientCode}</td>
+                      <td className="px-3 py-2 text-xs text-gray-700">{scriptCode}</td>
+                      <td className="px-3 py-2 text-xs text-gray-700">{scriptName}</td>
+                      <td className="px-3 py-2 text-xs text-gray-700">{isin}</td>
+                      <td className="px-3 py-2 text-xs text-gray-700 text-center">{pledgePoa}</td>
+                      <td className="px-3 py-2 text-xs text-gray-700 text-center font-bold">{freePoa}</td>
+                      <td className="px-3 py-2 text-xs text-gray-700 text-center">{mtfQty}</td>
+                      <td className="px-3 py-2 text-xs text-gray-700 text-center font-bold">{netQty}</td>
+                      <td className="px-3 py-2 text-xs text-gray-700 text-center">{stockValue}</td>
+                      <td className="px-3 py-2 text-xs text-gray-700 text-center">{closeRate}</td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
