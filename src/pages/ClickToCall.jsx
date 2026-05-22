@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import logo from "../logo-arihant-capital.png";
 import Header from "./Header.jsx";
+import { getInactiveClickToCall } from "../api/korpApiService";
 
 export default function ClickToCall() {
   const navigate = useNavigate();
@@ -20,11 +21,26 @@ export default function ClickToCall() {
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
   // 🔹 Future API
   useEffect(() => {
-    /*
-    fetch("/api/click-to-call")
-      .then(res => res.json())
-      .then(data => setApiData(data));
-    */
+    const fetchInactiveData = async () => {
+      try {
+        const response = await getInactiveClickToCall({ size: 50, pageNumber: 0 });
+        const data = response.data?.data || response.data || [];
+        if (Array.isArray(data)) {
+          const formattedData = data.map(item => ({
+            name: item.clientName || item.name || item.ClientName || "-",
+            clientCode: item.clientCode || item.ClientCode || "-",
+            mobile: item.mobileNo || item.mobile || item.MobileNo || "-",
+            email: item.emailId || item.email || item.EmailId || "-",
+            pan: item.panNo || item.pan || item.PanNo || "-",
+            ...item
+          }));
+          setApiData(formattedData);
+        }
+      } catch (error) {
+        console.error("Error fetching inactive click to call data:", error);
+      }
+    };
+    fetchInactiveData();
   }, []);
 
   // 🔹 Dummy data (UI ke liye)

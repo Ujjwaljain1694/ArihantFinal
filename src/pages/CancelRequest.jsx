@@ -114,7 +114,7 @@ const CancelRequest = () => {
   const clearBtn = () => {
     setRequestDate("");
     setClientCode("");
-    
+
     // Fetch default today's records immediately with cleared inputs
     setIsLoading(true);
     const todayStr = formatDate(new Date());
@@ -227,11 +227,10 @@ const CancelRequest = () => {
           <button
             onClick={handleDownload}
             disabled={rows.length === 0}
-            className={`w-11 h-11 rounded-full flex items-center justify-center transition-all border active:scale-95 ${
-              rows.length === 0
+            className={`w-11 h-11 rounded-full flex items-center justify-center transition-all border active:scale-95 ${rows.length === 0
                 ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                 : "text-[#27ae60] bg-green-50 hover:bg-[#27ae60] hover:text-white border-green-100 shadow-sm"
-            }`}
+              }`}
           >
             <Download size={18} />
           </button>

@@ -1,8 +1,9 @@
-import { Search, ChevronLeft, ChevronRight, Calendar, ChevronDown } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Calendar, ChevronDown, Download } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import Header from "./Header.jsx";
+import { getInactiveFollowupData } from "../api/korpApiService";
 
 export default function FollowUpReport() {
   const navigate = useNavigate();
@@ -12,6 +13,8 @@ export default function FollowUpReport() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [apiData, setApiData] = useState([]);
+  const [loading, setLoading] = useState(false);
   const calendarRef = useRef(null);
 
   // Close calendar when clicking outside
@@ -76,7 +79,7 @@ export default function FollowUpReport() {
   };
 
   // 🔹 Apply validation
-  const handleApply = () => {
+  const handleApply = async () => {
     if (!search.trim()) {
       setErrorMessage("Please Enter Client Code");
       setShowError(true);
@@ -88,6 +91,27 @@ export default function FollowUpReport() {
       setShowError(true);
       setTimeout(() => setShowError(false), 3000);
       return;
+    }
+
+    setLoading(true);
+    try {
+      // Convert DD/MM/YYYY to DD-MM-YYYY
+      const callDate = selectedDate.replace(/\//g, "-");
+      const response = await getInactiveFollowupData({
+        pageNumber: 0,
+        size: 50,
+        CallDate: callDate,
+        ClientCode: search
+      });
+      const data = response.data?.data || response.data || [];
+      setApiData(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error fetching followup data:", error);
+      setErrorMessage("Failed to fetch data");
+      setShowError(true);
+      setTimeout(() => setShowError(false), 3000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -179,6 +203,63 @@ export default function FollowUpReport() {
               </button>
             </div>
           </div>
+
+          {/* TABLE SECTION */}
+          {loading ? (
+            <div className="p-8 text-center text-gray-500 font-medium">Loading...</div>
+          ) : apiData.length > 0 ? (
+            <div className="mt-6 pb-6">
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-sm font-medium text-gray-700">Search results ({apiData.length})</p>
+                <Download
+                  size={18}
+                  className="text-green-600 cursor-pointer hover:text-green-800 transition-colors"
+                  onClick={() => {
+                    if (apiData.length === 0) return;
+                    const keys = Object.keys(apiData[0]);
+                    const csv = [
+                      keys.join(","),
+                      ...apiData.map(row => keys.map(k => `"${row[k] || ""}"`).join(","))
+                    ].join("\n");
+                    const blob = new Blob([csv], { type: "text/csv" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "followup_report.csv";
+                    a.click();
+                  }}
+                />
+              </div>
+              <div className="bg-white border border-gray-300 rounded-md overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full border-collapse text-sm">
+                    <thead className="bg-green-600 text-white">
+                      <tr>
+                        {Object.keys(apiData[0]).map((key) => (
+                          <th key={key} className="p-3 px-4 py-3 border border-gray-300 text-left whitespace-nowrap capitalize font-medium">
+                            {key.replace(/([A-Z])/g, ' $1').trim()}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {apiData.map((item, i) => (
+                        <tr key={i} className="border-t hover:bg-green-50 transition-colors">
+                          {Object.keys(item).map((key, j) => (
+                            <td key={j} className="p-3 px-4 py-2 border border-gray-300 whitespace-nowrap text-gray-700">
+                              {item[key]}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-8 text-center text-gray-500 font-medium">No data found. Please apply filters.</div>
+          )}
         </div>
 
         {/* 🚨 CUSTOM ERROR TOAST */}

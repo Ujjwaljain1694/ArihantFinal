@@ -15,12 +15,7 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 function Contests() {
   const [activeTab, setActiveTab] = useState("contest");
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
-  const [data, setData] = useState([
-    { branch: "BRAP05", client: "188003119", name: "ANAND PATEL", email: "*****@yahoo.com", mobile: "******5" },
-    { branch: "BRAP05", client: "AP0110283", name: "RADHESHYAM PANCHAL", email: "*****@gmail.com", mobile: "******1" },
-    { branch: "BRAP05", client: "188018114", name: "DHARAM JAIN", email: "*****@yahoo.com", mobile: "******5" },
-    { branch: "BRAP05", client: "138000287", name: "SHOBHA LALWANI", email: "*****@gmail.com", mobile: "******2" },
-  ]);
+  const [data, setData] = useState([]);
   const navigate = useNavigate();
 
   // SORT

@@ -20,12 +20,17 @@ export default function ContestsData() {
   const fetchContactDetails = async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem("connect_token");
+      console.log("🔐 Token exists:", !!token);
+      
       const params = {
         pageNumber: 0,
         size: 50
       };
+      console.log("📤 Calling API with params:", params);
+      
       const response = await getClientContactDetails(params);
-      console.log("ClientContactDetails API Response:", response.data);
+      console.log("✅ ClientContactDetails API Response:", response.data);
       const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
 
       if (Array.isArray(items) && items.length > 0) {
@@ -34,7 +39,10 @@ export default function ContestsData() {
         setData([]);
       }
     } catch (err) {
-      console.error("Failed to fetch client contact details:", err);
+      console.error("❌ Failed to fetch client contact details:", err);
+      console.error("Error response:", err.response?.data);
+      console.error("Error status:", err.response?.status);
+      console.error("Error message:", err.message);
       setData([]);
     } finally {
       setLoading(false);

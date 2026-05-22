@@ -1,7 +1,12 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { getClientContactDetails } from "../api/korpApiService";
 
 export default function ContactDetailsPage() {
-  const contacts = [
+  const [apiContacts, setApiContacts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
+
+  const staticContacts = [
     {
       name: "Mr. Prem Sachdev",
       designation: "Executive",
@@ -68,8 +73,42 @@ export default function ContactDetailsPage() {
     },
   ];
 
+  useEffect(() => {
+    const fetchContacts = async () => {
+      setLoading(true);
+      try {
+        const response = await getClientContactDetails({ pageNumber: 0, size: 50 });
+        const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
+        const list = Array.isArray(items) ? items : [items];
+        setApiContacts(list);
+      } catch (error) {
+        console.error("Failed to load client contact details:", error);
+        setApiError("Unable to fetch contact details from server.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchContacts();
+  }, []);
+
+  const contacts = apiContacts.length > 0
+    ? apiContacts.map((item) => ({
+        name: item.name || item.Name || item.clientName || item.ClientName || item.fullName || "-",
+        designation: item.designation || item.Designation || item.role || item.Role || "-",
+        desk: item.desk || item.Desk || item.department || item.Department || item.deskName || "-",
+        call: item.call || item.mobile || item.mobileNo || item.phone || item.Phone || item.PhoneNo || "-",
+        email: item.email || item.Email || item.emailId || item.EmailId || "-",
+        time: item.time || item.availability || item.Time || item.timeSlot || "-",
+      }))
+    : apiError
+      ? staticContacts
+      : [];
+
   return (
     <div className="w-full bg-[#f2f2f2] overflow-x-auto">
+      <div className="px-6 py-4 text-sm text-gray-700 font-semibold">
+        {loading ? "Loading contact details..." : apiError ? "Showing fallback contact list" : "Contact details"}
+      </div>
       <table className="w-[1817px] border-collapse text-[14px] text-[#1b1b1b] font-medium tracking-wide">
         <thead>
           <tr className="bg-[#c7e2c7] h-[62px]">

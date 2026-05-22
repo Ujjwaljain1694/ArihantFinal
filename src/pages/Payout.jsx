@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Header from "./Header.jsx";
 import ArihantProducts from "./ArihantProducts.jsx";
 import { L } from "../styles/legacyStyles.jsx";
-import { Search, Download } from "lucide-react";
+import { Search, Download, Trash2 } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Table from "../components/common/Table";
@@ -42,7 +42,7 @@ const Payout = () => {
 
                 <div className="bg-gray-100 p-1 md:p-2 mt-[60px]">
                     <div className="tabs-wrapper w-full bg-white px-4 md:px-8 pt-1 pb-0 shadow-md border border-gray-200 rounded-lg max-w-[1700px] mx-auto">
-                        
+
                         {/* 🧭 NAVIGATION TABS */}
                         <div className="flex flex-wrap gap-x-6 gap-y-2 border-b border-gray-200 pt-4 text-[14px]">
                             {tabs.map((tab) => (
@@ -126,7 +126,7 @@ const PayoutTab = () => {
             console.log("REQUEST PARAMS =>", params);
 
             const response = await korpInstance.get(
-                "/payout/GetPayReport",
+                "/payout/korpgetclientBalance",
                 {
                     params,
                 }
@@ -348,9 +348,8 @@ const PayoutTab = () => {
                                             return (
                                                 <tr
                                                     key={index}
-                                                    className={`hover:bg-gray-50/50 transition-colors group ${
-                                                        balanceExceeded ? "bg-rose-50/40 hover:bg-rose-50/70" : ""
-                                                    }`}
+                                                    className={`hover:bg-gray-50/50 transition-colors group ${balanceExceeded ? "bg-rose-50/40 hover:bg-rose-50/70" : ""
+                                                        }`}
                                                 >
                                                     <td className="px-6 py-4 text-[13px] text-gray-900 font-bold whitespace-nowrap border-r border-gray-50">
                                                         {row.ClientCode}
@@ -377,11 +376,10 @@ const PayoutTab = () => {
                                                                 value={row.request}
                                                                 onChange={(e) => onInputChange(index, e.target.value)}
                                                                 placeholder="0.00"
-                                                                className={`w-[140px] pl-6 pr-3 py-1.5 bg-gray-50 border rounded-lg text-[12px] font-bold text-gray-700 outline-none transition-all ${
-                                                                    balanceExceeded
-                                                                        ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/10"
-                                                                        : "border-gray-200 focus:border-[#27ae60] focus:ring-2 focus:ring-[#27ae60]/10"
-                                                                }`}
+                                                                className={`w-[140px] pl-6 pr-3 py-1.5 bg-gray-50 border rounded-lg text-[12px] font-bold text-gray-700 outline-none transition-all ${balanceExceeded
+                                                                    ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/10"
+                                                                    : "border-gray-200 focus:border-[#27ae60] focus:ring-2 focus:ring-[#27ae60]/10"
+                                                                    }`}
                                                             />
                                                         </div>
                                                     </td>
@@ -611,7 +609,7 @@ const PayoutReportTab = () => {
             console.log("REQUEST PARAMS =>", params);
 
             const response = await korpInstance.get(
-                "/payout/GetPayoutDetailReport",
+                "/payout/korpgetpayoutrequestreport",
                 {
                     params,
                 }
@@ -691,7 +689,7 @@ const PayoutReportTab = () => {
             }
 
             const response = await korpInstance.get(
-                "/payout/GetPayoutDetailReport",
+                "/payout/korpgetpayoutrequestreport",
                 {
                     params,
                 }
@@ -782,10 +780,12 @@ const PayoutReportTab = () => {
                 {[
                     { label: "Total Request", value: count, bg: "bg-blue-50 text-blue-500" },
                     { label: "Total Processed", value: rows.filter(r => (r.Status || r.status || "").toLowerCase() === "processed").length, bg: "bg-green-50 text-green-500" },
-                    { label: "Total Cancelled", value: rows.filter(r => {
-                        const s = (r.Status || r.status || "").toLowerCase();
-                        return s === "cancelled" || s === "rejected";
-                    }).length, bg: "bg-rose-50 text-rose-500" }
+                    {
+                        label: "Total Cancelled", value: rows.filter(r => {
+                            const s = (r.Status || r.status || "").toLowerCase();
+                            return s === "cancelled" || s === "rejected";
+                        }).length, bg: "bg-rose-50 text-rose-500"
+                    }
                 ].map(card => (
                     <div key={card.label} className="bg-white border border-gray-100 rounded-xl py-3 px-5 shadow-sm flex items-center gap-3 min-w-[180px] flex-1 sm:flex-none">
                         <div className={`w-9 h-9 rounded-lg ${card.bg} flex items-center justify-center font-bold text-sm`}>
@@ -802,7 +802,7 @@ const PayoutReportTab = () => {
             {/* 📊 PREMIUM REVIEW TABLE */}
             <div className="mt-8 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <ResultsHeader count={rows.length} onDownload={exportAsXLSX} />
-                
+
                 <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-xl shadow-gray-200/40">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
@@ -854,13 +854,12 @@ const PayoutReportTab = () => {
                                                     })}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-                                                        status.toLowerCase() === "processed"
-                                                            ? "bg-green-50 text-green-600 border-green-100"
-                                                            : status.toLowerCase() === "cancelled" || status.toLowerCase() === "rejected"
+                                                    <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${status.toLowerCase() === "processed"
+                                                        ? "bg-green-50 text-green-600 border-green-100"
+                                                        : status.toLowerCase() === "cancelled" || status.toLowerCase() === "rejected"
                                                             ? "bg-rose-50 text-rose-600 border-rose-100"
                                                             : "bg-orange-50 text-orange-600 border-orange-100"
-                                                    }`}>
+                                                        }`}>
                                                         {status}
                                                     </span>
                                                 </td>
@@ -924,14 +923,73 @@ const PayoutReportTab = () => {
 };
 
 const CancelRequestTab = () => {
-    const handleDownload = () => {
-        const csv = [
-            ["Date", "Client Code", "Client Name", "Request Amount", "Status", "Cancel"],
-        ]
-            .map((row) => row.join(","))
-            .join("\n");
+    const [rows, setRows] = useState([]);
+    const [allCount, setAllCount] = useState(0);
 
-        const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const todayDateStr = () => {
+        const date = new Date();
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${day}-${month}-${year}`;
+    };
+
+    const getDetail = async () => {
+        try {
+            const params = {
+                size: 500,
+                pageNumber: 0,
+                requestdate: todayDateStr(),
+            };
+
+            const response = await korpInstance.post("/payout/getPayOutCancelData", {}, { params });
+            const res = response.data;
+            if (res.success) {
+                setAllCount(res?.result?.all_Count || 0);
+                setRows(res?.result?.Payoutlist || []);
+            }
+        } catch (error) {
+            console.log("API ERROR =>", error);
+        }
+    };
+
+    useEffect(() => {
+        getDetail();
+    }, []);
+
+    const onSubmit = async (submitClientCode, Id) => {
+        try {
+            const params = {
+                RequestId: Id,
+                ClientCode: submitClientCode,
+                RequestDate: todayDateStr(),
+            };
+
+            const response = await korpInstance.get("/payout/GetPayOutCancelRequest", { params });
+            if (response.data.success) {
+                toast.success(response.data.message || "Cancellation successful!");
+                getDetail();
+            } else {
+                toast.error(response.data.message || "Error processing cancellation");
+            }
+        } catch (error) {
+            toast.error("Cancel Request Failed");
+        }
+    };
+
+    const handleDownload = () => {
+        if (rows.length === 0) return;
+        const csv = [["Date", "Client Code", "Client Name", "Request Amount", "Status"]];
+        rows.forEach(item => {
+            csv.push([
+                item.RequestDate || item.date || todayDateStr(),
+                item.ClientCode || "",
+                `"${item.ClientName || ""}"`,
+                String(item.RequestAmount || "").replace(/,/g, ''),
+                item.Status || item.status || "Pending"
+            ].join(","));
+        });
+        const blob = new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -940,13 +998,29 @@ const CancelRequestTab = () => {
         URL.revokeObjectURL(url);
     };
 
+    const formattedRows = rows.map((row) => [
+        row.RequestDate || row.date || todayDateStr(),
+        row.ClientCode,
+        row.ClientName,
+        `₹${Number(row.RequestAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+        <span className="px-3 py-1 bg-orange-50 text-orange-600 rounded-full font-bold text-[10px] uppercase border border-orange-100">
+            {row.Status || row.status || "Pending"}
+        </span>,
+        <button
+            onClick={() => onSubmit(row.ClientCode, row.Id)}
+            className="bg-rose-50 text-rose-500 border border-rose-100 hover:bg-rose-500 hover:text-white px-4 py-1 rounded text-[10px] font-black transition-all uppercase tracking-widest active:scale-95 flex items-center gap-1.5 mx-auto"
+        >
+            <Trash2 size={12} /> CANCEL
+        </button>
+    ]);
+
     return (
         <div style={{ ...L.wrapper, paddingTop: '8px' }}>
             <div style={{ ...L.card, borderRadius: '16px' }} className="mt-2">
-                <ResultsHeader count={0} onDownload={handleDownload} />
+                <ResultsHeader count={allCount} onDownload={handleDownload} />
                 <Table
                     headers={["Date", "Client Code", "Client Name", "Request Amount", "Status", "Cancel"]}
-                    rows={[]}
+                    rows={formattedRows}
                 />
             </div>
         </div>

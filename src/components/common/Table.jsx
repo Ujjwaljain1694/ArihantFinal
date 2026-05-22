@@ -36,6 +36,7 @@ const Table = ({ headers, rows }) => {
 
   const formatCell = (content, header) => {
     if (content === null || content === undefined) return "";
+    if (React.isValidElement(content)) return content;
     const h = header.toLowerCase();
     const s = content.toString();
 

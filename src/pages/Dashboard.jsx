@@ -110,80 +110,57 @@ function Dashboard() {
     const fetchData = async () => {
       try {
         setLoading(true);
-
-        // Define our robust fallback fetchers
-        const safeFetch = async (type, code) => {
+        const safeFetchDetail = async (type) => {
           try {
             const res = await korpInstance.get("/dashboard/korpgetclientDetail", {
               params: { pageNumber: 0, size: 50, Type: type }
             });
-            console.log(`[Dashboard Debug] safeFetch(${type}) success:`, res.data);
-            return res.data?.result?.all_Count !== undefined ? res.data.result.all_Count : (res.data?.result?.AClist?.length || 0);
+            return res.data?.result?.all_Count !== undefined 
+              ? res.data.result.all_Count 
+              : (res.data?.result?.AClist?.length || res.data?.result?.clientlist?.length || 0);
           } catch (e) {
-            console.error(`[Dashboard Debug] safeFetch(${type}) error:`, e.response?.data || e.message || e);
             return undefined;
           }
         };
 
         const safeAppLoginFetch = async () => {
           try {
-            const params = {
-              pageNumber: 0,
-              size: 10,
-              datefrom: "",
-              dateto: "",
-              fromDate: "",
-              toDate: "",
-              fromdate: "",
-              todate: ""
-            };
-            const res = await getMobileLoginData(params);
-            console.log("[Dashboard Debug] safeAppLoginFetch success:", res.data);
-            if (res.data?.success) {
-              const result = res.data.result || {};
-              if (result.TotalLoginClients !== undefined) {
-                return result.TotalLoginClients;
-              }
-              const clientList = result.clientlist || result.userList || res.data.data || [];
-              return Array.isArray(clientList) ? clientList.length : 0;
+            const res = await korpInstance.get("/reports/getMobileAppLogin");
+            if (res.data?.result) {
+              return res.data.result.TotalLoginClients ?? res.data.result.totalAppLogin ?? 0;
             }
-            return 0;
+            return res.data?.TotalLoginClients ?? res.data?.all_Count ?? 0;
           } catch (e) {
-            console.error("[Dashboard Debug] safeAppLoginFetch error:", e.response?.data || e.message || e);
             return undefined;
           }
         };
 
         const branchCode = localStorage.getItem("branchCode") || "AP2100001";
 
-        // Fire both main dashboard API and the detailed metric APIs in parallel
         const [dashRes, nc, tc, ac, al, ic] = await Promise.allSettled([
-          getDashboardData(branchCode),
-          safeFetch("NC", branchCode),
-          safeFetch("TC", branchCode),
-          safeFetch("AC", branchCode),
+          getDashboardData(),
+          safeFetchDetail("NC"),
+          safeFetchDetail("TC"),
+          safeFetchDetail("AC"),
           safeAppLoginFetch(),
-          safeFetch("IC", branchCode)
+          safeFetchDetail("IC")
         ]);
 
-        // 1. Process Main Dashboard Data (for Revenue, etc.)
+        // Revenue Data from main API
         if (dashRes.status === "fulfilled" && dashRes.value) {
-          const resData = dashRes.value.data || dashRes.value;
-          if (dashRes.value.status === 200 || resData?.success) {
-            const res = resData.result || resData.data || resData || {};
-            const nextRevenue = {
-              ytdRevenue: res.ytdRevenue || "0",
-              ytdTradedClients: res.ytdTradedClients || "0",
-              mtdRevenue: res.mtdRevenue || "0",
-              mtdTradedClients: res.mtdTradedClients || "0",
-              mtdClientsAcquired: res.mtdClientsAcquired || "0"
-            };
-            setRevenueData(nextRevenue);
-            sessionStorage.setItem("revenue_data", JSON.stringify(nextRevenue));
-          }
+          const data = dashRes.value.result || dashRes.value.data || dashRes.value || {};
+          const nextRevenue = {
+            ytdRevenue: String(data.YTD_revenue ?? data.ytdRevenue ?? "0"),
+            ytdTradedClients: String(data.YTD_Client ?? data.ytdTradedClients ?? "0"),
+            mtdRevenue: String(data.MTD_revenue ?? data.mtdRevenue ?? "0"),
+            mtdTradedClients: String(data.MTD_Client ?? data.mtdTradedClients ?? "0"),
+            mtdClientsAcquired: String(data.MTD_Client_Aquired ?? data.mtdClientsAcquired ?? "0")
+          };
+          setRevenueData(nextRevenue);
+          sessionStorage.setItem("revenue_data", JSON.stringify(nextRevenue));
         }
 
-        // 2. Process Detailed Metrics (these take priority as they are real-time)
+        // Dashboard Metrics from detailed APIs
         setDashboardMetrics(prev => {
           const nextMetrics = {
             ...prev,
@@ -203,6 +180,7 @@ function Dashboard() {
         setLoading(false);
       }
     };
+
     fetchData();
   }, []);
 

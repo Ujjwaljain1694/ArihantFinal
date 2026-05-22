@@ -42,7 +42,7 @@ function DealSlip() {
     }
   }, [showCustomError]);
 
-  const handleApply = () => {
+  const handleApply = async () => {
     if (!clientCode.trim()) {
       setCustomErrorMsg("Please enter Client Code");
       setShowCustomError(true);
@@ -68,8 +68,16 @@ function DealSlip() {
       setShowCustomError(true);
       return;
     }
-    // Proceed with download logic if valid
-    console.log("Downloading slip for:", clientCode);
+    
+    // Call API endpoint
+    try {
+      const response = await getUserProfile();
+      console.log("Deal Slip API Response:", response.data);
+    } catch (error) {
+      console.error("Deal Slip API Error:", error);
+      setCustomErrorMsg("Failed to fetch profile");
+      setShowCustomError(true);
+    }
   };
 
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
