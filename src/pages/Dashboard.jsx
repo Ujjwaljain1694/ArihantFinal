@@ -111,39 +111,44 @@ function Dashboard() {
       try {
         setLoading(true);
 
-        const branchCode = localStorage.getItem("branchCode") || "AP2100001";
+        // Clear stale sessionStorage cache
+        sessionStorage.removeItem("dashboard_metrics");
+        sessionStorage.removeItem("revenue_data");
 
-        const [dashRes, profileRes] = await Promise.allSettled([
+        const [dashRes] = await Promise.allSettled([
           getDashboardData(),
           getUserProfile()
         ]);
 
-        // Revenue Data from main API
+        // NOTE: getDashboardData() already returns response.data from korpApiService
+        // API response: { success, message, result: { ACTIVE_CLIENT, TOTAL_CLIENT, ... } }
         if (dashRes.status === "fulfilled" && dashRes.value) {
-          const data = dashRes.value.result || dashRes.value.data || dashRes.value || {};
+          const raw = dashRes.value;
+          const data = Array.isArray(raw.result) ? raw.result[0] : (raw.result || raw.data || raw || {});
+
+          console.log("Dashboard parsed data:", data);
+
+          // ✅ CORRECT API KEYS from actual response
+          const nextMetrics = {
+            newClient: String(data.NEW_CLIENT ?? "0"),
+            totalClients: String(data.TOTAL_CLIENT ?? "0"),
+            activeClients: String(data.ACTIVE_CLIENT ?? "0"),
+            totalAppLogin: String(data.TOTALAPPLOGIN_Client ?? "0"),
+            inactiveClients: String(data.INACTIVE_CLIENT ?? "0")
+          };
+          setDashboardMetrics(nextMetrics);
+          sessionStorage.setItem("dashboard_metrics", JSON.stringify(nextMetrics));
+
+          // ✅ CORRECT revenue keys
           const nextRevenue = {
-            ytdRevenue: String(data.YTD_revenue ?? data.ytdRevenue ?? "0"),
-            ytdTradedClients: String(data.YTD_Client ?? data.ytdTradedClients ?? "0"),
-            mtdRevenue: String(data.MTD_revenue ?? data.mtdRevenue ?? "0"),
-            mtdTradedClients: String(data.MTD_Client ?? data.mtdTradedClients ?? "0"),
-            mtdClientsAcquired: String(data.MTD_Client_Aquired ?? data.mtdClientsAcquired ?? "0")
+            ytdRevenue: String(data.YTD_revenue ?? "0"),
+            ytdTradedClients: String(data.YTD_Client ?? "0"),
+            mtdRevenue: String(data.MTD_revenue ?? "0"),
+            mtdTradedClients: String(data.MTD_Client ?? "0"),
+            mtdClientsAcquired: String(data.MTD_Client_Aquired ?? data.YTD_Client_Aquired ?? "0")
           };
           setRevenueData(nextRevenue);
           sessionStorage.setItem("revenue_data", JSON.stringify(nextRevenue));
-          
-          // Optionally update dashboard metrics if dashboard API starts returning them
-          setDashboardMetrics(prev => {
-            const nextMetrics = {
-              ...prev,
-              newClient: data.NC_Count !== undefined ? String(data.NC_Count) : prev.newClient,
-              totalClients: data.TC_Count !== undefined ? String(data.TC_Count) : prev.totalClients,
-              activeClients: data.AC_Count !== undefined ? String(data.AC_Count) : prev.activeClients,
-              totalAppLogin: data.AppLogin_Count !== undefined ? String(data.AppLogin_Count) : prev.totalAppLogin,
-              inactiveClients: data.IC_Count !== undefined ? String(data.IC_Count) : prev.inactiveClients
-            };
-            sessionStorage.setItem("dashboard_metrics", JSON.stringify(nextMetrics));
-            return nextMetrics;
-          });
         }
 
       } catch (err) {

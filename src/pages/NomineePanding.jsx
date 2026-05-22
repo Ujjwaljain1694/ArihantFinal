@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, ChevronRight, Eye, EyeOff } from "lucide-react";
+import { ChevronRight, Eye, EyeOff } from "lucide-react";
 import { getNomineeNotDone } from "../api/korpApiService";
 import { toast } from "react-toastify";
 
@@ -15,7 +15,6 @@ export default function NomineePending() {
     direction: "asc",
   });
 
-  // Initialize with sample data
   useEffect(() => {
     handleApply();
   }, []);
@@ -27,36 +26,35 @@ export default function NomineePending() {
       const params = {};
       if (filterClient.trim()) {
         params.clientCode = filterClient.trim();
-        params.Clientcode = filterClient.trim();
-        params.clientcode = filterClient.trim();
       }
 
       const response = await getNomineeNotDone(params);
-      console.log("GetNomineeNotDone API Response:", response.data);
+      console.log("FULL API RESPONSE :", response.data);
 
-      const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
+      // ✅ CORRECT RESPONSE ARRAY
+      const items = response?.data?.result || [];
 
       if (Array.isArray(items)) {
         let filtered = items;
 
-        // Apply all filters locally as well for backup
+        // Local filters
         if (filterClient.trim() !== "") {
           filtered = filtered.filter((item) => {
-            const code = item.clientCode || item.clientcode || item.ClientCode || "";
+            const code = item.Code || "";
             return code.toLowerCase().includes(filterClient.toLowerCase());
           });
         }
 
         if (filterClientName.trim() !== "") {
           filtered = filtered.filter((item) => {
-            const name = item.clientName || item.clientname || item.ClientName || "";
+            const name = item.Name || "";
             return name.toLowerCase().includes(filterClientName.toLowerCase());
           });
         }
 
         if (filterMobile.trim() !== "") {
           filtered = filtered.filter((item) => {
-            const mobile = item.mobile || item.Mobile || item.mobileNo || item.mobileNumber || "";
+            const mobile = item.Mobile || "";
             return mobile.includes(filterMobile);
           });
         }
@@ -139,7 +137,7 @@ export default function NomineePending() {
           />
         </div>
 
-        <button 
+        <button
           onClick={handleApply}
           className="bg-[#34b44a] text-white font-bold text-[14px] px-8 h-[45px] rounded-lg flex items-center gap-2 shadow-md hover:bg-[#2e9d41] transition-all active:scale-95"
         >
@@ -153,12 +151,12 @@ export default function NomineePending() {
         {/* Header */}
         <div className="grid grid-cols-4 bg-[#34b44a] text-white text-[14px] font-semibold border border-gray-300">
           <div
-            onClick={() => handleSort("clientCode")}
+            onClick={() => handleSort("Code")}
             className="px-4 py-2 border-r border-white/20 flex items-center justify-between cursor-pointer select-none"
           >
             <span>Client Code</span>
             <span className="ml-2">
-              {sortConfig.key === "clientCode" ? (
+              {sortConfig.key === "Code" ? (
                 sortConfig.direction === "asc" ? (
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -177,12 +175,12 @@ export default function NomineePending() {
           </div>
 
           <div
-            onClick={() => handleSort("clientName")}
+            onClick={() => handleSort("Name")}
             className="px-4 py-2 border-r border-white/20 flex items-center justify-between cursor-pointer select-none"
           >
             <span>Client Name</span>
             <span className="ml-2">
-              {sortConfig.key === "clientName" ? (
+              {sortConfig.key === "Name" ? (
                 sortConfig.direction === "asc" ? (
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -201,12 +199,12 @@ export default function NomineePending() {
           </div>
 
           <div
-            onClick={() => handleSort("mobile")}
+            onClick={() => handleSort("Mobile")}
             className="px-4 py-2 border-r border-white/20 flex items-center justify-between cursor-pointer select-none"
           >
             <span>Mobile</span>
             <span className="ml-2">
-              {sortConfig.key === "mobile" ? (
+              {sortConfig.key === "Mobile" ? (
                 sortConfig.direction === "asc" ? (
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -225,12 +223,12 @@ export default function NomineePending() {
           </div>
 
           <div
-            onClick={() => handleSort("email")}
+            onClick={() => handleSort("Email")}
             className="px-4 py-2 flex items-center justify-between cursor-pointer select-none"
           >
             <span>Email</span>
             <span className="ml-2">
-              {sortConfig.key === "email" ? (
+              {sortConfig.key === "Email" ? (
                 sortConfig.direction === "asc" ? (
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -267,17 +265,18 @@ export default function NomineePending() {
         ) : (
           <>
             {results.map((row, index) => {
-              const clientCode = row.clientCode || row.clientcode || row.ClientCode || "-";
-              const clientName = row.clientName || row.clientname || row.ClientName || "-";
-              const mobile = row.mobile || row.Mobile || row.mobileNo || row.mobileNumber || row.phone || "-";
-              const email = row.email || row.Email || row.emailId || "-";
+              // ✅ CORRECT API KEYS
+              const clientCode = row.Code || "-";
+              const clientName = row.Name || "-";
+              const mobile = row.Mobile || "-";
+              const email = row.Email || "-";
 
-              const displayMobile = mobile !== "-" && mobile.length >= 8 
-                ? `${mobile.substring(0, 2)}xxxxxx${mobile.substring(8)}` 
+              const displayMobile = mobile !== "-" && mobile.length >= 8
+                ? `${mobile.substring(0, 2)}xxxxxx${mobile.substring(8)}`
                 : mobile;
 
-              const displayEmail = email !== "-" && email.includes("@") 
-                ? `${email.substring(0, 2)}xxxxxx@${email.split('@')[1]}` 
+              const displayEmail = email !== "-" && email.includes("@")
+                ? `${email.substring(0, 2)}xxxxxx@${email.split('@')[1]}`
                 : email;
 
               return (
