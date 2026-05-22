@@ -30,6 +30,10 @@ export default function InactiveClient() {
     }
   }, [showCustomError]);
 
+  useEffect(() => {
+    fetchInactiveClients("");
+  }, []);
+
   const fetchInactiveClients = async (query) => {
     try {
       setLoading(true);
@@ -40,13 +44,13 @@ export default function InactiveClient() {
       });
 
       if (res.data && res.data.success && res.data.result) {
-        const list = res.data.result.AClist || [];
+        const list = res.data.result.AClist || res.data.result.clientlist || [];
         const normalized = list.map(item => ({
           clientCode: item.clientCode || item.ClientCode || "",
           clientName: item.clientName || item.ClientName || "",
-          pan: item.clientPan || item.ClientPan || "",
-          mobile: item.clientMobile || item.ClientMobile || "",
-          email: item.clientEmail || item.ClientEmail || ""
+          pan: item.Panno || item.panno || item.clientPan || item.ClientPan || "",
+          mobile: item.clientMobile || item.ClientMobile || item.Mobile || item.mobile || "",
+          email: item.Email || item.email || item.clientEmail || item.ClientEmail || ""
         }));
         setTableData(normalized);
       } else {

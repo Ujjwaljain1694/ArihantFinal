@@ -93,13 +93,13 @@ export default function ContactDetailsPage() {
 
   const contacts = apiContacts.length > 0
     ? apiContacts.map((item) => ({
-        name: item.name || item.Name || item.clientName || item.ClientName || item.fullName || "-",
-        designation: item.designation || item.Designation || item.role || item.Role || "-",
-        desk: item.desk || item.Desk || item.department || item.Department || item.deskName || "-",
-        call: item.call || item.mobile || item.mobileNo || item.phone || item.Phone || item.PhoneNo || "-",
-        email: item.email || item.Email || item.emailId || item.EmailId || "-",
-        time: item.time || item.availability || item.Time || item.timeSlot || "-",
-      }))
+      name: item.name || item.Name || item.clientName || item.ClientName || item.fullName || "-",
+      designation: item.designation || item.Designation || item.role || item.Role || "-",
+      desk: item.desk || item.Desk || item.department || item.Department || item.deskName || "-",
+      call: item.call || item.mobile || item.mobileNo || item.phone || item.Phone || item.PhoneNo || "-",
+      email: item.email || item.Email || item.emailId || item.EmailId || "-",
+      time: item.time || item.availability || item.Time || item.timeSlot || "-",
+    }))
     : apiError
       ? staticContacts
       : [];

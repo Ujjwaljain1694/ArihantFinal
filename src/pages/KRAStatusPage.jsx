@@ -57,19 +57,19 @@ export default function KRAStatusPage() {
       const trimmedCode = clientCode.trim();
       const params = trimmedCode
         ? {
-            Clientcode: trimmedCode,
-            clientcode: trimmedCode,
-            clientCode: trimmedCode,
-            ClientCode: trimmedCode,
-          }
+          Clientcode: trimmedCode,
+          clientcode: trimmedCode,
+          clientCode: trimmedCode,
+          ClientCode: trimmedCode,
+        }
         : {};
-      
+
       const response = await getKRADataNew(params);
       console.log("KRA & UCC API Response:", response.data);
 
       const items = response?.data?.data || response?.data?.Data || response?.data || [];
       const rawItems = Array.isArray(items) ? items : [items];
-      
+
       const formatted = rawItems
         .filter(item => item && (item.clientcode || item.Clientcode || item.clientCode || item.ClientCode))
         .map(item => {
@@ -142,8 +142,8 @@ export default function KRAStatusPage() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`pb-3 transition-all ${activeTab === tab
-                    ? "border-b-[3px] border-green-500 font-black text-black"
-                    : "hover:text-green-600"
+                  ? "border-b-[3px] border-green-500 font-black text-black"
+                  : "hover:text-green-600"
                   }`}
               >
                 {tab}
@@ -189,7 +189,7 @@ export default function KRAStatusPage() {
                   }}
                   className="w-[400px] h-[54px] rounded-xl border border-gray-300 px-5 text-[18px] outline-none bg-transparent"
                 />
- 
+
                 <button
                   onClick={handleSearch}
                   disabled={loading}
@@ -206,7 +206,7 @@ export default function KRAStatusPage() {
                   {loading ? "Searching..." : "Search"}
                 </button>
               </div>
- 
+
               {/* Table */}
               {loading ? (
                 <div className="p-16 text-center text-gray-500 font-semibold text-[16px]">
@@ -376,7 +376,7 @@ export default function KRAStatusPage() {
               )}
             </div>
           )}
-          
+
           <ArihantProducts />
         </div>
       </div>

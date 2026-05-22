@@ -29,8 +29,14 @@ export default function ClientCodeList() {
           const result = res.data.result || {};
           const items = result.clientlist || result.userList || res.data.data || [];
           if (Array.isArray(items)) {
-            const codes = items.map(item => item.clientCode || item.ClientCode || item.code || "").filter(Boolean);
-            setClientCodesList(codes);
+            const mappedClients = items.map(item => ({
+              code: item.clientCode || item.ClientCode || item.code || "",
+              name: item.clientName || item.ClientName || item.name || "",
+              pan: item.Panno || item.panno || item.clientPan || item.ClientPan || item.pan || "",
+              mobile: item.clientMobile || item.ClientMobile || item.Mobile || item.mobile || "",
+              email: item.Email || item.email || item.clientEmail || item.ClientEmail || ""
+            })).filter(c => c.code);
+            setClientCodesList(mappedClients);
           } else {
             setClientCodesList([]);
           }
@@ -47,26 +53,40 @@ export default function ClientCodeList() {
     fetchData();
   }, []);
 
-  const handleSort = () => {
+  const handleSort = (key) => {
     setSortConfig((prev) => ({
+      key,
       active: true,
-      direction: prev.active && prev.direction === "asc" ? "desc" : "asc",
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
     }));
   };
 
-  const filteredClients = clientCodesList.filter((code) =>
-    code.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredClients = clientCodesList.filter((client) =>
+    (client.code || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (client.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (client.pan || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (client.mobile || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (client.email || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const sortedClients = useMemo(() => {
-    if (!sortConfig.active) return filteredClients;
-    return [...filteredClients].sort((a, b) =>
-      sortConfig.direction === "asc" ? a.localeCompare(b) : b.localeCompare(a)
-    );
+    if (!sortConfig.active || !sortConfig.key) return filteredClients;
+    
+    return [...filteredClients].sort((a, b) => {
+      const aVal = a[sortConfig.key] || "";
+      const bVal = b[sortConfig.key] || "";
+      
+      if (typeof aVal === "string") {
+        return sortConfig.direction === "asc" 
+          ? aVal.localeCompare(bVal) 
+          : bVal.localeCompare(aVal);
+      }
+      return sortConfig.direction === "asc" ? aVal - bVal : bVal - aVal;
+    });
   }, [filteredClients, sortConfig]);
 
-  const SortIcon = () => {
-    if (!sortConfig.active) {
+  const SortIcon = ({ columnKey }) => {
+    if (!sortConfig.active || sortConfig.key !== columnKey) {
       return <ChevronsUpDown size={12} className="text-white/40 group-hover:text-white transition-colors" />;
     }
     return sortConfig.direction === "asc"
@@ -104,41 +124,55 @@ export default function ClientCodeList() {
             Search results({sortedClients.length})
           </div>
 
-          {/* Table — compact square box */}
-          <div className="overflow-y-auto w-[280px] border border-gray-200 rounded-none shadow-sm relative">
+          {/* Table — full width responsive table box */}
+          <div className="overflow-x-auto w-full border border-gray-200 rounded-none shadow-sm relative">
             {loading && (
-              <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10">
+              <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10 min-h-[150px]">
                 <span className="text-[#34b350] text-sm font-bold animate-pulse">Loading...</span>
               </div>
             )}
-            <table className="w-full border-collapse text-left text-[11px] font-medium">
-              <thead className="bg-[#1EB04C] text-white uppercase">
+            <table className="w-full border-collapse text-left text-[11px] font-medium min-w-[700px]">
+              <thead className="bg-[#1EB04C] text-white uppercase font-bold">
                 <tr>
-                  <th
-                    onClick={handleSort}
-                    className="px-3 py-3 group cursor-pointer font-bold select-none hover:bg-[#18a045] transition-colors"
-                  >
-                    <div className="flex items-center justify-between gap-1.5 whitespace-nowrap">
-                      <span>Client Code</span>
-                      <SortIcon />
-                    </div>
-                  </th>
+                  {[
+                    { key: "code", label: "Client Code" },
+                    { key: "name", label: "Client Name" },
+                    { key: "pan", label: "PAN" },
+                    { key: "mobile", label: "Mobile" },
+                    { key: "email", label: "Email" }
+                  ].map((col) => (
+                    <th
+                      key={col.key}
+                      onClick={() => handleSort(col.key)}
+                      className="px-3 py-3 group cursor-pointer select-none hover:bg-[#18a045] transition-colors"
+                    >
+                      <div className="flex items-center justify-between gap-1.5 whitespace-nowrap">
+                        <span>{col.label}</span>
+                        <SortIcon columnKey={col.key} />
+                      </div>
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="bg-white">
-                {!loading && sortedClients.map((code, idx) => (
+                {!loading && sortedClients.map((client, idx) => (
                   <tr
-                    key={code}
-                    className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-[#f0fdf4]"
-                      }`}
+                    key={idx}
+                    className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                      idx % 2 === 0 ? "bg-white" : "bg-[#f0fdf4]"
+                    }`}
                   >
-                    <td className="px-3 py-2 text-gray-700 text-[11px]">{code}</td>
+                    <td className="px-3 py-2 text-gray-700 text-[11px]">{client.code}</td>
+                    <td className="px-3 py-2 text-gray-700 text-[11px]">{client.name}</td>
+                    <td className="px-3 py-2 text-gray-700 text-[11px]">{client.pan}</td>
+                    <td className="px-3 py-2 text-gray-700 text-[11px]">{client.mobile}</td>
+                    <td className="px-3 py-2 text-gray-700 text-[11px]">{client.email}</td>
                   </tr>
                 ))}
                 {!loading && sortedClients.length === 0 && (
                   <tr>
-                    <td className="px-3 py-12 text-center text-gray-400 text-[13px] font-medium">
-                      {error ? error : "No results found"}
+                    <td colSpan={5} className="px-3 py-12 text-center text-gray-400 text-[13px] font-medium">
+                      {error ? error : "No data to display"}
                     </td>
                   </tr>
                 )}

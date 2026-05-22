@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Calendar, Wifi, User, Folder, Loader2 } from "lucide-react";
 import Header from "./Header";
-import korpInstance, { getDashboardData, korpSendOtp, getClientDetailByType, getMobileLoginData } from "../api/korpApiService";
+import korpInstance, { getDashboardData, korpSendOtp, getClientDetailByType, getMobileLoginData, getUserProfile } from "../api/korpApiService";
 import { verifyOtp } from "../api/authApi";
 import "@fortawesome/fontawesome-free/css/all.css";
 import { toast as toastify } from "react-toastify";
@@ -110,40 +110,12 @@ function Dashboard() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const safeFetchDetail = async (type) => {
-          try {
-            const res = await korpInstance.get("/dashboard/korpgetclientDetail", {
-              params: { pageNumber: 0, size: 50, Type: type }
-            });
-            return res.data?.result?.all_Count !== undefined 
-              ? res.data.result.all_Count 
-              : (res.data?.result?.AClist?.length || res.data?.result?.clientlist?.length || 0);
-          } catch (e) {
-            return undefined;
-          }
-        };
-
-        const safeAppLoginFetch = async () => {
-          try {
-            const res = await korpInstance.get("/reports/getMobileAppLogin");
-            if (res.data?.result) {
-              return res.data.result.TotalLoginClients ?? res.data.result.totalAppLogin ?? 0;
-            }
-            return res.data?.TotalLoginClients ?? res.data?.all_Count ?? 0;
-          } catch (e) {
-            return undefined;
-          }
-        };
 
         const branchCode = localStorage.getItem("branchCode") || "AP2100001";
 
-        const [dashRes, nc, tc, ac, al, ic] = await Promise.allSettled([
+        const [dashRes, profileRes] = await Promise.allSettled([
           getDashboardData(),
-          safeFetchDetail("NC"),
-          safeFetchDetail("TC"),
-          safeFetchDetail("AC"),
-          safeAppLoginFetch(),
-          safeFetchDetail("IC")
+          getUserProfile()
         ]);
 
         // Revenue Data from main API
@@ -158,21 +130,21 @@ function Dashboard() {
           };
           setRevenueData(nextRevenue);
           sessionStorage.setItem("revenue_data", JSON.stringify(nextRevenue));
+          
+          // Optionally update dashboard metrics if dashboard API starts returning them
+          setDashboardMetrics(prev => {
+            const nextMetrics = {
+              ...prev,
+              newClient: data.NC_Count !== undefined ? String(data.NC_Count) : prev.newClient,
+              totalClients: data.TC_Count !== undefined ? String(data.TC_Count) : prev.totalClients,
+              activeClients: data.AC_Count !== undefined ? String(data.AC_Count) : prev.activeClients,
+              totalAppLogin: data.AppLogin_Count !== undefined ? String(data.AppLogin_Count) : prev.totalAppLogin,
+              inactiveClients: data.IC_Count !== undefined ? String(data.IC_Count) : prev.inactiveClients
+            };
+            sessionStorage.setItem("dashboard_metrics", JSON.stringify(nextMetrics));
+            return nextMetrics;
+          });
         }
-
-        // Dashboard Metrics from detailed APIs
-        setDashboardMetrics(prev => {
-          const nextMetrics = {
-            ...prev,
-            newClient: nc.status === "fulfilled" && nc.value !== undefined ? String(nc.value) : prev.newClient,
-            totalClients: tc.status === "fulfilled" && tc.value !== undefined ? String(tc.value) : prev.totalClients,
-            activeClients: ac.status === "fulfilled" && ac.value !== undefined ? String(ac.value) : prev.activeClients,
-            totalAppLogin: al.status === "fulfilled" && al.value !== undefined ? String(al.value) : prev.totalAppLogin,
-            inactiveClients: ic.status === "fulfilled" && ic.value !== undefined ? String(ic.value) : prev.inactiveClients
-          };
-          sessionStorage.setItem("dashboard_metrics", JSON.stringify(nextMetrics));
-          return nextMetrics;
-        });
 
       } catch (err) {
         console.error("Dashboard data fetch error:", err);

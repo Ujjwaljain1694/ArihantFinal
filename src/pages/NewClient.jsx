@@ -19,13 +19,13 @@ export default function NewClient() {
       });
       
       if (res.data && res.data.success && res.data.result) {
-        const list = res.data.result.AClist || [];
+        const list = res.data.result.AClist || res.data.result.clientlist || [];
         const normalized = list.map(item => ({
           code: item.clientCode || item.ClientCode || "",
           name: item.clientName || item.ClientName || "",
-          pan: item.clientPan || item.ClientPan || "",
-          mobile: item.clientMobile || item.ClientMobile || "",
-          email: item.clientEmail || item.ClientEmail || ""
+          pan: item.Panno || item.panno || item.clientPan || item.ClientPan || "",
+          mobile: item.clientMobile || item.ClientMobile || item.Mobile || item.mobile || "",
+          email: item.Email || item.email || item.clientEmail || item.ClientEmail || ""
         }));
         setClientsList(normalized);
       } else {
