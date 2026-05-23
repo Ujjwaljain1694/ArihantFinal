@@ -7,31 +7,99 @@ import { verifyOtp } from "../api/authApi";
 import "@fortawesome/fontawesome-free/css/all.css";
 import { toast as toastify } from "react-toastify";
 
-// Internal VideoCard component converted to Tailwind
+// Internal VideoCard — auto-fetches latest video from Arihant Capital YouTube channel
+const ARIHANT_CHANNEL_ID = "UCrPcG3wkHygflvEIMcb_I3Q"; // @arihant_plus verified channel ID
+const FALLBACK_VIDEO_ID  = "67CeWgOOIPU";
+
+// Vite dev proxy — /api/youtube-rss → https://www.youtube.com/feeds/videos.xml (server-side, no CORS)
+// In production, configure your backend to proxy this route.
+
+// Regex-based extraction — avoids all XML namespace issues
+const extractVideoIdFromText = (xmlText) => {
+  // <yt:videoId>VIDEO_ID</yt:videoId>
+  const match = xmlText.match(/<yt:videoId>([^<]+)<\/yt:videoId>/);
+  if (match) return match[1].trim();
+  // Fallback: yt:video:VIDEO_ID inside <id> tag
+  const idMatch = xmlText.match(/<id>yt:video:([^<]+)<\/id>/);
+  if (idMatch) return idMatch[1].trim();
+  return null;
+};
+
+const extractTitleFromText = (xmlText) => {
+  // First <title> inside an <entry>
+  const entryMatch = xmlText.match(/<entry[\s\S]*?<title>([^<]+)<\/title>/);
+  if (entryMatch) return entryMatch[1].trim();
+  return "";
+};
+
 const VideoCard = () => {
-  const [play, setPlay] = useState(false);
+  const [play, setPlay]             = useState(false);
+  const [videoId, setVideoId]       = useState(FALLBACK_VIDEO_ID);
+  const [videoTitle, setVideoTitle] = useState("");
+  const [loadingVid, setLoadingVid] = useState(true);
+
+  useEffect(() => {
+    const fetchLatestVideo = async () => {
+      try {
+        // Uses Vite server proxy — no CORS issues
+        const res = await fetch(
+          `/api/youtube-rss?channel_id=${ARIHANT_CHANNEL_ID}`,
+          { signal: AbortSignal.timeout(8000) }
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const xmlText = await res.text();
+        const id    = extractVideoIdFromText(xmlText);
+        const title = extractTitleFromText(xmlText);
+        if (id && id.length >= 8) {
+          setVideoId(id);
+          setVideoTitle(title);
+        }
+      } catch (e) {
+        console.warn("[VideoCard] YouTube RSS fetch failed, using fallback:", e.message);
+      } finally {
+        setLoadingVid(false);
+      }
+    };
+    fetchLatestVideo();
+  }, []);
 
   return (
     <div className="w-full h-full rounded-2xl overflow-hidden bg-white shadow-[0_3px_12px_rgba(0,0,0,0.1)] relative">
       {!play ? (
         <div className="w-full h-full relative cursor-pointer group" onClick={() => setPlay(true)}>
+          {/* Thumbnail */}
           <img
-            src="https://img.youtube.com/vi/67CeWgOOIPU/maxresdefault.jpg"
+            src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
             alt="video thumbnail"
             className="w-full h-full object-cover"
+            onError={(e) => { e.target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`; }}
           />
-          {/* YouTube Play Button Overlay */}
+          {/* Shimmer while loading */}
+          {loadingVid && (
+            <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+          )}
+          {/* Latest badge */}
+          <div className="absolute top-3 left-3 bg-[#FF0000] text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide shadow">
+            Latest
+          </div>
+          {/* Play button */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-[68px] h-[48px] bg-black/80 group-hover:bg-[#FF0000] rounded-[12px] flex items-center justify-center transition-all duration-300 shadow-xl">
               <div className="w-0 h-0 border-l-[18px] border-l-white border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent ml-1"></div>
             </div>
           </div>
+          {/* Video title */}
+          {videoTitle && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+              <p className="text-white text-xs font-medium line-clamp-2 leading-tight">{videoTitle}</p>
+            </div>
+          )}
         </div>
       ) : (
         <iframe
           className="w-full h-full border-none block"
-          src="https://www.youtube.com/embed/67CeWgOOIPU?autoplay=1"
-          title="YouTube video"
+          src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+          title={videoTitle || "YouTube video"}
           frameBorder="0"
           allow="autoplay; encrypted-media"
           allowFullScreen
@@ -52,7 +120,7 @@ const StatItem = ({ icon, label, value }) => {
   };
 
   return (
-    <div className="flex items-center gap-3 p-[15px] bg-[#f9f9f9] rounded-md border border-[#e0e0e0]">
+    <div className="flex items-center gap-3 p-[15px] bg-[#f9f9f9] rounded-md border border-[#e0e0e0] flex-1 min-w-[140px]">
       <div className="flex items-center justify-center text-[#34b350] text-[18px]">
         {renderIcon()}
       </div>
@@ -98,10 +166,12 @@ function Dashboard() {
     const saved = sessionStorage.getItem("revenue_data");
     return saved ? JSON.parse(saved) : {
       ytdRevenue: "0",
+      ytdClientsAcquired: "0",
       ytdTradedClients: "0",
       mtdRevenue: "0",
       mtdTradedClients: "0",
-      mtdClientsAcquired: "0"
+      mtdClientsAcquired: "0",
+      todayTurnover: "0"
     };
   });
 
@@ -142,10 +212,12 @@ function Dashboard() {
           // ✅ CORRECT revenue keys
           const nextRevenue = {
             ytdRevenue: String(data.YTD_revenue ?? "0"),
+            ytdClientsAcquired: String(data.YTD_Client_Aquired ?? "0"),
             ytdTradedClients: String(data.YTD_Client ?? "0"),
             mtdRevenue: String(data.MTD_revenue ?? "0"),
             mtdTradedClients: String(data.MTD_Client ?? "0"),
-            mtdClientsAcquired: String(data.MTD_Client_Aquired ?? data.YTD_Client_Aquired ?? "0")
+            mtdClientsAcquired: String(data.MTD_Client_Aquired ?? "0"),
+            todayTurnover: String(data.TODAY_TURNOVER ?? "0")
           };
           setRevenueData(nextRevenue);
           sessionStorage.setItem("revenue_data", JSON.stringify(nextRevenue));
@@ -337,11 +409,11 @@ function Dashboard() {
       {/* Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-[15px] p-[15px] mt-[60px]">
         {[
-          { label: "New Client", value: dashboardMetrics.newClient, path: "/new-client" },
           { label: "Total Clients", value: dashboardMetrics.totalClients, path: "/total-client" },
           { label: "Active Clients", value: dashboardMetrics.activeClients, path: "/active-client" },
-          { label: "Total App Login", value: dashboardMetrics.totalAppLogin, path: "/client-code-list" },
+          { label: "New Client", value: dashboardMetrics.newClient, path: "/new-client" },
           { label: "Inactive Clients", value: dashboardMetrics.inactiveClients, path: "/inactive-client" },
+          { label: "Total App Login", value: dashboardMetrics.totalAppLogin, path: "/client-code-list" },
         ].map((card, idx) => (
           <div
             key={idx}
@@ -361,7 +433,7 @@ function Dashboard() {
         {/* Horizontal Divider Line */}
         <div className="my-2 border-t border-gray-100"></div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-[15px]">
+        <div className="flex flex-nowrap gap-[15px] overflow-x-auto pb-1">
           <StatItem icon={Calendar} label="YTD Revenue" value={revenueData.ytdRevenue} onEyeClick={handleEyeClick} isRevealed={isRevealed} />
           <StatItem icon={Wifi} label="YTD Traded Clients" value={revenueData.ytdTradedClients} onEyeClick={handleEyeClick} isRevealed={isRevealed} />
           <StatItem icon="fa fa-suitcase" label="MTD Revenue" value={revenueData.mtdRevenue} onEyeClick={handleEyeClick} isRevealed={isRevealed} />
