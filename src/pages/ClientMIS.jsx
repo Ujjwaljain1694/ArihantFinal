@@ -6,6 +6,7 @@ import FilterBar, { FilterItem, ApplyButton, SearchInput } from "../components/c
 import ResultsHeader from "../components/common/ResultsHeader";
 import ClientTable from "../components/common/ClientTable";
 import { getClientMIS } from "../api/korpApiService";
+import { extractDataFromApiResponse } from "../utils/apiResponseHandler";
 
 const ClientMIS = () => {
     const [clientCode, setClientCode] = useState("");
@@ -35,10 +36,26 @@ const ClientMIS = () => {
             const response = await getClientMIS(params);
             console.log("Client MIS API Response:", response.data);
 
-            const rows = response?.data?.data || response?.data?.Data || response?.data?.result?.userList || response?.data || [];
-            
-            if (Array.isArray(rows) && rows.length > 0) {
-                setTableData(rows);
+            // Extract raw rows from the API response using the shared utility
+            const rows = extractDataFromApiResponse(response);
+            console.log("Extracted rows count:", rows.length);
+
+            // Normalize the field names to match the table component's expected keys
+            const normalizedRows = rows.map(item => ({
+                name: item.clientname ?? item.name ?? "",
+                code: item.clientcode ?? item.code ?? "",
+                pan: item.PAN ?? item.pan ?? "",
+                mobile: item.MOBILE ?? item.mobile ?? "",
+                email: item.EMAIL ?? item.email ?? "",
+                bank: item.DEFAULT_BANK ?? item.bank ?? "",
+                city: item.CITY ?? item.city ?? "",
+                date: item.OPENINGDATE ?? item.date ?? "",
+                dp: item.DPID ?? item.dp ?? "",
+            }));
+            console.log("Normalized rows (first 3):", normalizedRows.slice(0, 3));
+
+            if (normalizedRows.length > 0) {
+                setTableData(normalizedRows);
             } else {
                 setTableData([]);
                 if (code) {

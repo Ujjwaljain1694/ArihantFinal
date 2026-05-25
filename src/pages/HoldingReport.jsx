@@ -3,7 +3,7 @@ import { Loader2 } from 'lucide-react';
 import { ChevronDown, Search, Download, Calendar, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { getFreeHoldingsData } from '../api/korpApiService';
+import { getHoldingReport } from '../api/korpApiService';
 
 export default function HoldingReport() {
   const getDefaultDate = () => {
@@ -62,7 +62,7 @@ export default function HoldingReport() {
       // IMPORTANT:
       // Same API use karo jo live site me chal rahi hai:
       // /reports/KorpHoldingReport
-      const response = await getFreeHoldingsData(params);
+      const response = await getHoldingReport(params);
 
       console.log("Full Response:", response);
       console.log("Response Data:", response.data);
@@ -74,13 +74,15 @@ export default function HoldingReport() {
         return;
       }
 
-      // Data extraction
-      const rows = response?.data?.result?.result1 || [];
+      // Data extraction with fallback for different possible structures
+      const rows =
+        response?.data?.result?.result1 ||
+        response?.data?.result?.result ||
+        response?.data?.result?.userList ||
+        response?.data?.result?.rows ||
+        [];
 
       console.log("Rows Count:", rows.length);
-      console.log("First Row:", rows[0]);
-
-      // State update
       setTableData(Array.isArray(rows) ? rows : []);
     } catch (error) {
       console.error("API Error:", error);
@@ -173,10 +175,7 @@ export default function HoldingReport() {
           return;
         }
 
-        params.SearchType =
-          selectedOption === "Script Name"
-            ? "SCRIPT_NAME"
-            : "Client_Code";
+        params.SearchType = selectedOption === "Script Name" ? "SCRIPT_NAME" : "Clientcode";
 
         params.Search =
           searchInput.trim().toUpperCase();
@@ -190,7 +189,7 @@ export default function HoldingReport() {
       // ==========================================
       // 5. API CALL
       // ==========================================
-      const res = await getFreeHoldingsData(params);
+      const res = await getHoldingReport(params);
 
       console.log("FULL API RESPONSE:", res);
       console.log("SUCCESS VALUE:", res?.success);
@@ -203,8 +202,13 @@ export default function HoldingReport() {
       // 6. SUCCESS CHECK
       // ==========================================
       const payload = res?.data || res;
-      if (payload?.success === true && payload?.result?.result1) {
-        const rows = payload.result.result1;
+      if (payload?.success) {
+        const rows =
+          payload?.result?.result1 ||
+          payload?.result?.result ||
+          payload?.result?.userList ||
+          payload?.result?.rows ||
+          [];
         setFilteredData(Array.isArray(rows) ? rows : []);
 
         if (rows.length === 0) {
