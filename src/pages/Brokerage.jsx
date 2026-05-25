@@ -58,7 +58,7 @@ const Brokerage = () => {
                 if (toDate) params.toDate = formatDateForApi(toDate);
 
                 const response = await getBrokerageClientWise(params);
-                const rows = response?.data?.data || response?.data?.Data || response?.data || [];
+                const rows = response?.data?.result?.userList || response?.data?.result?.result1 || response?.data?.data || response?.data?.Data || [];
                 setTableData(Array.isArray(rows) ? rows : []);
             } 
             else if (activeSubTab === "Third Party Brokerage") {
@@ -70,7 +70,7 @@ const Brokerage = () => {
                 if (tpToDate) params.toDate = formatDateForApi(tpToDate);
 
                 const response = await getBrokerageDateWise(params);
-                const rows = response?.data?.data || response?.data?.Data || response?.data || [];
+                const rows = response?.data?.result?.userList || response?.data?.result?.result1 || response?.data?.data || response?.data?.Data || [];
                 setTableData(Array.isArray(rows) ? rows : []);
             } 
             else if (activeSubTab === "Research Brokerage") {
@@ -81,7 +81,7 @@ const Brokerage = () => {
                 if (tradeDate) params.fromDate = formatDateForApi(tradeDate);
 
                 const response = await getBrokerageDateWise(params);
-                const rows = response?.data?.data || response?.data?.Data || response?.data || [];
+                const rows = response?.data?.result?.userList || response?.data?.result?.result1 || response?.data?.data || response?.data?.Data || [];
                 setTableData(Array.isArray(rows) ? rows : []);
             }
         } catch (err) {
@@ -240,17 +240,36 @@ const Brokerage = () => {
 
     const statsData = calculateStats();
 
+    // Robust helper to find keys ignoring case and special characters
+    const getVal = (item, keys) => {
+        if (!item) return null;
+        const lowerKeys = keys.map(k => k.toLowerCase().replace(/[^a-z0-9]/g, ''));
+        for (let key in item) {
+            const cleanKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (lowerKeys.includes(cleanKey)) {
+                return item[key];
+            }
+        }
+        return null;
+    };
+
     // Map live UAT response rows dynamically to headers
     const getTableHeadersAndRows = () => {
         if (activeSubTab === "Capital Brokerage") {
-            const headers = ["CLIENT CODE", "CLIENT NAME", "BROKERAGE", "SEGMENT", "DATE"];
-            const rows = tableData.map(item => [
-                item.clientCode || item.ClientCode || "-",
-                item.clientName || item.ClientName || "-",
-                isMasked ? "xxxxxx" : `₹ ${parseFloat(item.brokerage || item.Brokerage || 0).toFixed(2)}`,
-                item.segment || item.Segment || "-",
-                item.date || item.Date || "-"
-            ]);
+            const headers = ["CLIENT NAME", "BROKERAGE", "TURNOVER", "SEGMENT"];
+            const rows = tableData.map(item => {
+                const clientName = getVal(item, ["clientname", "name"]) || "-";
+                const brokerage = getVal(item, ["brokerage"]) || 0;
+                const turnover = getVal(item, ["turnover", "amount", "turnovr"]) || "-";
+                const segment = getVal(item, ["segment", "seg"]) || "-";
+
+                return [
+                    clientName,
+                    isMasked ? "xxxxxx" : `₹ ${parseFloat(brokerage).toFixed(2)}`,
+                    turnover,
+                    segment
+                ];
+            });
             return { headers, rows };
         } 
         else if (activeSubTab === "Third Party Brokerage") {

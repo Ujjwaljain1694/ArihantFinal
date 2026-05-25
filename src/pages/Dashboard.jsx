@@ -9,7 +9,7 @@ import { toast as toastify } from "react-toastify";
 
 // Internal VideoCard — auto-fetches latest video from Arihant Capital YouTube channel
 const ARIHANT_CHANNEL_ID = "UCrPcG3wkHygflvEIMcb_I3Q"; // @arihant_plus verified channel ID
-const FALLBACK_VIDEO_ID  = "67CeWgOOIPU";
+const FALLBACK_VIDEO_ID = "67CeWgOOIPU";
 
 // Vite dev proxy — /api/youtube-rss → https://www.youtube.com/feeds/videos.xml (server-side, no CORS)
 // In production, configure your backend to proxy this route.
@@ -33,8 +33,8 @@ const extractTitleFromText = (xmlText) => {
 };
 
 const VideoCard = () => {
-  const [play, setPlay]             = useState(false);
-  const [videoId, setVideoId]       = useState(FALLBACK_VIDEO_ID);
+  const [play, setPlay] = useState(false);
+  const [videoId, setVideoId] = useState(FALLBACK_VIDEO_ID);
   const [videoTitle, setVideoTitle] = useState("");
   const [loadingVid, setLoadingVid] = useState(true);
 
@@ -48,7 +48,7 @@ const VideoCard = () => {
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const xmlText = await res.text();
-        const id    = extractVideoIdFromText(xmlText);
+        const id = extractVideoIdFromText(xmlText);
         const title = extractTitleFromText(xmlText);
         if (id && id.length >= 8) {
           setVideoId(id);

@@ -7,17 +7,21 @@ import { getFreeHoldingsData } from '../api/korpApiService';
 
 export default function HoldingReport() {
   const getDefaultDate = () => {
-    const now = new Date();
-    const day = now.getDay(); // 0 is Sun, 1 is Mon
-    let defaultDate = new Date();
-    if (day === 1) { // Mon
-      defaultDate.setDate(now.getDate() - 3);
-    } else if (day === 0) { // Sun
-      defaultDate.setDate(now.getDate() - 2);
-    } else {
-      defaultDate.setDate(now.getDate() - 1);
-    }
+    const defaultDate = new Date();
+    defaultDate.setDate(defaultDate.getDate() - 1);
     return defaultDate;
+  };
+
+  // Helper to get the last working day (Friday) if a weekend is selected
+  const getWorkingDate = (date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    if (day === 0) { // Sunday
+      d.setDate(d.getDate() - 2);
+    } else if (day === 6) { // Saturday
+      d.setDate(d.getDate() - 1);
+    }
+    return d;
   };
 
   const [selectedOption, setSelectedOption] = useState('Select Option');
@@ -46,8 +50,9 @@ export default function HoldingReport() {
     console.log("API function called");
 
     try {
+      const workingDateForInitial = getWorkingDate(getDefaultDate());
       const params = {
-        datefrom: formatDate(getDefaultDate()), // 19/05/2026
+        datefrom: formatDate(workingDateForInitial), // e.g. Friday if Sunday is default
         size: 50,
         pageNumber: 0,
       };
@@ -116,7 +121,8 @@ export default function HoldingReport() {
 
   const handleApply = async (
     pageNumber = 0,
-    size = 50
+    size = 50,
+    overrideDate = null
   ) => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
@@ -131,36 +137,23 @@ export default function HoldingReport() {
       let params = {};
 
       // ==========================================
-      // 1. DATE LOGIC (same as Angular)
-      // Mon -> -3 days
-      // Sun -> -2 days
-      // Else -> -1 day
+      // 1. DATE LOGIC
+      // Default to yesterday
       // ==========================================
-      let reportDate = selectedDate;
+      let reportDate = overrideDate || selectedDate;
 
       if (!reportDate) {
-        const now = new Date();
-        const day = now.getDay(); // 0=Sun, 1=Mon
-
-        reportDate = new Date(now);
-
-        if (day === 1) {
-          // Monday
-          reportDate.setDate(now.getDate() - 3);
-        } else if (day === 0) {
-          // Sunday
-          reportDate.setDate(now.getDate() - 2);
-        } else {
-          // Other days
-          reportDate.setDate(now.getDate() - 1);
-        }
+        reportDate = new Date();
+        reportDate.setDate(reportDate.getDate() - 1);
       }
 
       // ==========================================
       // 2. BASIC PARAMETERS
+      // Use working date for API call if it's weekend
       // ==========================================
+      const workingReportDate = getWorkingDate(reportDate);
       params = {
-        datefrom: formatDate(reportDate), // dd/MM/yyyy
+        datefrom: formatDate(workingReportDate), // dd/MM/yyyy
         size: actualSize,
         pageNumber: actualPageNumber,
       };
@@ -484,7 +477,10 @@ export default function HoldingReport() {
               <div className="relative group">
                 <DatePicker
                   selected={selectedDate}
-                  onChange={(d) => setSelectedDate(d)}
+                  onChange={(d) => {
+                    setSelectedDate(d);
+                    handleApply(0, 50, d);
+                  }}
                   dateFormat="dd/MM/yyyy"
                   placeholderText="DD/MM/YYYY"
                   maxDate={new Date()}
