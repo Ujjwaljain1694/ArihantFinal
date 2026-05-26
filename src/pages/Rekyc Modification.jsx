@@ -11,7 +11,7 @@ import { getRekycModification } from "../api/korpApiService";
 
 export default function ReKYCModification({ search = "" }) {
   const [visiblePans, setVisiblePans] = useState({});
-  const [results, setResults] = useState([]);
+  const [tableData, setTableData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchRekycModifications = async () => {
@@ -22,25 +22,34 @@ export default function ReKYCModification({ search = "" }) {
         pageNumber: 0,
       };
       if (search.trim()) {
-        params.clientCode = search.trim();
-        params.Clientcode = search.trim();
-        params.clientcode = search.trim();
+        params.clientCode = search.trim(); // Only one query param to prevent 400 error
       }
       const response = await getRekycModification(params);
-      console.log("Rekyc Modification API Response:", response.data);
-      const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
-      if (Array.isArray(items)) {
-        setResults(items);
-      } else {
-        setResults([]);
-      }
+      console.log("Full Rekyc API response:", response);
+
+      const apiData = response?.data;
+
+      console.log("API DATA =>", apiData);
+
+      const result = apiData?.result || {};
+
+      console.log("RESULT =>", result);
+
+      const items = result?.userList || [];
+
+      console.log("FINAL ITEMS =>", items);
+      setTableData(items);
     } catch (error) {
       console.error("Failed to fetch Rekyc modifications:", error);
-      setResults([]);
+      setTableData([]);
     } finally {
       setIsLoading(false);
     }
   };
+  // Log table data updates
+  React.useEffect(() => {
+    console.log("Updated Table Data:", tableData);
+  }, [tableData]);
 
   useEffect(() => {
     fetchRekycModifications();
@@ -54,11 +63,13 @@ export default function ReKYCModification({ search = "" }) {
     }));
   };
 
-  // Perform a backup local filter to ensure search is solid
-  const filteredData = results.filter((item) => {
+  // Restore the original search filter
+  const filteredData = tableData.filter((item) => {
     const code = item.clientCode || item.clientcode || item.ClientCode || "";
-    return code.toLowerCase().includes(search.toLowerCase());
+    return String(code).toLowerCase().includes(String(search).toLowerCase());
   });
+  console.log('Filtered Data count:', filteredData.length);
+  console.log('Filtered Data:', filteredData);
 
   return (
     <div className="bg-white px-2">
@@ -109,14 +120,72 @@ export default function ReKYCModification({ search = "" }) {
             </div>
           ) : (
             filteredData.map((row, index) => {
-              const clientCode = row.clientCode || row.clientcode || row.ClientCode || "-";
-              const pan = row.pan || row.Pan || "-";
+              const clientCode = row.clientCode || row.client_code || row.ClientCode || "-";
+              const pan = row.PAN || row.pan || row.Pan || "-";
               const maskedPan = row.maskedPan || row.maskedpan || row.MaskedPan || (pan !== "-" ? pan.replace(/.(?=.{4})/g, "*") : "-");
-              const clientName = row.clientName || row.clientname || row.ClientName || "-";
-              const requestType = row.requestType || row.requesttype || row.RequestType || "-";
-              const requestDate = row.requestDate || row.requestdate || row.RequestDate || "-";
-              const requestStatus = row.requestStatus || row.requeststatus || row.RequestStatus || row.status || row.Status || "-";
-              const adminUpdatedDate = row.adminUpdatedDate || row.adminupdateddate || row.AdminUpdatedDate || "-";
+              const clientName = row.ClientName || row.clientName || row.clientname || "-";
+
+              let requestType = row.requestType || row.requesttype || row.RequestType || row.type || row.Type || "-";
+              let requestStatus = row.requestStatus || row.requeststatus || row.RequestStatus || row.status || row.Status || "-";
+
+              if (requestType === "-") {
+                if (row.isnomineeadded === "1") {
+                  requestType = "Nominee Addition";
+                  requestStatus = row.adminnomineestatus === "1" ? "Accepted" : row.adminnomineestatus === "2" ? "Rejected" : "Pending";
+                } else if (row.Isckycrequest === "1") {
+                  requestType = "CKYC Request";
+                  requestStatus = row.adminckycrequeststatus === "1" ? "Accepted" : row.adminckycrequeststatus === "2" ? "Rejected" : "Pending";
+                } else if (row.segmentAddedrequest === "1") {
+                  requestType = "Segment Addition";
+                  requestStatus = row.adminsegmentAddedstatus === "1" ? "Accepted" : row.adminsegmentAddedstatus === "2" ? "Rejected" : "Pending";
+                } else if (row.ismobileUpdate === "1") {
+                  requestType = "Mobile Update";
+                  requestStatus = row.adminmobileupdatestatus === "1" ? "Accepted" : row.adminmobileupdatestatus === "2" ? "Rejected" : "Pending";
+                } else if (row.isemailUpdate === "1") {
+                  requestType = "Email Update";
+                  requestStatus = row.adminemailUpdatestatus === "1" ? "Accepted" : row.adminemailUpdatestatus === "2" ? "Rejected" : "Pending";
+                } else if (row.isbankUpdate === "1") {
+                  requestType = "Bank Update";
+                  requestStatus = row.adminbankstatus === "1" ? "Accepted" : row.adminbankstatus === "2" ? "Rejected" : "Pending";
+                } else if (row.isbankdefaulUpdate === "1") {
+                  requestType = "Default Bank Update";
+                  requestStatus = row.adminbankdefaulstatus === "1" ? "Accepted" : row.adminbankdefaulstatus === "2" ? "Rejected" : "Pending";
+                } else if (row.isaccountclose === "1") {
+                  requestType = "Account Closure";
+                  requestStatus = row.admincloserstatus === "1" ? "Accepted" : row.admincloserstatus === "2" ? "Rejected" : "Pending";
+                } else if (row.IsActivationrequest === "1") {
+                  requestType = "Activation Request";
+                  requestStatus = row.adminActivationrequeststatus === "1" ? "Accepted" : row.adminActivationrequeststatus === "2" ? "Rejected" : "Pending";
+                }
+              }
+
+              const requestDate = row.requestDate || row.requestdate || row.RequestDate || row.date || row.Date || "-";
+
+              // Map admin updated date covering all casing edge cases
+              let rawAdminDate =
+                row.adminUpdatedDate ||
+                row.adminupdatedate ||
+                row.adminupdateddate ||
+                row.AdminUpdatedDate ||
+                row.AdminupdateDate ||
+                row.AdminUpdateDate ||
+                row.adminUpdateDate ||
+                row.adminupdateDate ||
+                row.LDstatusDate || // Sometime LDstatusDate acts as the updated date
+                row.updatedDate ||
+                row.updateddate ||
+                null;
+
+              const adminUpdatedDate = (rawAdminDate && String(rawAdminDate).trim() !== "") ? rawAdminDate : "-";
+
+              if (index === 0) {
+                console.log("REKYC ADMIN DATE DEBUG =>", {
+                  adminupdatedate: row.adminupdatedate,
+                  LDstatusDate: row.LDstatusDate,
+                  rawAdminDate: rawAdminDate,
+                  finalValue: adminUpdatedDate
+                });
+              }
 
               return (
                 <div
@@ -127,9 +196,9 @@ export default function ReKYCModification({ search = "" }) {
 
                   <div className="px-2 py-3 border-r border-gray-300 flex items-center justify-start gap-2 font-semibold">
                     <span className="truncate" title={visiblePans[clientCode] ? pan : maskedPan}>{visiblePans[clientCode] ? pan : maskedPan}</span>
-                    <EyeOff 
-                      size={12} 
-                      className="cursor-pointer text-gray-400 hover:text-[#34b44a] flex-shrink-0" 
+                    <EyeOff
+                      size={12}
+                      className="cursor-pointer text-gray-400 hover:text-[#34b44a] flex-shrink-0"
                       onClick={() => togglePanVisibility(clientCode)}
                     />
                   </div>
@@ -138,10 +207,12 @@ export default function ReKYCModification({ search = "" }) {
 
                   <div className="px-2 py-3 border-r border-gray-300 flex flex-col justify-center truncate">
                     <div className="font-semibold truncate" title={requestType}>{requestType}</div>
-                    <span className="inline-flex items-center gap-1 bg-[#35b34a] text-white text-[10px] px-1.5 py-[1px] rounded-md mt-1 w-max">
-                      <Check size={10} />
-                      Accepted
-                    </span>
+                    {requestStatus.toLowerCase() === "accepted" || requestType !== "-" ? (
+                      <span className="inline-flex items-center gap-1 bg-[#35b34a] text-white text-[10px] px-1.5 py-[1px] rounded-md mt-1 w-max">
+                        <Check size={10} />
+                        Accepted
+                      </span>
+                    ) : null}
                   </div>
 
                   <div className="px-2 py-3 border-r border-gray-300 truncate" title={requestDate}>{requestDate}</div>

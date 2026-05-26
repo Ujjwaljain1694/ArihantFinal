@@ -41,19 +41,33 @@ export default function PhysicalAccountOpening() {
       }
 
       const response = await getPhysicalAccountOpening(params);
-      console.log("GetPhysicalAccountOpening API Response:", response.data);
-      
-      const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
-      
+      const apiData = response?.data || {};
+
+      console.log("FULL ACCOUNT OPENING RESPONSE:", response);
+      console.log("ACCOUNT OPENING API DATA:", apiData);
+
+      const items =
+        apiData?.result?.userList ||
+        apiData?.result?.data ||
+        apiData?.data?.userList ||
+        apiData?.data ||
+        apiData?.userList ||
+        apiData?.result?.resultlist ||
+        [];
+
+      console.log("FINAL ACCOUNT OPENING ITEMS:", items);
+
       if (Array.isArray(items)) {
         let filtered = items;
         if (search.trim()) {
           filtered = items.filter((item) => {
             const code = item.clientCode || item.clientcode || item.ClientCode || "";
-            return code.toLowerCase().includes(search.trim().toLowerCase());
+            return String(code)
+              .toLowerCase()
+              .includes(search.trim().toLowerCase());
           });
         }
-        setResults(filtered);
+        setResults(Array.isArray(filtered) ? filtered : []);
         if (filtered.length === 0 && search.trim()) {
           toast.error("No data found for the selected criteria");
         }
@@ -384,13 +398,35 @@ export default function PhysicalAccountOpening() {
           ) : (
             <>
               {results.map((row, index) => {
+                if (index === 0) {
+                  console.log("ACCOUNT OPENING FIRST ROW FULL DATA =>", row);
+                }
+
                 const clientCode = row.clientCode || row.clientcode || row.ClientCode || "-";
                 const clientName = row.clientName || row.clientname || row.ClientName || "-";
-                const pan = row.pan || row.Pan || "-";
-                const date = row.date || row.Date || row.requestDate || row.RequestDate || "-";
+                const pan =
+                  row.pan ||
+                  row.Pan ||
+                  row.PAN ||
+                  "-";
+                const date =
+                  row.date ||
+                  row.Date ||
+                  row.requestDate ||
+                  row.RequestDate ||
+                  row.createdDate ||
+                  row.CreatedDate ||
+                  "-";
                 const searchCode = row.searchCode || row.searchcode || row.SearchCode || "-";
                 const requestType = row.requestType || row.requesttype || row.RequestType || "-";
-                const status = row.status || row.Status || "-";
+                const status =
+                  row.Status1 ||
+                  row.status1 ||
+                  row.status ||
+                  row.Status ||
+                  row.requestStatus ||
+                  row.RequestStatus ||
+                  "-";
                 const remark = row.remark || row.Remark || "-";
                 const remark2 = row.remark2 || row.Remark2 || "-";
                 const remark3 = row.remark3 || row.Remark3 || "-";

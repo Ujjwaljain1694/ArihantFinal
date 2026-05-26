@@ -17,6 +17,7 @@ export default function PhysicalModification() {
   const [customErrorMsg, setCustomErrorMsg] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
 
   React.useEffect(() => {
     if (showCustomError) {
@@ -47,18 +48,34 @@ export default function PhysicalModification() {
       }
 
       const response = await getPhysicalModification(params);
-      console.log("GetPhysicalModification API Response:", response.data);
-      const items = response?.data?.data || response?.data?.Data || response?.data?.result || response?.data || [];
+      const apiData = response?.data || {};
+
+      const items =
+        apiData?.result?.resultlist ||
+        apiData?.result?.userList ||
+        apiData?.result?.data ||
+        apiData?.data?.userList ||
+        apiData?.data ||
+        apiData?.userList ||
+        [];
+
+      console.log("FULL PHYSICAL RESPONSE:", response);
+      console.log("PHYSICAL API DATA:", response?.data);
+      console.log("PHYSICAL RESULT:", response?.data?.result);
+      console.log("PHYSICAL RESULTLIST/USERLIST:", apiData?.result?.resultlist || apiData?.result?.userList);
+      console.log("FINAL PHYSICAL ITEMS:", items);
 
       if (Array.isArray(items)) {
         let filtered = items;
         if (search.trim()) {
           filtered = items.filter((item) => {
             const code = item.clientCode || item.clientcode || item.ClientCode || "";
-            return code.toLowerCase().includes(search.trim().toLowerCase());
+            return String(code)
+              .toLowerCase()
+              .includes(search.trim().toLowerCase());
           });
         }
-        setResults(filtered);
+        setResults(Array.isArray(filtered) ? filtered : []);
         if (filtered.length === 0 && search.trim()) {
           const msg = "No data found for the selected criteria";
           setError(msg);
@@ -166,22 +183,20 @@ export default function PhysicalModification() {
 
         <button
           onClick={() => setActiveSubTab("Physical Modification")}
-          className={`pb-2 -mb-[9px] ${
-            activeSubTab === "Physical Modification"
-              ? "font-semibold border-b-[4px] border-[#33b34a]"
-              : "font-normal"
-          }`}
+          className={`pb-2 -mb-[9px] ${activeSubTab === "Physical Modification"
+            ? "font-semibold border-b-[4px] border-[#33b34a]"
+            : "font-normal"
+            }`}
         >
           Physical Modification
         </button>
 
-        <button 
+        <button
           onClick={() => setActiveSubTab("Rekyc Modification")}
-          className={`pb-2 ${
-            activeSubTab === "Rekyc Modification"
-              ? "font-semibold border-b-[4px] border-[#33b34a]"
-              : "font-normal"
-          }`}
+          className={`pb-2 ${activeSubTab === "Rekyc Modification"
+            ? "font-semibold border-b-[4px] border-[#33b34a]"
+            : "font-normal"
+            }`}
         >
           Rekyc Modification
         </button>
@@ -206,7 +221,7 @@ export default function PhysicalModification() {
             className="w-full h-[40px] rounded-full border border-gray-300 pl-12 pr-4 text-[15px] outline-none bg-white focus:border-[#34b44a] transition-all"
           />
         </div>
-        <button 
+        <button
           onClick={handleApply}
           className="bg-[#34b44a] text-white font-bold text-[14px] px-8 h-[40px] rounded-full flex items-center gap-2 shadow-md hover:bg-[#2e9d41] transition-all active:scale-95"
         >
@@ -235,57 +250,67 @@ export default function PhysicalModification() {
                 <Head title="Remark" field="remark" />
               </div>
 
-            {/* Body */}
-            {isLoading ? (
-              <div className="bg-white h-[100px] flex items-center justify-center px-6 text-[15px] text-gray-500 border-b border-gray-200 font-semibold">
-                Loading physical modifications from UAT...
-              </div>
-            ) : results.length === 0 ? (
-              <>
-                <div className="bg-white h-[45px] flex items-center px-6 text-[15px] text-gray-500 border-b border-gray-200">
-                  No data to display
+              {/* Body */}
+              {isLoading ? (
+                <div className="bg-white h-[100px] flex items-center justify-center px-6 text-[15px] text-gray-500 border-b border-gray-200 font-semibold">
+                  Loading physical modifications from UAT...
                 </div>
+              ) : results.length === 0 ? (
+                <>
+                  <div className="bg-white h-[45px] flex items-center px-6 text-[15px] text-gray-500 border-b border-gray-200">
+                    No data to display
+                  </div>
 
-                <div className="bg-white px-6 py-2 text-gray-400 border-b border-gray-200 text-[13px]">
-                  0 total
-                </div>
-              </>
-            ) : (
-              <>
-                {results.map((row, index) => {
-                  const clientCode = row.clientCode || row.clientcode || row.ClientCode || "-";
-                  const clientName = row.clientName || row.clientname || row.ClientName || "-";
-                  const pan = row.pan || row.Pan || row.panCode || "-";
-                  const requestDate = row.requestDate || row.requestdate || row.RequestDate || row.date || row.Date || "-";
-                  const branchCode = row.branchCode || row.branchcode || row.BranchCode || "-";
-                  const requestType = row.requestType || row.requesttype || row.RequestType || row.type || row.Type || "-";
-                  const status = row.status || row.Status || "-";
-                  const remark = row.remark || row.Remark || "-";
+                  <div className="bg-white px-6 py-2 text-gray-400 border-b border-gray-200 text-[13px]">
+                    0 total
+                  </div>
+                </>
+              ) : (
+                <>
+                  {results.map((row, index) => {
+                    const clientCode = row.clientCode || row.clientcode || row.ClientCode || "-";
+                    const clientName = row.clientName || row.clientname || row.ClientName || "-";
+                    const pan =
+                      row.pan ||
+                      row.Pan ||
+                      row.PAN ||
+                      row.panCode ||
+                      "-";
+                    const requestDate = row.requestDate || row.requestdate || row.RequestDate || row.date || row.Date || "-";
+                    const branchCode = row.branchCode || row.branchcode || row.BranchCode || "-";
+                    const requestType = row.requestType || row.requesttype || row.RequestType || row.type || row.Type || "-";
+                    const status =
+                      row.status ||
+                      row.Status ||
+                      row.requestStatus ||
+                      row.RequestStatus ||
+                      "-";
+                    const remark = row.remark || row.Remark || "-";
 
-                  return (
-                    <div
-                      key={index}
-                      className="grid grid-cols-8 bg-[#f2f2f2] border-b border-gray-200 text-[14px] hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="px-4 py-2 border-r border-gray-300">{clientCode}</div>
-                      <div className="px-4 py-2 border-r border-gray-300">{clientName}</div>
-                      <div className="px-4 py-2 border-r border-gray-300">{pan}</div>
-                      <div className="px-4 py-2 border-r border-gray-300">{requestDate}</div>
-                      <div className="px-4 py-2 border-r border-gray-300">{branchCode}</div>
-                      <div className="px-4 py-2 border-r border-gray-300">{requestType}</div>
-                      <div className="px-4 py-2 border-r border-gray-300 text-green-600 font-bold">
-                        {status}
+                    return (
+                      <div
+                        key={index}
+                        className="grid grid-cols-8 bg-[#f2f2f2] border-b border-gray-200 text-[14px] hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="px-4 py-2 border-r border-gray-300">{clientCode}</div>
+                        <div className="px-4 py-2 border-r border-gray-300">{clientName}</div>
+                        <div className="px-4 py-2 border-r border-gray-300">{pan}</div>
+                        <div className="px-4 py-2 border-r border-gray-300">{requestDate}</div>
+                        <div className="px-4 py-2 border-r border-gray-300">{branchCode}</div>
+                        <div className="px-4 py-2 border-r border-gray-300">{requestType}</div>
+                        <div className="px-4 py-2 border-r border-gray-300 text-green-600 font-bold">
+                          {status}
+                        </div>
+                        <div className="px-4 py-2">{remark}</div>
                       </div>
-                      <div className="px-4 py-2">{remark}</div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
 
-                <div className="bg-white px-6 py-2 text-black font-bold border-b border-gray-200 text-[14px]">
-                  {results.length} total
-                </div>
-              </>
-            )}
+                  <div className="bg-white px-6 py-2 text-black font-bold border-b border-gray-200 text-[14px]">
+                    {results.length} total
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </>

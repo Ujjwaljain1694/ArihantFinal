@@ -30,8 +30,28 @@ export default function HoldKRAStatus() {
       setLoading(true);
       try {
         const response = await getKRAHold();
-        const items = response?.data?.data || response?.data?.Data || response?.data || [];
-        const list = Array.isArray(items) ? items : [items];
+        const apiData = response?.data || {};
+
+        console.log("FULL HOLD KRA RESPONSE:", response);
+        console.log("HOLD KRA API DATA:", apiData);
+
+        const items =
+          apiData?.result?.userList ||
+          apiData?.result?.data ||
+          apiData?.data?.userList ||
+          response?.data?.data ||
+          apiData?.data ||
+          apiData?.userList ||
+          apiData?.result ||
+          [];
+
+        console.log("FINAL HOLD KRA ITEMS:", items);
+
+        const list = Array.isArray(items)
+          ? items
+          : items
+            ? [items]
+            : [];
         setAllResults(list);
         setResults(list);
       } catch (error) {
@@ -57,7 +77,12 @@ export default function HoldKRAStatus() {
     }
 
     const filtered = allResults.filter((row) => {
-      const code = (row.clientCode || row.clientcode || row.ClientCode || "").toString().toLowerCase();
+      const code = String(
+        row.clientCode ||
+        row.clientcode ||
+        row.ClientCode ||
+        ""
+      ).toLowerCase();
       return code.includes(trimmed);
     });
 
@@ -127,24 +152,24 @@ export default function HoldKRAStatus() {
               if (e.key === "Enter") handleSearch();
             }}
           />
-          
+
           {/* Search Icon */}
           <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-            <svg 
-              className="w-5 h-5 text-gray-400" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              className="w-5 h-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
           </div>
-          
+
           {/* Clear Button */}
           {filter && (
             <button
@@ -154,17 +179,17 @@ export default function HoldKRAStatus() {
               }}
               className="absolute right-12 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 transition-colors"
             >
-              <svg 
-                className="w-4 h-4 text-gray-500" 
-                fill="none" 
-                stroke="currentColor" 
+              <svg
+                className="w-4 h-4 text-gray-500"
+                fill="none"
+                stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M6 18L18 6M6 6l12 12" 
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
                 />
               </svg>
             </button>
@@ -222,15 +247,27 @@ export default function HoldKRAStatus() {
                   key={index}
                   className="grid grid-cols-7 bg-[#f2f2f2] border-b border-gray-200 text-[14px] hover:bg-gray-100 transition-colors"
                 >
-                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={row.clientCode}>{row.clientCode}</div>
-                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={row.pan}>{row.pan}</div>
-                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={row.clientName}>{row.clientName}</div>
-                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={row.branchCode}>{row.branchCode}</div>
-                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={row.kraName}>{row.kraName}</div>
-                  <div className="px-2 py-3 border-r border-gray-300 text-green-600 font-bold truncate" title={row.kraStatus}>
-                    {row.kraStatus}
+                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={row.clientCode || row.clientcode || row.ClientCode || "-"}>
+                    {row.clientCode || row.clientcode || row.ClientCode || "-"}
                   </div>
-                  <div className="px-2 py-3 truncate" title={row.reason}>{row.reason}</div>
+                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={row.pan || row.Pan || row.PAN || "-"}>
+                    {row.pan || row.Pan || row.PAN || "-"}
+                  </div>
+                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={row.clientName || row.clientname || row.ClientName || "-"}>
+                    {row.clientName || row.clientname || row.ClientName || "-"}
+                  </div>
+                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={row.branchCode || row.branchcode || row.BranchCode || "-"}>
+                    {row.branchCode || row.branchcode || row.BranchCode || "-"}
+                  </div>
+                  <div className="px-2 py-3 border-r border-gray-300 truncate" title={row.kraName || row.kraname || row.KRAName || "-"}>
+                    {row.kraName || row.kraname || row.KRAName || "-"}
+                  </div>
+                  <div className="px-2 py-3 border-r border-gray-300 text-green-600 font-bold truncate" title={row.kraStatus || row.krastatus || row.KRAStatus || "-"}>
+                    {row.kraStatus || row.krastatus || row.KRAStatus || "-"}
+                  </div>
+                  <div className="px-2 py-3 truncate" title={row.reason || row.Reason || row.rejectedReason || "-"}>
+                    {row.reason || row.Reason || row.rejectedReason || "-"}
+                  </div>
                 </div>
               ))}
 

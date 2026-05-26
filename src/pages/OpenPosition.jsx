@@ -341,7 +341,7 @@ export default function OpenPosition() {
                   <td className="px-3 py-2 text-xs text-gray-700 font-medium">
                     {row.clientCode}
                   </td>
-                  <td className="px-3 py-2 text-xs text-gray-700">
+                  <td className="px-3 py-2 text-xs text-gray-700 bg-yellow-50">
                     {row.scriptName}
                   </td>
                   <td className="px-3 py-2 text-xs text-gray-700 text-center font-bold">

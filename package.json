@@ -16,7 +16,7 @@
     "@fortawesome/fontawesome-free": "^7.2.0",
     "@mui/material": "^9.0.0",
     "@mui/x-date-pickers": "^9.0.2",
-    "axios": "^1.14.0",
+    "axios": "^1.16.1",
     "body-parser": "^2.2.2",
     "bootstrap": "^5.3.8",
     "cors": "^2.8.6",
