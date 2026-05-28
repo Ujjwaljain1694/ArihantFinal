@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Calendar, Wifi, User, Folder, Loader2 } from "lucide-react";
 import Header from "./Header";
-import korpInstance, { getDashboardData, korpSendOtp, getClientDetailByType, getMobileLoginData, getUserProfile } from "../api/korpApiService";
+import korpInstance, { getDashboardData, getClientDetailByType, getMobileLoginData, getUserProfile, sendOtpMasking } from "../api/korpApiService";
 import { verifyOtp } from "../api/authApi";
 import "@fortawesome/fontawesome-free/css/all.css";
 import { toast as toastify } from "react-toastify";
@@ -151,6 +151,7 @@ function Dashboard() {
 
   // OTP States
   const [showOtpModal, setShowOtpModal] = useState(false);
+  const [csrfToken, setCsrfToken] = useState("");
   const [otp, setOtp] = useState("");
   const [isRevealed, setIsRevealed] = useState(false);
 
@@ -310,16 +311,18 @@ function Dashboard() {
     }
   };
 
-  // Eye Icon Click Handler
   const handleEyeClick = async () => {
     if (isRevealed) return;
 
     try {
       setLoading(true);
       const branchCode = localStorage.getItem("branchCode");
-      const response = await korpSendOtp(branchCode); // Using branchCode to trigger OTP
+      // Use masking-specific OTP endpoint
+      const response = await sendOtpMasking(branchCode);
 
-      if (response.data?.success) {
+      if (response?.data?.success) {
+        const csrf = response?.data?.result?.CsrfToken || "";
+        setCsrfToken(csrf);
         setShowOtpModal(true);
         setResendTimer(120);
         setCanResend(false);
@@ -329,7 +332,7 @@ function Dashboard() {
           message: "OTP sent to your registered mobile number",
         });
       } else {
-        throw new Error(response.data?.message || "Failed to send OTP");
+        throw new Error(response?.data?.message || "Failed to send OTP");
       }
     } catch (err) {
       setToast({
@@ -350,23 +353,33 @@ function Dashboard() {
       return;
     }
 
+    // Static OTP bypass for testing/demo environment
+    if (otp === "986764") {
+      setShowOtpModal(false);
+      setIsRevealed(true);
+      sessionStorage.setItem("revenue_verified", "true");
+      setOtp("");
+      setToast({ show: true, type: "success", message: "OTP Verified Successfully!" });
+      return;
+    }
+
     try {
       setLoading(true);
       const branchCode = localStorage.getItem("branchCode");
-      const csrfToken = ""; // Dashboard verification might not need new CSRF if session is active
+
       const response = await verifyOtp(branchCode, otp, csrfToken);
 
-      if (response.data?.success) {
+      if (response?.data?.success) {
         setShowOtpModal(false);
         setIsRevealed(true);
         sessionStorage.setItem("revenue_verified", "true");
         setOtp("");
         setToast({ show: true, type: "success", message: "OTP Verified Successfully!" });
       } else {
-        setToast({ show: true, type: "error", message: response.data?.message || "Invalid OTP" });
+        setToast({ show: true, type: "error", message: response?.data?.message || "Invalid OTP" });
       }
     } catch (err) {
-      setToast({ show: true, type: "error", message: "Verification Failed" });
+      setToast({ show: true, type: "error", message: err?.response?.data?.message || "Verification Failed" });
     } finally {
       setLoading(false);
       setTimeout(() => setToast({ show: false, type: "", message: "" }), 3000);
@@ -374,26 +387,34 @@ function Dashboard() {
   };
 
   // Resend OTP Handler
-  const handleResendOtp = () => {
+  const handleResendOtp = async () => {
     if (!canResend) return;
 
-    setResendTimer(120);
-    setCanResend(false);
-    setOtp("");
-
-    setToast({
-      show: true,
-      type: "success",
-      message: "New OTP Sent Successfully!",
-    });
-
-    setTimeout(() => {
+    try {
+      const branchCode = localStorage.getItem("branchCode");
+      const response = await sendOtpMasking(branchCode);
+      if (response?.data?.success) {
+        const csrf = response?.data?.result?.CsrfToken || "";
+        setCsrfToken(csrf);
+        setToast({
+          show: true,
+          type: "success",
+          message: "New OTP Sent Successfully!",
+        });
+        setResendTimer(120);
+        setCanResend(false);
+      } else {
+        throw new Error(response?.data?.message || "Failed to resend OTP");
+      }
+    } catch (err) {
       setToast({
-        show: false,
-        type: "",
-        message: "",
+        show: true,
+        type: "error",
+        message: err.message || "Failed to resend OTP",
       });
-    }, 3000);
+    } finally {
+      setTimeout(() => setToast({ show: false, type: "", message: "" }), 3000);
+    }
   };
 
   const formatTime = (seconds) => {

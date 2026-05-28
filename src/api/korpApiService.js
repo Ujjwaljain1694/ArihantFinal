@@ -52,9 +52,9 @@ attachInterceptors(ssoInstance);
 // ── 🔑 AUTHENTICATION APIs ──────────────────────────────────────────────────
 
 export const korpLogin = (data) => ssoInstance.post("/login", data);
-export const korpSendOtp = (mobileNumber) => korpInstance.post("/sendotp", { mobileNumber });
+
 export const korpValidateOtp = (data) => korpInstance.post("/validatingotp", data);
-export const korpResendOtp = () => korpInstance.get("/resentOtp");
+export const sendOtpMasking = (branchCode) => korpInstance.post("/sendotpMasking", { branchCode, type: "AP" });
 export const korpCheckUsername = (data) => ssoInstance.post("/checkUsername", data);
 
 // ── 📊 REPORTS APIs ──────────────────────────────────────────────────────────
