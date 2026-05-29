@@ -32,6 +32,8 @@ export default function HoldingReport() {
   const [showCustomError, setShowCustomError] = useState(false);
   const [customErrorMsg, setCustomErrorMsg] = useState("");
   const [tableData, setTableData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const hasMountedRef = React.useRef(false);
   const isFetchingRef = React.useRef(false);
@@ -90,6 +92,7 @@ export default function HoldingReport() {
       console.error("Response:", error.response?.data);
       setTableData([]);
     } finally {
+      setIsLoading(false);
       isFetchingRef.current = false;
     }
   };
@@ -134,6 +137,7 @@ export default function HoldingReport() {
 
     setIsLoading(true);
     setHasSearched(true);
+    setVisibleCount(10);
 
     try {
       let params = {};
@@ -209,7 +213,7 @@ export default function HoldingReport() {
           payload?.result?.userList ||
           payload?.result?.rows ||
           [];
-        setFilteredData(Array.isArray(rows) ? rows : []);
+        setTableData(Array.isArray(rows) ? rows : []);
 
         if (rows.length === 0) {
           setCustomErrorMsg(
@@ -220,7 +224,7 @@ export default function HoldingReport() {
       } else {
         setCustomErrorMsg("Data not found");
         setShowCustomError(true);
-        setFilteredData([]);
+        setTableData([]);
       }
     } catch (error) {
       console.error("API Error:", error);
@@ -229,7 +233,7 @@ export default function HoldingReport() {
 
       setCustomErrorMsg("Error fetching data");
       setShowCustomError(true);
-      setFilteredData([]);
+      setTableData([]);
     } finally {
       setIsLoading(false);
       isFetchingRef.current = false;
@@ -284,6 +288,33 @@ export default function HoldingReport() {
         return item[key] || "";
     }
   };
+
+  const sortedData = React.useMemo(() => {
+    let sortableItems = [...tableData];
+    if (sortConfig.key !== "") {
+      sortableItems.sort((a, b) => {
+        let aValue = getCellValue(a, sortConfig.key);
+        let bValue = getCellValue(b, sortConfig.key);
+        
+        if (!isNaN(aValue) && !isNaN(bValue) && aValue !== "" && bValue !== "") {
+          aValue = Number(aValue);
+          bValue = Number(bValue);
+        } else {
+          if (typeof aValue === 'string') aValue = aValue.toLowerCase();
+          if (typeof bValue === 'string') bValue = bValue.toLowerCase();
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === "asc" ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === "asc" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [tableData, sortConfig]);
 
   // Compute visible rows for infinite scroll
   const visibleData = sortedData.slice(0, visibleCount);
@@ -497,7 +528,7 @@ export default function HoldingReport() {
         <div className="overflow-x-auto max-w-[1600px] mx-auto">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-gray-800 font-semibold text-sm">
-              Search results({sortedData.length})
+              Showing {visibleData.length} of {sortedData.length} records
             </h2>
             <Download
               size={18}
@@ -514,10 +545,10 @@ export default function HoldingReport() {
               border: 1px solid rgba(255, 255, 255, 0.1);
             }
           `}</style>
-          <div className="overflow-y-auto no-scrollbar" style={{ maxHeight: "500px" }} onScroll={(e) => {
+          <div className="overflow-y-auto" style={{ maxHeight: "400px" }} onScroll={(e) => {
             const bottom = e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 5;
-            if (bottom) {
-              setVisibleCount((prev) => prev + 10);
+            if (bottom && visibleCount < sortedData.length) {
+              setVisibleCount((prev) => prev + rowsPerPage);
             }
           }}>
             <table className="w-full holding-table border-collapse" style={{ fontFamily: 'futura, sans-serif' }}>

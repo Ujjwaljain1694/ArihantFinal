@@ -3,6 +3,12 @@ import { ChevronUp, ChevronDown, ChevronsUpDown, Download } from "lucide-react";
 
 const DataTable = ({ headers, rows, showMaskIcon = false, resultsCount, onDownload, onMaskToggle, isMasked, isPlain = false }) => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [visibleCount, setVisibleCount] = useState(10);
+  const rowsPerPage = 10;
+
+  React.useEffect(() => {
+    setVisibleCount(10);
+  }, [rows]);
 
   const handleSort = (index) => {
     let direction = 'asc';
@@ -23,6 +29,8 @@ const DataTable = ({ headers, rows, showMaskIcon = false, resultsCount, onDownlo
     });
   }, [rows, sortConfig]);
 
+  const visibleRows = sortedRows.slice(0, visibleCount);
+
   const SortIcon = ({ index }) => {
     if (sortConfig.key === index) {
       return sortConfig.direction === 'asc' ? (
@@ -40,7 +48,12 @@ const DataTable = ({ headers, rows, showMaskIcon = false, resultsCount, onDownlo
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden mb-6">
 
 
-      <div className="overflow-x-auto">
+      <div className="overflow-auto" style={{ maxHeight: "400px" }} onScroll={(e) => {
+        const bottom = e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 5;
+        if (bottom && visibleCount < sortedRows.length) {
+          setVisibleCount((prev) => prev + rowsPerPage);
+        }
+      }}>
         <table className="w-full text-left table-fixed border-collapse">
           <thead className="bg-[#1EB04C] text-white">
             <tr>
@@ -60,7 +73,7 @@ const DataTable = ({ headers, rows, showMaskIcon = false, resultsCount, onDownlo
             </tr>
           </thead>
           <tbody className="bg-white">
-            {sortedRows.map((row, rowIndex) => (
+            {visibleRows.map((row, rowIndex) => (
               <tr key={rowIndex} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
                 {row.map((cell, cellIndex) => (
                   <td
@@ -93,7 +106,7 @@ const DataTable = ({ headers, rows, showMaskIcon = false, resultsCount, onDownlo
       </div>
 
       <div className="px-6 py-4 bg-gray-50/50 text-gray-500 font-bold border-t border-gray-100 text-[12px] tracking-wider">
-        {sortedRows.length} TOTAL RECORDS
+        Showing {visibleRows.length} of {sortedRows.length} TOTAL RECORDS
       </div>
     </div>
   );

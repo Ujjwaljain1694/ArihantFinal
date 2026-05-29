@@ -12,6 +12,10 @@ export default function FOGlobalPosition() {
   const [toDate, setToDate] = useState(null);
   const [showCustomError, setShowCustomError] = useState(false);
   const [customErrorMsg, setCustomErrorMsg] = useState("");
+  const [tableData, setTableData] = useState([]);
+  const [visibleCount, setVisibleCount] = useState(10);
+  const rowsPerPage = 10;
+  const [sortConfig, setSortConfig] = useState({ key: '', direction: 'asc' });
 
   React.useEffect(() => {
     if (showCustomError) {
@@ -24,6 +28,7 @@ export default function FOGlobalPosition() {
   const toRef = React.useRef();
 
   const handleApply = () => {
+    setVisibleCount(10);
     if (!searchInput.trim()) {
       setCustomErrorMsg("Please enter Client Code");
       setShowCustomError(true);
@@ -52,6 +57,27 @@ export default function FOGlobalPosition() {
       theme: "colored"
     });
   };
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedData = [...tableData].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    if (a[sortConfig.key] < b[sortConfig.key]) {
+      return sortConfig.direction === 'asc' ? -1 : 1;
+    }
+    if (a[sortConfig.key] > b[sortConfig.key]) {
+      return sortConfig.direction === 'asc' ? 1 : -1;
+    }
+    return 0;
+  });
+
+  const visibleData = sortedData.slice(0, visibleCount);
 
   return (
     <div className="flex flex-col">
@@ -146,6 +172,57 @@ export default function FOGlobalPosition() {
           </div>
         </div>
 
+        {/* Table Section */}
+        <div className="overflow-x-auto no-scrollbar max-w-[1600px] mx-auto mt-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-gray-800 font-semibold text-sm">
+              Showing {visibleData.length} of {sortedData.length} records
+            </h2>
+          </div>
+
+          <style>{`
+            .no-scrollbar::-webkit-scrollbar {
+              display: none;
+            }
+            .no-scrollbar {
+              -ms-overflow-style: none;
+              scrollbar-width: none;
+            }
+            .global-position-table th, .global-position-table td {
+              border: 1px solid #e5e7eb;
+            }
+            .global-position-table th {
+              border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+          `}</style>
+          <div className="overflow-y-auto" style={{ maxHeight: "400px" }} onScroll={(e) => {
+            const bottom = e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 5;
+            if (bottom && visibleCount < sortedData.length) {
+              setVisibleCount((prev) => prev + rowsPerPage);
+            }
+          }}>
+            <table className="w-full global-position-table border-collapse" style={{ fontFamily: 'futura, sans-serif' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#1EB04C' }} className="text-white">
+                  <th className="px-4 py-3 border-r border-white/10 text-left text-[12px] font-bold whitespace-nowrap cursor-pointer hover:bg-[#18a045] transition-colors" onClick={() => handleSort('clientCode')}>
+                    CLIENT CODE
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleData.length > 0 ? visibleData.map((row, idx) => (
+                  <tr key={idx} className={`transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#f8fafc]'}`}>
+                    <td className="px-3 py-2 text-xs text-gray-700 font-medium">{row.clientCode}</td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td className="py-16 text-center text-gray-400 text-sm font-medium">No records found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
         {/* 🚨 CUSTOM ERROR TOAST */}
         <div

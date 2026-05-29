@@ -27,6 +27,8 @@ export default function OpenPosition() {
 
   const [tableData, setTableData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
+  const [visibleCount, setVisibleCount] = useState(10);
+  const rowsPerPage = 10;
 
   const fetchTableData = async () => {
     console.log("Fetching Open Position API...");
@@ -69,6 +71,7 @@ export default function OpenPosition() {
   }, []);
 
   const handleApply = () => {
+    setVisibleCount(10);
     // FILTER DATA
     const filtered = tableData.filter((item) => {
       return (
@@ -135,6 +138,8 @@ export default function OpenPosition() {
     }
     return 0;
   });
+
+  const visibleData = sortedData.slice(0, visibleCount);
 
   const handleDownload = () => {
     const csv = [
@@ -244,7 +249,7 @@ export default function OpenPosition() {
         <div className="overflow-x-auto no-scrollbar max-w-[1600px] mx-auto">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-gray-800 font-semibold text-sm">
-              Search results({sortedData.length})
+              Showing {visibleData.length} of {sortedData.length} records
             </h2>
             <Download
               size={18}
@@ -268,6 +273,12 @@ export default function OpenPosition() {
               border: 1px solid rgba(255, 255, 255, 0.1);
             }
           `}</style>
+          <div className="overflow-y-auto" style={{ maxHeight: "400px" }} onScroll={(e) => {
+            const bottom = e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 5;
+            if (bottom && visibleCount < sortedData.length) {
+              setVisibleCount((prev) => prev + rowsPerPage);
+            }
+          }}>
           <table className="w-full open-position-table border-collapse" style={{ fontFamily: 'futura, sans-serif' }}>
             <thead>
               <tr style={{ backgroundColor: '#1EB04C' }} className="text-white">
@@ -328,7 +339,7 @@ export default function OpenPosition() {
               </tr>
             </thead>
             <tbody>
-              {sortedData.map((row, idx) => (
+              {visibleData.map((row, idx) => (
                 <tr
                   key={idx}
                   className={`transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-[#f8fafc]'
@@ -365,6 +376,7 @@ export default function OpenPosition() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* 🚨 CUSTOM ERROR TOAST */}

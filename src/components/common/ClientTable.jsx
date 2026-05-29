@@ -4,6 +4,12 @@ import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 const ClientTable = ({ data = [] }) => {
   const [visibleRows, setVisibleRows] = useState({});
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
+  const [visibleCount, setVisibleCount] = useState(10);
+  const rowsPerPage = 10;
+
+  React.useEffect(() => {
+    setVisibleCount(10);
+  }, [data]);
 
   const handleSort = (key) => {
     let direction = "asc";
@@ -34,6 +40,8 @@ const ClientTable = ({ data = [] }) => {
       return 0;
     });
   }, [data, sortConfig]);
+
+  const visibleData = sortedData.slice(0, visibleCount);
 
   const toggleVisibility = (index) => {
     setVisibleRows(prev => ({
@@ -69,7 +77,12 @@ const ClientTable = ({ data = [] }) => {
 
   return (
     <div className="bg-white border border-gray-200 overflow-hidden shadow-none rounded-none">
-      <div className="overflow-x-auto">
+      <div className="overflow-auto" style={{ maxHeight: "400px" }} onScroll={(e) => {
+        const bottom = e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 5;
+        if (bottom && visibleCount < sortedData.length) {
+          setVisibleCount((prev) => prev + rowsPerPage);
+        }
+      }}>
         <table className="w-full text-left text-[11px] font-medium tracking-tight">
           <thead className="bg-[#1EB04C] text-white uppercase">
             <tr>
@@ -88,7 +101,7 @@ const ClientTable = ({ data = [] }) => {
             </tr>
           </thead>
           <tbody className="bg-white">
-            {sortedData.map((row, i) => (
+            {visibleData.map((row, i) => (
               <tr key={i} className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
                 {/* Client Name & Code */}
                 <td className="px-3 py-2 border-r border-gray-100 text-[11px]">
@@ -138,7 +151,7 @@ const ClientTable = ({ data = [] }) => {
         </table>
       </div>
       <div className="px-4 py-2 bg-[#f9f9f9] text-gray-500 font-medium border-t border-gray-200 text-[11px]">
-        {sortedData.length} total
+        Showing {visibleData.length} of {sortedData.length} total
       </div>
     </div>
   );
